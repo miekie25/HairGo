@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "643880881990",
+    "project_id": "hairgo-32fc0",
+    "storage_bucket": "hairgo-32fc0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:643880881990:android:902755db7d8267131f1f47",
+        "android_client_info": {
+          "package_name": "com.hairgo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDukVSuaEPyuMI4geNl87radKOtfzKKJBI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
