@@ -1,5 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- Primary -->
+    <color name="navy">#1B2A4A</color>
+    <color name="navy_dark">#10182E</color>
+
+    <!-- Accent -->
+    <color name="teal">#14B8A6</color>
+    <color name="teal_light">#CCF2EC</color>
+
+    <!-- Text -->
+    <color name="grey_dark">#333333</color>
+    <color name="grey_medium">#8A8A8A</color>
+
+    <!-- Background / Surface -->
+    <color name="grey_light">#F2F2F2</color>
+    <color name="white">#FFFFFF</color>
+    <color name="grey_border">#E0E0E0</color>
+
+    <!-- Status -->
+    <color name="success">#2E8B57</color>
+    <color name="warning">#E0A800</color>
+    <color name="error">#D9534F</color>
 </resources>
