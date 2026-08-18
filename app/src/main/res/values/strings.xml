@@ -1,4 +1,6 @@
 <resources>
+
+    // Login Screen
     <string name="app_name">HairGo</string>
     <string name="login_title">Welcome Back</string>
     <string name="login_subtitle">Sign in to continue</string>
@@ -7,4 +9,10 @@
     <string name="btn_login">Log In</string>
     <string name="forgot_password">Forgot Password?</string>
     <string name="no_account">Don\'t have an account? Sign Up</string>
+
+    // Client Dashboard
+    <string name="nav_home">Home</string>
+    <string name="nav_bookings">Bookings</string>
+    <string name="nav_profile">Profile</string>
+    <string name="dashboard_welcome_default">Welcome back</string>
 </resources>
