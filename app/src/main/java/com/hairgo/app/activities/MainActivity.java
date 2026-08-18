@@ -1,5 +1,6 @@
 package com.hairgo.app.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,5 +16,9 @@ public class MainActivity extends AppCompatActivity {
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         Log.d("HairGo", "Firebase Firestore connected: " + (db != null));
+
+        // TEMP: preview screen only — remove once real routing logic is in
+        startActivity(new Intent(this, ClientDashboardActivity.class));
+        finish();
     }
 }
