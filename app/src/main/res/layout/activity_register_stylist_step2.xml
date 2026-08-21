@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_light"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header with Back Button -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <include layout="@layout/view_auth_header"/>
+
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Centered Title -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tell us about your work"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:gravity="center"
+                android:layout_marginBottom="20dp"/>
+
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnUploadWork"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="Upload pictures of previous work"
+                android:textAllCaps="false"
+                app:icon="@drawable/ic_upload"
+                app:iconTint="@color/teal_primary"
+                app:strokeColor="@color/input_border"
+                android:textColor="@color/text_primary"
+                app:cornerRadius="12dp"/>
+
+
+            <!-- Centered Photo Status -->
+            <TextView
+                android:id="@+id/tvWorkPhotosCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="16dp"
+                android:text="No photos selected"
+                android:textSize="12sp"
+                android:textColor="@color/text_hint"
+                android:gravity="center"/>
+
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnUploadProfile"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="Upload profile picture"
+                android:textAllCaps="false"
+                app:icon="@drawable/ic_upload"
+                app:iconTint="@color/teal_primary"
+                app:strokeColor="@color/input_border"
+                android:textColor="@color/text_primary"
+                app:cornerRadius="12dp"/>
+
+
+            <ImageView
+                android:id="@+id/ivProfilePreview"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="16dp"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                android:background="@drawable/bg_header"/>
+
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilIdNumber"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint=" Enter ID number"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                android:layout_marginBottom="14dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etIdNumber"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:maxLength="13"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilSkills"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Work description"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                android:layout_marginBottom="14dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etSkills"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textMultiLine"
+                    android:minLines="3"
+                    android:gravity="top"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPricing"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Service pricing (R per hour)"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                android:layout_marginBottom="20dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPricing"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRegister"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="Next"
+                android:textAllCaps="false"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                app:backgroundTint="@color/teal_primary"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>
