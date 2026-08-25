@@ -15,4 +15,8 @@
     <string name="nav_bookings">Bookings</string>
     <string name="nav_profile">Profile</string>
     <string name="dashboard_welcome_default">Welcome back</string>
+    <string name="hint_search_salons">Search salons or locations</string>
+    <string name="no_salons_found">No salons found</string>
+    <string name="section_services">Services</string>
+    <string name="btn_book_now">Book Now</string>
 </resources>
