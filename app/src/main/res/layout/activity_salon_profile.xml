@@ -144,6 +144,7 @@
             android:layout_marginHorizontal="24dp"
             android:layout_marginBottom="24dp"
             android:text="@string/btn_book_now"
+            android:background="@drawable/bg_button_teal"
             style="@style/ButtonPrimary"
             app:layout_constraintTop_toBottomOf="@id/rvServices"
             app:layout_constraintStart_toStartOf="parent"

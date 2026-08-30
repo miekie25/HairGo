@@ -2,6 +2,9 @@ package com.hairgo.app.utils;
 
 import com.hairgo.app.models.Salon;
 
+import com.hairgo.app.models.Booking;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,6 +27,38 @@ public class DummyData {
                 Arrays.asList("Braids", "Cornrows", "Treatment", "Blow Dry")));
 
         return salons;
+    }
+
+    public static List<Booking> getDummyBookings() {
+        List<Booking> bookings = new ArrayList<>();
+        Calendar cal;
+
+        cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_MONTH, 3);
+        bookings.add(new Booking("b1", "Fresh Fadez Barbershop", "Haircut", cal.getTime(), "pending"));
+
+        cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_MONTH, 1);
+        bookings.add(new Booking("b2", "Glow Hair Studio", "Silk Press", cal.getTime(), "confirmed"));
+
+        cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_MONTH, -5);
+        bookings.add(new Booking("b3", "The Cutting Edge", "Fade", cal.getTime(), "completed"));
+
+        cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_MONTH, -2);
+        bookings.add(new Booking("b4", "Bella Hair Lounge", "Braids", cal.getTime(), "cancelled"));
+
+        return bookings;
+    }
+
+    public static Booking getDummyBookingById(String bookingId) {
+        for (Booking booking : getDummyBookings()) {
+            if (booking.getBookingId().equals(bookingId)) {
+                return booking;
+            }
+        }
+        return null;
     }
 
     public static Salon getDummySalonById(String salonId) {

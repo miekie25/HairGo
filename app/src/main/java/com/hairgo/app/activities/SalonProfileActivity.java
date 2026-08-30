@@ -1,5 +1,6 @@
 package com.hairgo.app.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -52,6 +53,11 @@ public class SalonProfileActivity extends AppCompatActivity {
         rvServices.setLayoutManager(new LinearLayoutManager(this));
         rvServices.setAdapter(new ServiceAdapter(salon.getServices()));
 
+        findViewById(R.id.btnBook).setOnClickListener(v -> {
+            Intent intent = new Intent(this, BookAppointmentActivity.class);
+            intent.putExtra("salonId", salon.getSalonId());
+            startActivity(intent);
+        });
         findViewById(R.id.btnBook).setOnClickListener(v ->
                 Toast.makeText(this, "Booking flow coming soon", Toast.LENGTH_SHORT).show()
         );

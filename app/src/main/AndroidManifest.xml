@@ -32,6 +32,16 @@
         <activity android:name=".activities.SalonProfileActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".activities.ForgotPasswordActivity"
+            android:exported="false" />
+
+        <activity android:name=".activities.BookAppointmentActivity"
+            android:exported="false" />
+
+        <activity android:name=".activities.BookingDetailsActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>
