@@ -58,5 +58,8 @@ public class SalonProfileActivity extends AppCompatActivity {
             intent.putExtra("salonId", salon.getSalonId());
             startActivity(intent);
         });
+        findViewById(R.id.btnBook).setOnClickListener(v ->
+                Toast.makeText(this, "Booking flow coming soon", Toast.LENGTH_SHORT).show()
+        );
     }
 }
