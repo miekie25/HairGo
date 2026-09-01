@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/hairgo_navy">
+    android:background="@color/navy">
 
     <!-- Scrollable photo grid — everything except the bottom bar lives in here -->
     <androidx.core.widget.NestedScrollView
@@ -34,7 +34,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="HairGo"
-                    android:textColor="@color/hairgo_white"
+                    android:textColor="@color/white"
                     android:textSize="32sp"
                     android:textStyle="bold"
                     android:fontFamily="sans-serif-condensed"
@@ -62,7 +62,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="@color/hairgo_navy_dark"
+        android:background="@color/navy_dark"
         android:elevation="8dp"
         android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -77,7 +77,7 @@
             android:layout_marginEnd="8dp"
             style="?attr/borderlessButtonStyle"
             android:text="Log In"
-            android:textColor="@color/hairgo_white" />
+            android:textColor="@color/white" />
 
         <Button
             android:id="@+id/btnSignUp"
@@ -85,8 +85,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Sign Up"
-            android:textColor="@color/hairgo_white"
-            android:backgroundTint="@color/hairgo_teal" />
+            android:textColor="@color/white"
+            android:backgroundTint="@color/teal" />
 
     </LinearLayout>
 

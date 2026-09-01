@@ -1,4 +1,4 @@
-package com.example.hairgo;
+package com.hairgo.app.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -7,12 +7,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.hairgo.app.R;
+
+
 public class WelcomeActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_welcome);
+
+        // TODO: re-enable once Denzel uploads the hairstyle/salon images to res/drawable
+        /*
         int[] hairstyleImages = {
                 R.drawable.salon1,
                 R.drawable.salon2,
@@ -42,23 +48,22 @@ public class WelcomeActivity extends AppCompatActivity {
                 R.drawable.hairstyle20,
                 R.drawable.hairstyle21,
                 R.drawable.hairstyle22
-
         };
 
         RecyclerView rvHairstyles = findViewById(R.id.rvHairstyles);
         rvHairstyles.setLayoutManager(new GridLayoutManager(this, 2));
         rvHairstyles.setAdapter(new HairstyleAdapter(hairstyleImages));
+        */
 
         Button btnSignUp = findViewById(R.id.btnSignUp);
         Button btnLogin = findViewById(R.id.btnLogin);
 
-
         btnSignUp.setOnClickListener(v -> {
-            // startActivity(new Intent(WelcomeActivity.this, RegisterActivity.class));
+            startActivity(new Intent(WelcomeActivity.this, RoleSelectionActivity.class));
         });
 
         btnLogin.setOnClickListener(v -> {
-            // startActivity(new Intent(WelcomeActivity.this, LoginActivity.class));
+            startActivity(new Intent(WelcomeActivity.this, LoginActivity.class));
         });
     }
 }

@@ -1,11 +1,12 @@
-package com.example.hairgo
+package com.hairgo.app.activities
 
 import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
-import com.example.hairgo.databinding.ActivityRegisterStylistStep1Binding
+import com.hairgo.app.R
+import com.hairgo.app.databinding.ActivityRegisterStylistStep1Binding
 
 class RegisterStylistStep1Activity : AppCompatActivity() {
 
@@ -33,6 +34,12 @@ class RegisterStylistStep1Activity : AppCompatActivity() {
                 }
                 startActivity(intent)
             }
+        }
+
+        // Added: "Already have an account? Log in" link
+        binding.tvLogin.setOnClickListener {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
         }
     }
 

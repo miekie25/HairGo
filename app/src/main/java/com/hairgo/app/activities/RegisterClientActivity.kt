@@ -1,10 +1,13 @@
-package com.example.hairgo
+package com.hairgo.app.activities
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
-import com.example.hairgo.databinding.ActivityRegisterClientBinding
+import com.hairgo.app.databinding.ActivityRegisterClientBinding
+import com.hairgo.app.R
+
 
 class RegisterClientActivity : AppCompatActivity() {
 
@@ -21,6 +24,12 @@ class RegisterClientActivity : AppCompatActivity() {
             if (validateForm()) {
                 // TODO: send data to your PHP REST API (POST /api/register/client)
             }
+        }
+
+        // Added: "Already have an account? Log in" link
+        binding.tvLogin.setOnClickListener {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
         }
     }
 

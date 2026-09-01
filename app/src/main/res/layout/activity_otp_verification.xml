@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_light"
+    android:background="@color/grey_light"
     android:fillViewport="true">
 
     <LinearLayout
@@ -25,7 +25,7 @@
                 android:layout_width="28dp"
                 android:layout_height="28dp"
                 android:layout_gravity="start"
-                android:src="@drawable/ic_back"
+                android:src="@drawable/ic_back_arrow"
                 android:padding="2dp"
                 android:layout_marginBottom="16dp"
                 android:clickable="true"
@@ -38,7 +38,7 @@
                 android:text="Verify your number"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/navy"
                 android:layout_marginBottom="6dp"/>
 
             <TextView
@@ -47,7 +47,7 @@
                 android:layout_height="wrap_content"
                 android:text="We've sent a 4-digit code to your number"
                 android:textSize="13.5sp"
-                android:textColor="@color/text_hint"
+                android:textColor="@color/grey_medium"
                 android:gravity="center"
                 android:layout_marginBottom="32dp"/>
 
@@ -68,7 +68,7 @@
                     android:maxLength="1"
                     android:textSize="22sp"
                     android:textStyle="bold"
-                    android:textColor="@color/text_primary"/>
+                    android:textColor="@color/navy"/>
 
                 <EditText
                     android:id="@+id/etOtp2"
@@ -81,7 +81,7 @@
                     android:maxLength="1"
                     android:textSize="22sp"
                     android:textStyle="bold"
-                    android:textColor="@color/text_primary"/>
+                    android:textColor="@color/navy"/>
 
                 <EditText
                     android:id="@+id/etOtp3"
@@ -94,7 +94,7 @@
                     android:maxLength="1"
                     android:textSize="22sp"
                     android:textStyle="bold"
-                    android:textColor="@color/text_primary"/>
+                    android:textColor="@color/navy"/>
 
                 <EditText
                     android:id="@+id/etOtp4"
@@ -106,7 +106,7 @@
                     android:maxLength="1"
                     android:textSize="22sp"
                     android:textStyle="bold"
-                    android:textColor="@color/text_primary"/>
+                    android:textColor="@color/navy"/>
             </LinearLayout>
 
             <TextView
@@ -114,7 +114,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Resend OTP"
-                android:textColor="@color/teal_primary"
+                android:textColor="@color/teal"
                 android:textStyle="bold"
                 android:textSize="14sp"
                 android:padding="8dp"
@@ -131,10 +131,10 @@
                 android:textAllCaps="false"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/background_light"
+                android:textColor="@color/white"
                 android:enabled="false"
                 app:cornerRadius="14dp"
-                app:backgroundTint="@color/teal_dark"
+                app:backgroundTint="@color/navy"
                 app:elevation="0dp"/>
 
         </LinearLayout>

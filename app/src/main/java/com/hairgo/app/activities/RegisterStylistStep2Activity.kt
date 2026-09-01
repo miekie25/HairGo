@@ -1,4 +1,4 @@
-package com.example.hairgo
+package com.hairgo.app.activities
 
 import android.content.Intent
 import android.net.Uri
@@ -6,7 +6,8 @@ import android.os.Bundle
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import com.example.hairgo.databinding.ActivityRegisterStylistStep2Binding
+import com.hairgo.app.R
+import com.hairgo.app.databinding.ActivityRegisterStylistStep2Binding
 
 class RegisterStylistStep2Activity : AppCompatActivity() {
 

@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/hairgo_navy">
+    android:background="@color/navy">
 
     <!-- Replace with your actual logo drawable -->
 
@@ -14,7 +14,7 @@
         android:layout_width="120dp"
         android:layout_height="120dp"
         android:contentDescription="HairGo logo"
-        android:src="@drawable/hair_logo"
+        android:src="@drawable/hairgo_logo"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -25,7 +25,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="HairGo"
-        android:textColor="@color/hairgo_white"
+        android:textColor="@color/white"
         android:textSize="34sp"
         android:textStyle="bold"
         android:fontFamily="sans-serif-condensed"
@@ -39,7 +39,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
         android:text="Book your look, effortlessly"
-        android:textColor="@color/hairgo_gray"
+        android:textColor="@color/grey_light"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -51,7 +51,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="48dp"
-        android:indeterminateTint="@color/hairgo_teal"
+        android:indeterminateTint="@color/teal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

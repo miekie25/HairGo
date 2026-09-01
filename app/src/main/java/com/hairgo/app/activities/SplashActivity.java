@@ -1,4 +1,4 @@
-package com.example.hairgo; // TODO: match your actual package name
+package com.hairgo.app.activities;
 
 import android.content.Intent;
 import android.os.Bundle;

@@ -10,6 +10,35 @@
     <string name="forgot_password">Forgot Password?</string>
     <string name="no_account">Don\'t have an account? Sign Up</string>
 
+    // Register Screen
+    <string-array name="areas_array">
+        <item>Soweto</item>
+        <item>Alexandra</item>
+        <item>Tembisa</item>
+        <item>Dobsonville</item>
+        <item>Mabopane</item>
+        <item>Soshanguve</item>
+        <item>Mamelodi</item>
+        <item>Atteridgeville</item>
+        <item>Khayelitsha</item>
+        <item>Gugulethu</item>
+        <item>Umlazi</item>
+        <item>KwaMashu</item>
+    </string-array>
+
+    <string-array name="languages_array">
+        <item>English</item>
+        <item>isiZulu</item>
+        <item>isiXhosa</item>
+        <item>Sesotho</item>
+        <item>Setswana</item>
+        <item>Sepedi</item>
+        <item>Tshivenda</item>
+        <item>isiNdebele</item>
+        <item>Seswati</item>
+        <item>Afrikaans</item>
+    </string-array>
+
     // Forgot Password
     <string name="back">Back</string>
     <string name="forgot_password_title">Forgot Password?</string>

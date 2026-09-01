@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_light"
+    android:background="@color/grey_light"
     android:fillViewport="true">
 
     <LinearLayout
@@ -19,7 +19,7 @@
             android:orientation="vertical"
             android:padding="24dp">
 
-            <!--  welcome title -->
+            <!-- Welcome title -->
             <TextView
                 android:id="@+id/tvWelcome"
                 android:layout_width="match_parent"
@@ -27,19 +27,19 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="4dp"
                 android:text="Welcome to HairGo "
-                android:textColor="@color/text_primary"
+                android:textColor="@color/navy"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textAlignment="center"/>
 
-            <!-- subtitle -->
+            <!-- Subtitle -->
             <TextView
                 android:id="@+id/tvSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Tell us how you'll be using the app"
                 android:textSize="14sp"
-                android:textColor="@color/text_hint"
+                android:textColor="@color/grey_medium"
                 android:layout_marginBottom="24dp"
                 android:textAlignment="center"/>
 
@@ -50,7 +50,7 @@
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="3dp"
-                app:strokeColor="@color/input_border"
+                app:strokeColor="@color/grey_border"
                 app:strokeWidth="1dp"
                 android:clickable="true"
                 android:focusable="true"
@@ -84,7 +84,7 @@
                             android:text="I'm a Client"
                             android:textSize="16sp"
                             android:textStyle="bold"
-                            android:textColor="@color/text_primary"/>
+                            android:textColor="@color/navy"/>
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -92,7 +92,7 @@
                             android:layout_marginTop="2dp"
                             android:text="Book appointments with salons and stylists near you"
                             android:textSize="12.5sp"
-                            android:textColor="@color/text_hint"/>
+                            android:textColor="@color/grey_medium"/>
                     </LinearLayout>
 
                     <ImageView
@@ -108,7 +108,7 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="3dp"
-                app:strokeColor="@color/input_border"
+                app:strokeColor="@color/grey_border"
                 app:strokeWidth="1dp"
                 android:clickable="true"
                 android:focusable="true"
@@ -142,7 +142,7 @@
                             android:text="I'm a Stylist / Salon"
                             android:textSize="16sp"
                             android:textStyle="bold"
-                            android:textColor="@color/text_primary"/>
+                            android:textColor="@color/navy"/>
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -150,7 +150,7 @@
                             android:layout_marginTop="2dp"
                             android:text="List your services and manage bookings from clients"
                             android:textSize="12.5sp"
-                            android:textColor="@color/text_hint"/>
+                            android:textColor="@color/grey_medium"/>
                     </LinearLayout>
 
                     <ImageView

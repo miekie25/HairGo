@@ -1,4 +1,4 @@
-package com.example.hairgo
+package com.hairgo.app.activities
 
 import android.os.Bundle
 import android.view.View
@@ -7,7 +7,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.hairgo.databinding.ActivityTermsConditionsBinding
+import com.hairgo.app.R
+import com.hairgo.app.databinding.ActivityTermsConditionsBinding
 
 class TermsConditionsActivity : AppCompatActivity() {
 

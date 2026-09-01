@@ -1,9 +1,10 @@
-package com.example.hairgo
+package com.hairgo.app.activities
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.example.hairgo.databinding.ActivityRoleSelectionBinding
+import com.hairgo.app.R
+import com.hairgo.app.databinding.ActivityRoleSelectionBinding
 
 class RoleSelectionActivity : AppCompatActivity() {
 

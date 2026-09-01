@@ -1,4 +1,4 @@
-package com.example.hairgo
+package com.hairgo.app.activities
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,7 +8,7 @@ import android.text.TextWatcher
 import android.view.KeyEvent
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
-import com.example.hairgo.databinding.ActivityOtpVerificationBinding
+import com.hairgo.app.databinding.ActivityOtpVerificationBinding
 
 class OtpVerificationActivity : AppCompatActivity() {
 

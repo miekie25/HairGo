@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_light"
+    android:background="@color/grey_light"
     android:fillViewport="true">
 
     <LinearLayout
@@ -23,7 +23,7 @@
                 android:id="@+id/btnBack"
                 android:layout_width="28dp"
                 android:layout_height="28dp"
-                android:src="@drawable/ic_back"
+                android:src="@drawable/ic_back_arrow"
                 android:padding="2dp"
                 android:layout_marginBottom="16dp"
                 android:clickable="true"
@@ -36,7 +36,7 @@
                 android:text="Terms &amp; Conditions"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/navy"
                 android:layout_marginBottom="4dp"/>
 
             <TextView
@@ -44,14 +44,14 @@
                 android:layout_height="wrap_content"
                 android:text="Please review before you finish creating your account"
                 android:textSize="13sp"
-                android:textColor="@color/text_hint"
+                android:textColor="@color/grey_medium"
                 android:layout_marginBottom="20dp"/>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="14dp"
-                app:strokeColor="@color/input_border"
+                app:strokeColor="@color/grey_border"
                 app:strokeWidth="1dp"
                 app:cardElevation="0dp"
                 android:layout_marginBottom="14dp">
@@ -79,7 +79,7 @@
                             android:text="Terms of Service"
                             android:textSize="15sp"
                             android:textStyle="bold"
-                            android:textColor="@color/text_primary"/>
+                            android:textColor="@color/navy"/>
 
                         <ImageView
                             android:id="@+id/ivChevronTerms"
@@ -98,7 +98,7 @@
                         android:paddingTop="0dp"
                         android:textSize="13sp"
                         android:lineSpacingExtra="4dp"
-                        android:textColor="@color/text_hint"
+                        android:textColor="@color/grey_medium"
                         android:text="Welcome to HairGo. By creating an account, you agree to use our platform responsibly to book and provide hair and grooming services within your community.\n\nBookings and cancellations: clients agree to honour confirmed appointments. Cancellations should be made at least 2 hours before the scheduled time to avoid a no-show fee set by the stylist. Stylists agree to honour accepted bookings and to communicate promptly if a reschedule is needed.\n\nPayments: prices shown on stylist profiles are set by the stylist and may vary by service. HairGo may charge a small service fee on completed bookings, shown at checkout.\n\nConduct: users must provide accurate registration information, including a valid ID number for stylists, and must treat other users with respect. HairGo may suspend accounts that violate these terms, including fraudulent listings or abusive behaviour.\n\nLiability: HairGo is a booking platform connecting clients and independent stylists. We are not responsible for the quality of services rendered but encourage users to report disputes through the app.\n\nThese terms may be updated from time to time; continued use of HairGo means you accept the latest version."/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -107,7 +107,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="14dp"
-                app:strokeColor="@color/input_border"
+                app:strokeColor="@color/grey_border"
                 app:strokeWidth="1dp"
                 app:cardElevation="0dp"
                 android:layout_marginBottom="24dp">
@@ -135,7 +135,7 @@
                             android:text="Privacy Policy"
                             android:textSize="15sp"
                             android:textStyle="bold"
-                            android:textColor="@color/text_primary"/>
+                            android:textColor="@color/navy"/>
 
                         <ImageView
                             android:id="@+id/ivChevronPrivacy"
@@ -154,7 +154,7 @@
                         android:paddingTop="0dp"
                         android:textSize="13sp"
                         android:lineSpacingExtra="4dp"
-                        android:textColor="@color/text_hint"
+                        android:textColor="@color/grey_medium"
                         android:text="HairGo respects your privacy and processes your personal information in accordance with South Africa's Protection of Personal Information Act (POPIA).\n\nInformation we collect: your name, contact details, area, language preference, and password. Stylists also provide an ID number, profile picture, portfolio photos, and pricing to verify identity and build trust with clients.\n\nHow we use it: to create and manage your account, match clients with nearby stylists, process bookings, and send appointment updates via SMS or email. ID numbers are used only for identity verification and are never shown publicly.\n\nSharing: we do not sell your personal information. Limited details, such as your name and booking time, are shared between a client and stylist only once a booking is made, and with payment processors solely to complete transactions.\n\nYour rights: you may request access to, correction of, or deletion of your personal information at any time by contacting our support team, and may withdraw consent for optional communications.\n\nRetention: your information is kept only for as long as your account is active or as required by law."/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -170,7 +170,7 @@
                     android:id="@+id/cbTermsAgree"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:buttonTint="@color/teal_primary"/>
+                    app:buttonTint="@color/teal"/>
 
                 <TextView
                     android:layout_width="0dp"
@@ -178,7 +178,7 @@
                     android:layout_height="wrap_content"
                     android:text="I have read and agree to the Terms of Service and Privacy Policy above."
                     android:textSize="13sp"
-                    android:textColor="@color/text_primary"/>
+                    android:textColor="@color/navy"/>
             </LinearLayout>
 
             <LinearLayout
@@ -192,7 +192,7 @@
                     android:id="@+id/cbPopiaConsent"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:buttonTint="@color/teal_primary"/>
+                    app:buttonTint="@color/teal"/>
 
                 <TextView
                     android:layout_width="0dp"
@@ -200,14 +200,14 @@
                     android:layout_height="wrap_content"
                     android:text="I consent to HairGo collecting and processing my personal information in accordance with POPIA."
                     android:textSize="13sp"
-                    android:textColor="@color/text_primary"/>
+                    android:textColor="@color/navy"/>
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="12dp"
-                app:strokeColor="@color/input_border"
+                app:strokeColor="@color/grey_border"
                 app:strokeWidth="1dp"
                 app:cardElevation="0dp"
                 android:layout_marginBottom="24dp">
@@ -223,7 +223,7 @@
                         android:id="@+id/cbNotRobot"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        app:buttonTint="@color/teal_primary"/>
+                        app:buttonTint="@color/teal"/>
 
                     <TextView
                         android:layout_width="0dp"
@@ -231,7 +231,7 @@
                         android:layout_height="wrap_content"
                         android:text="I'm not a robot"
                         android:textSize="14sp"
-                        android:textColor="@color/text_primary"/>
+                        android:textColor="@color/navy"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -243,10 +243,10 @@
                 android:textAllCaps="false"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/cardview_light_background"
+                android:textColor="@color/white"
                 android:enabled="false"
                 app:cornerRadius="14dp"
-                app:backgroundTint="@color/teal_primary"
+                app:backgroundTint="@color/teal"
                 app:elevation="0dp"/>
 
         </LinearLayout>
