@@ -1,79 +1,299 @@
-<resources>
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F2F2F2"
+    android:fillViewport="true">
 
-    // Login Screen
-    <string name="app_name">HairGo</string>
-    <string name="login_title">Welcome Back</string>
-    <string name="login_subtitle">Sign in to continue</string>
-    <string name="hint_email">Email</string>
-    <string name="hint_password">Password</string>
-    <string name="btn_login">Log In</string>
-    <string name="forgot_password">Forgot Password?</string>
-    <string name="no_account">Don\'t have an account? Sign Up</string>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    // Register Screen
-    <string-array name="areas_array">
-        <item>Soweto</item>
-        <item>Alexandra</item>
-        <item>Tembisa</item>
-        <item>Dobsonville</item>
-        <item>Mabopane</item>
-        <item>Soshanguve</item>
-        <item>Mamelodi</item>
-        <item>Atteridgeville</item>
-        <item>Khayelitsha</item>
-        <item>Gugulethu</item>
-        <item>Umlazi</item>
-        <item>KwaMashu</item>
-    </string-array>
+        <!-- Header Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            android:backgroundTint="#FFFFFF">
 
-    <string-array name="languages_array">
-        <item>English</item>
-        <item>isiZulu</item>
-        <item>isiXhosa</item>
-        <item>Sesotho</item>
-        <item>Setswana</item>
-        <item>Sepedi</item>
-        <item>Tshivenda</item>
-        <item>isiNdebele</item>
-        <item>Seswati</item>
-        <item>Afrikaans</item>
-    </string-array>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:padding="24dp">
 
-    // Forgot Password
-    <string name="back">Back</string>
-    <string name="forgot_password_title">Forgot Password?</string>
-    <string name="forgot_password_subtitle">Enter your email address to reset your password.</string>
-    <string name="email_address">Email</string>
-    <string name="back_to_login">Back to Login</string>
-    <string name="send_reset_link">Send Reset Link</string>
+                <!-- Profile Image -->
+                <FrameLayout
+                    android:layout_width="100dp"
+                    android:layout_height="100dp">
 
-    // Client Dashboard
-    <string name="nav_home">Home</string>
-    <string name="nav_bookings">Bookings</string>
-    <string name="nav_profile">Profile</string>
-    <string name="dashboard_welcome_default">Welcome back</string>
-    <string name="hint_search_salons">Search salons or locations</string>
-    <string name="no_salons_found">No salons found</string>
-    <string name="section_services">Services</string>
-    <string name="btn_book_now">Book Now</string>
-    <string name="title_book_appointment">Book Appointment</string>
-    <string name="label_select_service">Select a service</string>
-    <string name="label_select_date">Select a date</string>
-    <string name="label_select_time">Select a time</string>
-    <string name="hint_choose_date">Choose a date</string>
-    <string name="hint_choose_time">Choose a time</string>
-    <string name="btn_confirm_booking">Confirm Booking</string>
-    <string name="error_incomplete_booking">Please select a service, date, and time.</string>
-    <string name="error_past_datetime">Please choose a future date and time.</string>
-    <string name="booking_demo_success">Booking request sent — this is a demo, real booking logic comes in Phase 2.</string>
-    <string name="title_my_bookings">My Bookings</string>
-    <string name="no_bookings_found">No bookings yet</string>
-    <string name="title_booking_details">Booking Details</string>
-    <string name="label_service">Service</string>
-    <string name="label_date_time">Date &amp; Time</string>
-    <string name="btn_cancel_booking">Cancel Booking</string>
-    <string name="cancel_booking_confirm_title">Cancel this booking?</string>
-    <string name="cancel_booking_confirm_message">This will let the salon know you can\'t make it. This can\'t be undone.</string>
-    <string name="btn_keep_booking">Keep Booking</string>
-    <string name="booking_cancelled_demo">Booking cancelled — this is a demo, real soft-delete wiring comes in Phase 2.</string>
-</resources>
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_circle_teal" />
+
+                    <TextView
+                        android:id="@+id/tvProfileInitials"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="@string/profile_initials_placeholder"
+                        android:textColor="#FFFFFF"
+                        android:textSize="36sp"
+                        android:textStyle="bold" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/tvProfileName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/profile_name_placeholder"
+                    android:textColor="#1B2A4A"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvProfileRole"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/profile_role_placeholder"
+                    android:textColor="#14B8A6"
+                    android:textSize="14sp"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.1" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Personal Info Section -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="#FFFFFF">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/personal_information"
+                    android:textColor="#1B2A4A"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="12dp"
+                    android:background="#E0E0E0" />
+
+                <!-- Name Field -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/full_name"
+                    android:textColor="#8A8A8A"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/etProfileName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_input_rounded"
+                    android:hint="@string/enter_your_name"
+                    android:importantForAutofill="yes"
+                    android:autofillHints="name"
+                    android:inputType="textPersonName"
+                    android:padding="14dp"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <!-- Email Field -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/email_address"
+                    android:textColor="#8A8A8A"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/etProfileEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_input_rounded"
+                    android:hint="@string/enter_your_email"
+                    android:importantForAutofill="yes"
+                    android:autofillHints="emailAddress"
+                    android:inputType="textEmailAddress"
+                    android:padding="14dp"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <!-- Phone Field -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/phone_number"
+                    android:textColor="#8A8A8A"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/etProfilePhone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_input_rounded"
+                    android:hint="@string/enter_your_phone"
+                    android:importantForAutofill="yes"
+                    android:autofillHints="phone"
+                    android:inputType="phone"
+                    android:padding="14dp"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <!-- Save Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSaveProfile"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="20dp"
+                    android:backgroundTint="#1B2A4A"
+                    android:text="@string/save_changes"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    app:cornerRadius="12dp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Actions Section -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="#FFFFFF">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <!-- Leave a Review -->
+                <LinearLayout
+                    android:id="@+id/btnLeaveReview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_star"
+                        android:contentDescription="@string/leave_a_review"
+                        app:tint="#14B8A6" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="16dp"
+                        android:text="@string/leave_a_review"
+                        android:textColor="#333333"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        android:contentDescription="@string/navigate_icon"
+                        app:tint="#8A8A8A" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:background="#E0E0E0" />
+
+                <!-- Report a Problem -->
+                <LinearLayout
+                    android:id="@+id/btnReportProblem"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_upload"
+                        android:contentDescription="@string/report_a_problem"
+                        app:tint="#14B8A6" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="16dp"
+                        android:text="@string/report_a_problem"
+                        android:textColor="#333333"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        android:contentDescription="@string/navigate_icon"
+                        app:tint="#8A8A8A" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Logout Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLogout"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="32dp"
+            android:backgroundTint="@drawable/bg_button_outline_error"
+            android:text="@string/logout"
+            android:textAllCaps="false"
+            android:textColor="#B00020"
+            android:textSize="16sp"
+            app:cornerRadius="12dp"
+            app:strokeColor="#B00020"
+            app:strokeWidth="1dp" />
+
+    </LinearLayout>
+</ScrollView>
