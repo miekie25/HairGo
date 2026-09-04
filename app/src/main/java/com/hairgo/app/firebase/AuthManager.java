@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AuthManager {
+
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
@@ -35,9 +36,9 @@ public class AuthManager {
         mAuth.signOut();
     }
 
-    // Callback so your Activity knows when register/login finishes (success or error)
+    // Callback used when registration/login finishes
     public interface AuthCallback {
-        void onSuccess();
+        void onSuccess(String role);
         void onFailure(String errorMessage);
     }
 
@@ -46,7 +47,9 @@ public class AuthManager {
 
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
+
                     FirebaseUser firebaseUser = authResult.getUser();
+
                     if (firebaseUser == null) {
                         callback.onFailure("Something went wrong. Please try again.");
                         return;
@@ -63,17 +66,85 @@ public class AuthManager {
                     newUser.put("createdAt", FieldValue.serverTimestamp());
                     newUser.put("isDeleted", false);
 
-                    db.collection("users").document(uid).set(newUser)
-                            .addOnSuccessListener(unused -> callback.onSuccess())
+                    db.collection("users")
+                            .document(uid)
+                            .set(newUser)
+                            .addOnSuccessListener(unused ->
+                                    callback.onSuccess("client"))
                             .addOnFailureListener(e ->
-                                    callback.onFailure("Account created, but saving profile failed: " + e.getMessage()));
+                                    callback.onFailure(
+                                            "Account created, but saving profile failed: "
+                                                    + e.getMessage()
+                                    )
+                            );
                 })
-                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                .addOnFailureListener(e ->
+                        callback.onFailure(e.getMessage())
+                );
     }
 
     public void loginUser(String email, String password, AuthCallback callback) {
+
         mAuth.signInWithEmailAndPassword(email, password)
-                .addOnSuccessListener(authResult -> callback.onSuccess())
-                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+
+                .addOnSuccessListener(authResult -> {
+
+                    FirebaseUser firebaseUser = authResult.getUser();
+
+                    if (firebaseUser == null) {
+                        callback.onFailure("Could not retrieve user account.");
+                        return;
+                    }
+
+                    String uid = firebaseUser.getUid();
+
+                    // Get the user's profile from Firestore
+                    db.collection("users")
+                            .document(uid)
+                            .get()
+
+                            .addOnSuccessListener(documentSnapshot -> {
+
+                                if (!documentSnapshot.exists()) {
+                                    callback.onFailure(
+                                            "User profile was not found in Firestore."
+                                    );
+                                    return;
+                                }
+
+                                Boolean isDeleted =
+                                        documentSnapshot.getBoolean("isDeleted");
+
+                                if (Boolean.TRUE.equals(isDeleted)) {
+                                    callback.onFailure(
+                                            "This account has been deactivated."
+                                    );
+                                    return;
+                                }
+
+                                String role =
+                                        documentSnapshot.getString("role");
+
+                                if (role == null || role.trim().isEmpty()) {
+                                    callback.onFailure(
+                                            "User role is missing from your profile."
+                                    );
+                                    return;
+                                }
+
+                                callback.onSuccess(role.trim().toLowerCase());
+                            })
+
+                            .addOnFailureListener(e ->
+                                    callback.onFailure(
+                                            "Could not load your user profile: "
+                                                    + e.getMessage()
+                                    )
+                            );
+                })
+
+                .addOnFailureListener(e ->
+                        callback.onFailure(e.getMessage())
+                );
     }
 }
