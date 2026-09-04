@@ -1,10 +1,15 @@
 package com.hairgo.app.activities;
+
 import android.os.Bundle;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.hairgo.app.R;
+import com.hairgo.app.fragments.OwnerHomeFragment;
+import com.hairgo.app.fragments.OwnerBookingsFragment;
+import com.hairgo.app.fragments.OwnerStaffFragment;
+import com.hairgo.app.fragments.OwnerProfileFragment;
 
 public class OwnerDashboardActivity extends AppCompatActivity {
 
@@ -17,7 +22,6 @@ public class OwnerDashboardActivity extends AppCompatActivity {
         TextView tvGreeting = findViewById(R.id.tvOwnerGreeting);
         tvGreeting.setText("Welcome back, " + (ownerName != null ? ownerName : "Owner"));
 
-        // Show Home tab by default
         loadFragment(new OwnerHomeFragment());
 
         BottomNavigationView bottomNav = findViewById(R.id.ownerBottomNav);

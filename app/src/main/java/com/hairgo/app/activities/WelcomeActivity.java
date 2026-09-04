@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.hairgo.app.R;
+import com.hairgo.app.adapters.HairstyleAdapter;
 
 
 public class WelcomeActivity extends AppCompatActivity {
@@ -17,8 +18,7 @@ public class WelcomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_welcome);
 
-        // TODO: re-enable once Denzel uploads the hairstyle/salon images to res/drawable
-        /*
+
         int[] hairstyleImages = {
                 R.drawable.salon1,
                 R.drawable.salon2,
@@ -53,7 +53,6 @@ public class WelcomeActivity extends AppCompatActivity {
         RecyclerView rvHairstyles = findViewById(R.id.rvHairstyles);
         rvHairstyles.setLayoutManager(new GridLayoutManager(this, 2));
         rvHairstyles.setAdapter(new HairstyleAdapter(hairstyleImages));
-        */
 
         Button btnSignUp = findViewById(R.id.btnSignUp);
         Button btnLogin = findViewById(R.id.btnLogin);
