@@ -34,7 +34,7 @@ public class HairstyleAdapter extends RecyclerView.Adapter<HairstyleAdapter.View
             holder.itemView.setAlpha(0f);
             holder.itemView.animate()
                     .alpha(1f)
-                    .setDuration(300)
+                    .setDuration(5000)
                     .start();
             lastAnimatedPosition = position;
         } else {
