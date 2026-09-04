@@ -286,7 +286,7 @@
             android:layout_height="56dp"
             android:layout_marginTop="24dp"
             android:layout_marginBottom="32dp"
-            android:backgroundTint="@drawable/bg_button_outline_error"
+            android:backgroundTint="#FFFFFF"
             android:text="@string/logout"
             android:textAllCaps="false"
             android:textColor="#B00020"
