@@ -21,6 +21,15 @@ public class SalonManager {
         void onFailure(String errorMessage);
     }
 
+    /**
+     * Used when creating a salon, so the caller learns the id Firestore
+     * generated for the new document.
+     */
+    public interface SalonCreatedCallback {
+        void onSuccess(String salonId);
+        void onFailure(String errorMessage);
+    }
+
     public interface SalonDataCallback {
         void onSuccess(Map<String, Object> salon);
         void onFailure(String errorMessage);
@@ -32,8 +41,23 @@ public class SalonManager {
     }
 
     public void createSalon(String ownerId, String name, String location,
-                            List<String> services, SalonCallback callback) {
-        DocumentReference ref = db.collection("salons").document();
+                            List<String> services, SalonCreatedCallback callback) {
+        createSalon(null, ownerId, name, location, services, callback);
+    }
+
+    /**
+     * Creates a salon, optionally writing to a known document id.
+     *
+     * <p>Passing a documentId turns this into an upsert: the named document is
+     * replaced instead of a new one being created. The development seeder relies
+     * on that so it can reset its own test data without ever producing
+     * duplicates, and it needs no separate delete step that could fail quietly.
+     */
+    public void createSalon(String documentId, String ownerId, String name, String location,
+                            List<String> services, SalonCreatedCallback callback) {
+        DocumentReference ref = documentId == null
+                ? db.collection("salons").document()
+                : db.collection("salons").document(documentId);
 
         Map<String, Object> salon = new HashMap<>();
         salon.put("salonID", ref.getId());
@@ -45,7 +69,7 @@ public class SalonManager {
         salon.put("avgRating", 0.0);
 
         ref.set(salon)
-                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnSuccessListener(unused -> callback.onSuccess(ref.getId()))
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 

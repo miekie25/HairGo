@@ -100,6 +100,22 @@
 
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/tvNextAvailable"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginHorizontal="24dp"
+            android:background="@drawable/bg_circle_teal_light"
+            android:gravity="center"
+            android:padding="12dp"
+            android:textColor="@color/teal"
+            android:textSize="14sp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/llRating"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
         <View
             android:id="@+id/divider"
             android:layout_width="0dp"
@@ -107,7 +123,7 @@
             android:layout_marginTop="20dp"
             android:layout_marginHorizontal="24dp"
             android:background="@color/grey_border"
-            app:layout_constraintTop_toBottomOf="@id/llRating"
+            app:layout_constraintTop_toBottomOf="@id/tvNextAvailable"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 

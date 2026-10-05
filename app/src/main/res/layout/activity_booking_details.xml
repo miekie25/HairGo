@@ -124,5 +124,19 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
+        <!-- Only shown once a booking is completed, since only completed
+             bookings may be reviewed. -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnLeaveReview"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            android:text="@string/leave_a_review"
+            style="@style/ButtonPrimary"
+            app:layout_constraintTop_toBottomOf="@id/btnCancelBooking"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
