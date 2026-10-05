@@ -19,6 +19,8 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.hairgo.app.R;
 import com.hairgo.app.activities.LoginActivity;
+import com.hairgo.app.firebase.AuthManager;
+import com.hairgo.app.fragments.ReportProblemBottomSheet;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -77,6 +79,12 @@ public class ProfileFragment extends Fragment {
 
         // Logout button
         btnLogout.setOnClickListener(v -> logout());
+
+        View btnReportProblem = view.findViewById(R.id.btnReportProblem);
+        if (btnReportProblem != null) {
+            btnReportProblem.setOnClickListener(v ->
+                    new ReportProblemBottomSheet().show(getChildFragmentManager(), "report_problem"));
+        }
     }
 
     /**
@@ -101,7 +109,7 @@ public class ProfileFragment extends Fragment {
         }
 
         // Get the rest of the profile information from Firestore
-        firestore.collection("Users")
+        firestore.collection("users")
                 .document(uid)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
@@ -109,7 +117,7 @@ public class ProfileFragment extends Fragment {
                     if (documentSnapshot.exists()) {
 
                         String name = documentSnapshot.getString("name");
-                        String phone = documentSnapshot.getString("phone");
+                        String phone = documentSnapshot.getString("phoneNumber");
                         String role = documentSnapshot.getString("role");
 
                         if (name != null && !name.isEmpty()) {
@@ -144,13 +152,14 @@ public class ProfileFragment extends Fragment {
                         tvProfileRole.setText("CLIENT");
                     }
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(
-                                requireContext(),
-                                "Could not load profile.",
-                                Toast.LENGTH_SHORT
-                        ).show()
-                );
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    Toast.makeText(
+                            getContext(),
+                            "Could not load profile.",
+                            Toast.LENGTH_SHORT
+                    ).show();
+                });
     }
 
     /**
@@ -165,19 +174,12 @@ public class ProfileFragment extends Fragment {
         }
 
         String name = etProfileName.getText().toString().trim();
-        String email = etProfileEmail.getText().toString().trim();
         String phone = etProfilePhone.getText().toString().trim();
 
         // Basic validation
         if (TextUtils.isEmpty(name)) {
             etProfileName.setError("Please enter your name.");
             etProfileName.requestFocus();
-            return;
-        }
-
-        if (TextUtils.isEmpty(email)) {
-            etProfileEmail.setError("Please enter your email.");
-            etProfileEmail.requestFocus();
             return;
         }
 
@@ -192,32 +194,36 @@ public class ProfileFragment extends Fragment {
         Map<String, Object> profileUpdates = new HashMap<>();
 
         profileUpdates.put("name", name);
-        profileUpdates.put("phone", phone);
+        profileUpdates.put("phoneNumber", phone);
 
         /*
-         * Email is currently displayed from Firebase Authentication.
-         * Updating the Firebase Authentication email requires
-         * additional authentication, so we do not change it here.
+         * Email is not written here. It is owned by Firebase Authentication and
+         * changing it needs a recent re-authentication plus email verification,
+         * so the field is shown read-only rather than pretending to save.
          */
 
-        firestore.collection("Users")
+        firestore.collection("users")
                 .document(uid)
                 .update(profileUpdates)
                 .addOnSuccessListener(unused -> {
+
+                    if (!isAdded()) return;
 
                     tvProfileName.setText(name);
                     tvProfileInitials.setText(getInitials(name));
 
                     Toast.makeText(
-                            requireContext(),
+                            getContext(),
                             "Profile updated successfully!",
                             Toast.LENGTH_SHORT
                     ).show();
                 })
                 .addOnFailureListener(e -> {
 
+                    if (!isAdded()) return;
+
                     Toast.makeText(
-                            requireContext(),
+                            getContext(),
                             "Could not update profile.",
                             Toast.LENGTH_SHORT
                     ).show();
@@ -229,7 +235,7 @@ public class ProfileFragment extends Fragment {
      */
     private void logout() {
 
-        firebaseAuth.signOut();
+        new AuthManager().signOut();
 
         Intent intent = new Intent(
                 requireActivity(),

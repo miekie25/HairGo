@@ -21,4 +21,13 @@
     <color name="success">#2E8B57</color>
     <color name="warning">#E0A800</color>
     <color name="error">#D9534F</color>
+
+    <!-- Status tints (soft badge backgrounds) -->
+    <color name="teal_dark">#0F766E</color>
+    <color name="success_light">#DDF3E6</color>
+    <color name="success_dark">#1F6B44</color>
+    <color name="error_light">#FBE3E2</color>
+    <color name="error_dark">#B3261E</color>
+    <color name="warning_light">#FDF3D8</color>
+    <color name="warning_dark">#8A6300</color>
 </resources>

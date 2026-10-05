@@ -10,7 +10,7 @@
         android:id="@+id/tvBookingsTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="18dp"
         android:layout_marginHorizontal="16dp"
         android:text="@string/title_my_bookings"
         android:textColor="@color/navy"
@@ -20,14 +20,28 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
+    <TextView
+        android:id="@+id/tvBookingsSubtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:layout_marginHorizontal="16dp"
+        android:text="@string/bookings_subtitle"
+        android:textColor="@color/grey_medium"
+        android:textSize="13sp"
+        app:layout_constraintTop_toBottomOf="@id/tvBookingsTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvBookings"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="10dp"
         android:clipToPadding="false"
         android:paddingBottom="16dp"
-        app:layout_constraintTop_toBottomOf="@id/tvBookingsTitle"
+        android:scrollbars="none"
+        app:layout_constraintTop_toBottomOf="@id/tvBookingsSubtitle"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
@@ -39,8 +53,9 @@
         android:text="@string/no_bookings_found"
         android:textColor="@color/grey_medium"
         android:textSize="14sp"
+        android:gravity="center"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/tvBookingsTitle"
+        app:layout_constraintTop_toBottomOf="@id/tvBookingsSubtitle"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>

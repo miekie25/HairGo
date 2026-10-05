@@ -3,11 +3,12 @@ package com.hairgo.app.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.imageview.ShapeableImageView;
 
 import com.hairgo.app.R;
 import com.hairgo.app.models.Salon;
@@ -43,6 +44,13 @@ public class SalonAdapter extends RecyclerView.Adapter<SalonAdapter.SalonViewHol
         holder.tvSalonLocation.setText(salon.getLocation());
         holder.tvSalonRating.setText(String.format(Locale.getDefault(), "%.1f", salon.getAvgRating()));
 
+        int imageRes = salon.getImageRes();
+        if (imageRes != 0) {
+            holder.ivSalonPhoto.setImageResource(imageRes);
+        } else {
+            holder.ivSalonPhoto.setImageResource(R.drawable.ic_salon_placeholder_teal);
+        }
+
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onSalonClick(salon);
         });
@@ -54,12 +62,12 @@ public class SalonAdapter extends RecyclerView.Adapter<SalonAdapter.SalonViewHol
     }
 
     static class SalonViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivSalonIcon;
+        ShapeableImageView ivSalonPhoto;
         TextView tvSalonName, tvSalonLocation, tvSalonRating;
 
         SalonViewHolder(@NonNull View itemView) {
             super(itemView);
-            ivSalonIcon = itemView.findViewById(R.id.ivSalonIcon);
+            ivSalonPhoto = itemView.findViewById(R.id.ivSalonPhoto);
             tvSalonName = itemView.findViewById(R.id.tvSalonName);
             tvSalonLocation = itemView.findViewById(R.id.tvSalonLocation);
             tvSalonRating = itemView.findViewById(R.id.tvSalonRating);

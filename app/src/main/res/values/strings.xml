@@ -12,6 +12,19 @@
     <string name="btn_login">Log In</string>
     <string name="forgot_password">Forgot Password?</string>
     <string name="no_account">Don\'t have an account? Sign Up</string>
+    <string name="hint_email_required">Enter your email address</string>
+    <string name="hint_email_invalid">Enter a valid email address</string>
+    <string name="hint_password_required">Enter your password</string>
+    <string name="btn_logging_in">Logging in…</string>
+    <string name="login_error_invalid_credentials">Incorrect email or password</string>
+    <string name="login_error_network">Could not reach the server. Check your connection and try again.</string>
+    <string name="login_error_too_many_attempts">Too many attempts. Please try again later.</string>
+    <string name="login_error_account_disabled">This account has been disabled. Please contact support.</string>
+    <string name="login_error_unknown_role">We could not work out your account type. Please contact support.</string>
+    <string name="login_error_profile_not_found">We could not find your account profile. Please register again.</string>
+    <string name="login_error_role_missing">Your account type is missing. Please contact support.</string>
+    <string name="login_error_no_account">Could not load your account. Please try again.</string>
+    <string name="login_error_generic">Something went wrong. Please try again.</string>
 
     <!-- Register Screen -->
     <string-array name="areas_array">
@@ -49,6 +62,9 @@
     <string name="email_address">Email</string>
     <string name="back_to_login">Back to Login</string>
     <string name="send_reset_link">Send Reset Link</string>
+    <string name="forgot_error_not_configured">Password reset is not available right now. Please contact support.</string>
+    <string name="forgot_success">If an account exists for that email, a password reset link is on its way.</string>
+    <string name="btn_sending">Sending…</string>
 
     <!-- Client Dashboard & Booking -->
     <string name="nav_home">Home</string>
@@ -57,7 +73,10 @@
     <string name="dashboard_welcome_default">Welcome back</string>
     <string name="hint_search_salons">Search salons or locations</string>
     <string name="no_salons_found">No salons found</string>
+    <string name="salon_photo_desc">Salon photo</string>
     <string name="section_services">Services</string>
+    <string name="salon_not_found">Salon not found.</string>
+    <string name="salon_next_available">Next available: %1$s</string>
     <string name="btn_book_now">Book Now</string>
     <string name="title_book_appointment">Book Appointment</string>
     <string name="label_select_service">Select a service</string>
@@ -70,6 +89,9 @@
     <string name="error_past_datetime">Please choose a future date and time.</string>
     <string name="booking_demo_success">Booking request sent — this is a demo, real booking logic comes in Phase 2.</string>
     <string name="title_my_bookings">My Bookings</string>
+    <string name="bookings_subtitle">Your upcoming and past appointments</string>
+    <string name="section_upcoming">Upcoming</string>
+    <string name="section_past">Past</string>
     <string name="no_bookings_found">No bookings yet</string>
     <string name="title_booking_details">Booking Details</string>
     <string name="label_service">Service</string>
@@ -78,7 +100,37 @@
     <string name="cancel_booking_confirm_title">Cancel this booking?</string>
     <string name="cancel_booking_confirm_message">This will let the salon know you can\'t make it. This can\'t be undone.</string>
     <string name="btn_keep_booking">Keep Booking</string>
+    <!-- Still used by BookingDetailsActivity, which has not been moved off demo data yet. -->
     <string name="booking_cancelled_demo">Booking cancelled — this is a demo, real soft-delete wiring comes in Phase 2.</string>
+    <string name="booking_cancelled">Booking cancelled.</string>
+    <string name="booking_cancel_failed">Could not cancel the booking: %1$s</string>
+
+    <string name="select_time_title">Select Time</string>
+    <string name="fully_booked_title">Fully Booked</string>
+    <string name="fully_booked_message">No available slots for this date. Please choose another date.</string>
+    <string name="please_select_date_first">Please select a date first</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="booking_created_success">Booking confirmed</string>
+    <string name="couldnt_load_times_title">Couldn\'t load available times</string>
+
+    <string name="review_rating_required">Please select a star rating</string>
+    <string name="review_comment_required">Please enter a comment</string>
+    <string name="review_login_required">Please sign in first</string>
+    <string name="review_submitting">Submitting…</string>
+    <string name="review_submitted">Review submitted. Thank you.</string>
+    <string name="review_submit_failed">Could not submit the review: %1$s</string>
+    <string name="review_missing_booking">This review is not linked to a booking.</string>
+
+    <string name="report_description_required">Please describe the problem</string>
+    <string name="report_description_too_short">Please provide more details (min 10 characters)</string>
+    <string name="report_login_required">Please sign in first</string>
+    <string name="report_submitting">Submitting…</string>
+    <string name="report_submitted">Report submitted. We\'ll look into it!</string>
+    <string name="report_submit_failed">Could not submit the report: %1$s</string>
+    <string name="report_problem_subtitle">Tell us what isn\'t working</string>
+    <string name="booking_not_found">Booking not found.</string>
+    <string name="booking_date_format">dd MMM yyyy • hh:mm a</string>
 
     <!-- Profile Screen (Nikita's new strings) -->
     <string name="profile_initials_placeholder">JD</string>
