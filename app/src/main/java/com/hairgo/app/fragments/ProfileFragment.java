@@ -3,12 +3,12 @@ package com.hairgo.app.fragments;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,13 +19,17 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.hairgo.app.R;
 import com.hairgo.app.activities.LoginActivity;
+import com.hairgo.app.activities.MyReportsActivity;
 import com.hairgo.app.firebase.AuthManager;
 import com.hairgo.app.fragments.ReportProblemBottomSheet;
+import com.hairgo.app.utils.Snackbars;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class ProfileFragment extends Fragment {
+
+    private static final String TAG = "ProfileFragment";
 
     private TextView tvProfileInitials;
     private TextView tvProfileName;
@@ -84,6 +88,12 @@ public class ProfileFragment extends Fragment {
         if (btnReportProblem != null) {
             btnReportProblem.setOnClickListener(v ->
                     new ReportProblemBottomSheet().show(getChildFragmentManager(), "report_problem"));
+        }
+
+        View btnMyReports = view.findViewById(R.id.btnMyReports);
+        if (btnMyReports != null) {
+            btnMyReports.setOnClickListener(v ->
+                    startActivity(new Intent(requireContext(), MyReportsActivity.class)));
         }
     }
 
@@ -154,11 +164,8 @@ public class ProfileFragment extends Fragment {
                 })
                 .addOnFailureListener(e -> {
                     if (!isAdded()) return;
-                    Toast.makeText(
-                            getContext(),
-                            "Could not load profile.",
-                            Toast.LENGTH_SHORT
-                    ).show();
+                    Log.w(TAG, "Could not load profile: " + e.getMessage());
+                    Snackbars.show(requireView(), "Could not load profile.");
                 });
     }
 
@@ -212,21 +219,15 @@ public class ProfileFragment extends Fragment {
                     tvProfileName.setText(name);
                     tvProfileInitials.setText(getInitials(name));
 
-                    Toast.makeText(
-                            getContext(),
-                            "Profile updated successfully!",
-                            Toast.LENGTH_SHORT
-                    ).show();
+                    Snackbars.show(requireView(), "Profile updated successfully!");
                 })
                 .addOnFailureListener(e -> {
 
                     if (!isAdded()) return;
 
-                    Toast.makeText(
-                            getContext(),
-                            "Could not update profile.",
-                            Toast.LENGTH_SHORT
-                    ).show();
+                    Log.w(TAG, "Could not update profile: " + e.getMessage());
+
+                    Snackbars.show(requireView(), "Could not update profile.");
                 });
     }
 

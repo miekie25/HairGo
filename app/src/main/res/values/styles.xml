@@ -31,4 +31,16 @@
         <item name="cornerSize">10dp</item>
     </style>
 
+    <!-- All Snackbars in the app: navy pill, white text, rounded corners. -->
+    <style name="Widget.HairGo.Snackbar" parent="Widget.Material3.Snackbar">
+        <item name="backgroundTint">@color/navy</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.HairGo_Snackbar</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.HairGo_Snackbar" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
 </resources>

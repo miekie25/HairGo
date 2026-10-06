@@ -127,7 +127,7 @@
     <string name="report_login_required">Please sign in first</string>
     <string name="report_submitting">Submitting…</string>
     <string name="report_submitted">Report submitted. We\'ll look into it!</string>
-    <string name="report_submit_failed">Could not submit the report: %1$s</string>
+    <string name="report_submit_failed">Couldn\'t submit your report. Please try again.</string>
     <string name="report_problem_subtitle">Tell us what isn\'t working</string>
     <string name="booking_not_found">Booking not found.</string>
     <string name="booking_date_format">dd MMM yyyy • hh:mm a</string>
@@ -157,6 +157,37 @@
     <string name="let_us_know_whats_wrong">Let us know what\'s wrong</string>
     <string name="description">Description</string>
     <string name="describe_the_problem">Describe the problem</string>
+
+    <!-- Report a Problem: form -->
+    <string name="report_category_label">What went wrong?</string>
+    <string name="report_category_required">Please choose a category</string>
+    <string name="report_category_booking">Booking issue</string>
+    <string name="report_category_login">Login / Account</string>
+    <string name="report_category_app_error">App error</string>
+    <string name="report_category_payment">Payment</string>
+    <string name="report_category_other">Other</string>
+    <string name="report_severity_label">Severity</string>
+    <string name="report_severity_low">Low</string>
+    <string name="report_severity_medium">Medium</string>
+    <string name="report_severity_high">High</string>
+    <string name="report_description_too_long">Description is too long (max 500 characters)</string>
+    <string name="report_contact_email">Contact email (optional)</string>
+    <string name="report_contact_email_invalid">Enter a valid email address</string>
+    <string name="report_screenshots_label">Screenshots (optional)</string>
+    <string name="report_add_screenshot">Add screenshot</string>
+    <string name="report_max_screenshots">You can attach up to 3 screenshots</string>
+    <string name="report_remove_screenshot">Remove screenshot</string>
+    <string name="report_char_counter">%1$d/500</string>
+    <string name="report_uploading">Preparing screenshots…</string>
+
+    <!-- My Reports -->
+    <string name="title_my_reports">My Reports</string>
+    <string name="my_reports_subtitle">Problems you reported and their status</string>
+    <string name="my_reports">My Reports</string>
+    <string name="no_reports_found">No reports yet</string>
+    <string name="reports_loaded_failed">Could not load your reports.</string>
+    <string name="report_screenshots_count">%1$d screenshot(s)</string>
+    <string name="report_no_screenshots">No screenshots</string>
 
 
 </resources>

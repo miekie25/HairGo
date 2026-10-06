@@ -6,5 +6,7 @@
         <item name="postSplashScreenTheme">@style/Theme.HairGo</item>
     </style>
 
-    <style name="Theme.HairGo" parent="Base.Theme.HairGo" />
+    <style name="Theme.HairGo" parent="Base.Theme.HairGo">
+        <item name="snackbarStyle">@style/Widget.HairGo.Snackbar</item>
+    </style>
 </resources>

@@ -86,6 +86,11 @@
         <activity
             android:name=".activities.BookingDetailsActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".activities.MyReportsActivity"
+            android:exported="false" />
+
         <activity android:name=".activities.OwnerDashboardActivity"
             android:exported="false" />
 
