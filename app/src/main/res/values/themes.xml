@@ -2,7 +2,7 @@
     <!-- Base application theme. -->
     <style name="Theme.HairGo.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/navy</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/hairgo_logo</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
         <item name="postSplashScreenTheme">@style/Theme.HairGo</item>
     </style>
 
