@@ -5,8 +5,15 @@
     <color name="navy_dark">#10182E</color>
 
     <!-- Accent -->
+    <color name="coral_accent">#F2A38C</color>
     <color name="teal">#14B8A6</color>
     <color name="teal_light">#CCF2EC</color>
+    <color name="teal_primary">#1C8C7C</color>
+    <color name="badge_coral_bg">#FDECE7</color>
+    <color name="badge_orange_bg">#FFF4E0</color>
+    <color name="badge_green_bg">#E7F6EC</color>
+    <color name="badge_teal_bg">#E3F2F0</color>
+    <color name="input_border">#DADADA</color>
 
     <!-- Text -->
     <color name="grey_dark">#333333</color>
@@ -16,6 +23,7 @@
     <color name="grey_light">#F2F2F2</color>
     <color name="white">#FFFFFF</color>
     <color name="grey_border">#E0E0E0</color>
+    <color name="text_primary">#1A1A1A</color>
 
     <!-- Status -->
     <color name="success">#2E8B57</color>

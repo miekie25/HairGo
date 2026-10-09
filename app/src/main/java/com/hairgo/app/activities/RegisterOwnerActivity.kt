@@ -1,20 +1,19 @@
-package com.hairgo.app.activities
+package com.example.hairgo
 
 import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
-import com.hairgo.app.R
-import com.hairgo.app.databinding.ActivityRegisterStylistStep1Binding
+import com.example.hairgo.databinding.ActivityRegisterOwnerBinding
 
-class RegisterStylistStep1Activity : AppCompatActivity() {
+class RegisterOwnerActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityRegisterStylistStep1Binding
+    private lateinit var binding: ActivityRegisterOwnerBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityRegisterStylistStep1Binding.inflate(layoutInflater)
+        binding = ActivityRegisterOwnerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         val languages = resources.getStringArray(R.array.languages_array)
@@ -24,22 +23,14 @@ class RegisterStylistStep1Activity : AppCompatActivity() {
 
         binding.btnNext.setOnClickListener {
             if (validateForm()) {
-                val intent = Intent(this, RegisterStylistStep2Activity::class.java).apply {
-                    putExtra("fullName", binding.etFullName.text.toString().trim())
-                    putExtra("businessAddress", binding.etBusinessAddress.text.toString().trim())
-                    putExtra("language", binding.actvLanguage.text.toString())
-                    putExtra("email", binding.etEmail.text.toString().trim())
-                    putExtra("phone", binding.etPhone.text.toString().trim())
-                    putExtra("password", binding.etPassword.text.toString())
-                }
-                startActivity(intent)
-            }
-        }
+                OwnerRegistrationData.fullName = binding.etFullName.text.toString().trim()
+                OwnerRegistrationData.language = binding.actvLanguage.text.toString()
+                OwnerRegistrationData.email = binding.etEmail.text.toString().trim()
+                OwnerRegistrationData.phone = binding.etPhone.text.toString().trim()
+                OwnerRegistrationData.password = binding.etPassword.text.toString()
 
-        // Added: "Already have an account? Log in" link
-        binding.tvLogin.setOnClickListener {
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
+                startActivity(Intent(this, SalonSetupIntroActivity::class.java))
+            }
         }
     }
 
@@ -51,16 +42,17 @@ class RegisterStylistStep1Activity : AppCompatActivity() {
             isValid = false
         } else binding.tilFullName.error = null
 
-        if (binding.etBusinessAddress.text.toString().trim().isEmpty()) {
-            binding.tilArea.error = "Business address is required"
-            isValid = false
-        } else binding.tilArea.error = null
-
         val email = binding.etEmail.text.toString().trim()
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             binding.tilEmail.error = "Enter a valid email address"
             isValid = false
         } else binding.tilEmail.error = null
+
+        val phone = binding.etPhone.text.toString().trim()
+        if (phone.length < 9) {
+            binding.tilPhone.error = "Enter a valid phone number"
+            isValid = false
+        } else binding.tilPhone.error = null
 
         val password = binding.etPassword.text.toString()
         if (password.length < 8) {

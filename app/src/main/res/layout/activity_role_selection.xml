@@ -26,7 +26,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="4dp"
-                android:text="Welcome to HairGo "
+                android:text="Welcome to HairGo 👋 "
                 android:textColor="@color/navy"
                 android:textSize="20sp"
                 android:textStyle="bold"
@@ -50,7 +50,7 @@
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="3dp"
-                app:strokeColor="@color/grey_border"
+                app:strokeColor="@color/text_primary"
                 app:strokeWidth="1dp"
                 android:clickable="true"
                 android:focusable="true"
@@ -66,10 +66,10 @@
                     <TextView
                         android:layout_width="52dp"
                         android:layout_height="52dp"
-                        android:background="@drawable/bg_circle_teal"
+                        android:background="@drawable/bg_otp_box_focused"
                         android:gravity="center"
-                        android:text=""
-                        android:textSize="22sp"/>
+                        android:text="💇"
+                        android:textSize="22sp" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -84,15 +84,15 @@
                             android:text="I'm a Client"
                             android:textSize="16sp"
                             android:textStyle="bold"
-                            android:textColor="@color/navy"/>
+                            android:textColor="@color/text_primary"/>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Book appointments with salons and stylists near you"
+                            android:text="Book appointments with salons near you"
                             android:textSize="12.5sp"
-                            android:textColor="@color/grey_medium"/>
+                            android:textColor="@color/text_primary"/>
                     </LinearLayout>
 
                     <ImageView
@@ -103,12 +103,12 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardStylist"
+                android:id="@+id/cardOwner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="3dp"
-                app:strokeColor="@color/grey_border"
+                app:strokeColor="@color/grey_dark"
                 app:strokeWidth="1dp"
                 android:clickable="true"
                 android:focusable="true"
@@ -124,9 +124,9 @@
                     <TextView
                         android:layout_width="52dp"
                         android:layout_height="52dp"
-                        android:background="@drawable/bg_circle_teal"
+                        android:background="@drawable/bg_otp_box_focused"
                         android:gravity="center"
-                        android:text=""
+                        android:text="🏪"
                         android:textSize="22sp"/>
 
                     <LinearLayout
@@ -139,18 +139,18 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="I'm a Stylist / Salon"
+                            android:text="I'm a Salon Owner"
                             android:textSize="16sp"
                             android:textStyle="bold"
-                            android:textColor="@color/navy"/>
+                            android:textColor="@color/text_primary"/>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="List your services and manage bookings from clients"
+                            android:text="Set up your salon and list the services you offer"
                             android:textSize="12.5sp"
-                            android:textColor="@color/grey_medium"/>
+                            android:textColor="@color/text_primary"/>
                     </LinearLayout>
 
                     <ImageView
@@ -159,7 +159,6 @@
                         android:src="@drawable/ic_chevron_right"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
         </LinearLayout>
     </LinearLayout>
 </ScrollView>
