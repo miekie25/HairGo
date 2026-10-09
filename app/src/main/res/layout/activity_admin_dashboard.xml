@@ -50,6 +50,18 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Notifications"/>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAdminLogout"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:minWidth="0dp"
+            android:paddingHorizontal="8dp"
+            android:text="@string/logout"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white" />
+
     </LinearLayout>
 
     <FrameLayout
@@ -65,10 +77,10 @@
         android:id="@+id/bottomNav"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@android:color/white"
+        android:background="@color/surface"
         app:itemIconTint="@color/bottom_nav_colour_selector"
         app:itemTextColor="@color/bottom_nav_colour_selector"
-        app:menu="@menu/bottom_nav_menu"
+        app:menu="@menu/admin_bottom_nav_menu"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>

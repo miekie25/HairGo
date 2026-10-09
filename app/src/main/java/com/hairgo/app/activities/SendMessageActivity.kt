@@ -1,9 +1,9 @@
-package com.example.hairgo
+package com.hairgo.app.activities
 
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.hairgo.databinding.ActivitySendMessageBinding
+import com.hairgo.app.databinding.ActivitySendMessageBinding
 
 class SendMessageActivity : AppCompatActivity() {
 

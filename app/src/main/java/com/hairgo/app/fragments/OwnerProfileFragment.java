@@ -8,7 +8,9 @@ import android.widget.Button;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.hairgo.app.R;
+import com.hairgo.app.utils.ThemeManager;
 
 public class OwnerProfileFragment extends Fragment {
 
@@ -23,6 +25,15 @@ public class OwnerProfileFragment extends Fragment {
         btnLogout.setOnClickListener(v -> {
             // TODO: wire to actual sign-out logic once Firebase Authentication is confirmed
         });
+
+        // Dark mode toggle. Set the initial position before attaching the
+        // listener so restoring the switch does not re-trigger a theme change.
+        MaterialSwitch switchDarkMode = view.findViewById(R.id.switchDarkMode);
+        if (switchDarkMode != null) {
+            switchDarkMode.setChecked(ThemeManager.isDarkEnabled(requireContext()));
+            switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) ->
+                    ThemeManager.setNightMode(requireContext(), isChecked));
+        }
 
         return view;
     }

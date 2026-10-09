@@ -1,23 +1,26 @@
-package com.example.hairgo
+package com.hairgo.app.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.example.hairgo.databinding.ItemReportBinding
+import com.hairgo.app.R
+import com.hairgo.app.databinding.AdminItemReportBinding
+import com.hairgo.app.models.AdminReport
 
-class ReportAdapter(
-    private var reports: List<Report>,
-    private val onClick: (Report) -> Unit
-) : RecyclerView.Adapter<ReportAdapter.ReportViewHolder>() {
+class AdminReportAdapter(
+    private var reports: List<AdminReport>,
+    private val onClick: (AdminReport) -> Unit
+) : RecyclerView.Adapter<AdminReportAdapter.AdminReportViewHolder>() {
 
-    inner class ReportViewHolder(val binding: ItemReportBinding) : RecyclerView.ViewHolder(binding.root)
+    inner class AdminReportViewHolder(val binding: AdminItemReportBinding) :
+        RecyclerView.ViewHolder(binding.root)
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReportViewHolder {
-        val binding = ItemReportBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return ReportViewHolder(binding)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AdminReportViewHolder {
+        val binding = AdminItemReportBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return AdminReportViewHolder(binding)
     }
 
-    override fun onBindViewHolder(holder: ReportViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: AdminReportViewHolder, position: Int) {
         val report = reports[position]
         val b = holder.binding
 
@@ -47,7 +50,7 @@ class ReportAdapter(
 
     override fun getItemCount() = reports.size
 
-    fun submitList(newList: List<Report>) {
+    fun submitList(newList: List<AdminReport>) {
         reports = newList
         notifyDataSetChanged()
     }

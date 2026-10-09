@@ -27,7 +27,7 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="4dp"
                 android:text="Welcome to HairGo 👋 "
-                android:textColor="@color/navy"
+                android:textColor="@color/heading"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textAlignment="center"/>

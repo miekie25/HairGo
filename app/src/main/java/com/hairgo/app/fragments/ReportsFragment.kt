@@ -1,4 +1,4 @@
-package com.example.hairgo
+package com.hairgo.app.fragments
 
 import android.content.Intent
 import android.os.Bundle
@@ -7,13 +7,17 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.hairgo.databinding.FragmentReportsBinding
+import com.hairgo.app.R
+import com.hairgo.app.activities.ReportDetailActivity
+import com.hairgo.app.adapters.AdminReportAdapter
+import com.hairgo.app.databinding.FragmentReportsBinding
+import com.hairgo.app.utils.MockDataStore
 
 class ReportsFragment : Fragment() {
 
     private var _binding: FragmentReportsBinding? = null
     private val binding get() = _binding!!
-    private lateinit var adapter: ReportAdapter
+    private lateinit var adapter: AdminReportAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -25,7 +29,7 @@ class ReportsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = ReportAdapter(emptyList()) { report ->
+        adapter = AdminReportAdapter(emptyList()) { report ->
             val intent = Intent(requireContext(), ReportDetailActivity::class.java)
             intent.putExtra("reportId", report.id)
             startActivity(intent)

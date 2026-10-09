@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
     android:layout_marginVertical="5dp"
-    app:rippleColor="@color/teal_light"
     app:cardCornerRadius="14dp"
     app:cardElevation="1dp"
     app:strokeWidth="1dp"
@@ -19,7 +17,7 @@
         android:padding="14dp">
 
         <TextView
-            android:id="@+id/tvCategory"
+            android:id="@+id/tvReportedUserName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:maxLines="1"
@@ -29,75 +27,61 @@
             android:textStyle="bold"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/tvStatusBadge"/>
+            app:layout_constraintEnd_toStartOf="@id/tvReportStatus"/>
 
         <TextView
-            android:id="@+id/tvStatusBadge"
+            android:id="@+id/tvReportStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/bg_pill_pending"
+            android:background="@drawable/bg_badge_orange"
             android:paddingHorizontal="10dp"
             android:paddingVertical="4dp"
-            android:letterSpacing="0.06"
             android:textAllCaps="true"
             android:textColor="@color/warning_dark"
             android:textSize="10sp"
             android:textStyle="bold"
-            app:layout_constraintTop_toTopOf="@id/tvCategory"
-            app:layout_constraintBottom_toBottomOf="@id/tvCategory"
-            app:layout_constraintStart_toEndOf="@id/tvCategory"
+            app:layout_constraintTop_toTopOf="@id/tvReportedUserName"
+            app:layout_constraintBottom_toBottomOf="@id/tvReportedUserName"
             app:layout_constraintEnd_toEndOf="parent"/>
 
         <TextView
-            android:id="@+id/tvDescription"
+            android:id="@+id/tvReportReason"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@color/heading"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/tvReportedUserName"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvReportDescription"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:maxLines="2"
             android:ellipsize="end"
             android:textColor="@color/grey_dark"
             android:textSize="14sp"
-            app:layout_constraintTop_toBottomOf="@id/tvCategory"
+            app:layout_constraintTop_toBottomOf="@id/tvReportReason"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <ImageView
-            android:id="@+id/ivDateIcon"
-            android:layout_width="13dp"
-            android:layout_height="13dp"
+        <TextView
+            android:id="@+id/tvReportDate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:src="@drawable/ic_calendar"
-            app:tint="@color/grey_medium"
-            android:importantForAccessibility="no"
-            app:layout_constraintTop_toBottomOf="@id/tvDescription"
-            app:layout_constraintStart_toStartOf="parent"/>
-
-        <TextView
-            android:id="@+id/tvDate"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
             android:maxLines="1"
             android:ellipsize="end"
             android:textColor="@color/grey_medium"
             android:textSize="13sp"
-            app:layout_constraintTop_toTopOf="@id/ivDateIcon"
-            app:layout_constraintBottom_toBottomOf="@id/ivDateIcon"
-            app:layout_constraintStart_toEndOf="@id/ivDateIcon"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <TextView
-            android:id="@+id/tvMeta"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:textColor="@color/grey_medium"
-            android:textSize="13sp"
-            app:layout_constraintTop_toBottomOf="@id/tvDate"
+            app:layout_constraintTop_toBottomOf="@id/tvReportDescription"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 

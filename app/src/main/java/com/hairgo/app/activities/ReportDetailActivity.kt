@@ -1,4 +1,4 @@
-package com.example.hairgo
+package com.hairgo.app.activities
 
 import android.content.Intent
 import android.os.Bundle
@@ -7,12 +7,15 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.example.hairgo.databinding.ActivityReportDetailBinding
+import com.hairgo.app.R
+import com.hairgo.app.databinding.ActivityReportDetailBinding
+import com.hairgo.app.models.AdminReport
+import com.hairgo.app.utils.MockDataStore
 
 class ReportDetailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityReportDetailBinding
-    private lateinit var report: Report
+    private lateinit var report: AdminReport
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

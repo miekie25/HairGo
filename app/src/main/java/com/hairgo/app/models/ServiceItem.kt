@@ -1,4 +1,4 @@
-package com.example.hairgo
+package com.hairgo.app.models
 
 data class ServiceItem(
     val name: String,

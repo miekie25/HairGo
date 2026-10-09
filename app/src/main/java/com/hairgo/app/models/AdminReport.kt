@@ -1,6 +1,6 @@
-package com.example.hairgo
+package com.hairgo.app.models
 
-data class Report(
+data class AdminReport(
     val id: Int,
     val reporterName: String,
     val reporterEmail: String,

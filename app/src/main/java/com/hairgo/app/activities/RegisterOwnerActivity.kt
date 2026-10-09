@@ -1,11 +1,12 @@
-package com.example.hairgo
+package com.hairgo.app.activities
 
 import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
-import com.example.hairgo.databinding.ActivityRegisterOwnerBinding
+import com.hairgo.app.R
+import com.hairgo.app.databinding.ActivityRegisterOwnerBinding
 
 class RegisterOwnerActivity : AppCompatActivity() {
 

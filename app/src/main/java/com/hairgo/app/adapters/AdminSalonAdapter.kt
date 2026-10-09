@@ -3,7 +3,7 @@ package com.hairgo.app.adapters
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.hairgo.app.databinding.AdminSalonItemBinding
+import com.hairgo.app.databinding.AdminItemSalonBinding
 import com.hairgo.app.models.AdminSalon
 
 class AdminSalonAdapter(
@@ -11,11 +11,11 @@ class AdminSalonAdapter(
     private val onDeactivate: (AdminSalon) -> Unit
 ) : RecyclerView.Adapter<AdminSalonAdapter.AdminSalonViewHolder>() {
 
-    inner class AdminSalonViewHolder(val binding: AdminSalonItemBinding) :
+    inner class AdminSalonViewHolder(val binding: AdminItemSalonBinding) :
         RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AdminSalonViewHolder {
-        val binding = AdminSalonItemBinding.inflate(
+        val binding = AdminItemSalonBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
             false

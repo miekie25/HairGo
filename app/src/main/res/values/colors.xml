@@ -22,8 +22,10 @@
     <!-- Background / Surface -->
     <color name="grey_light">#F2F2F2</color>
     <color name="white">#FFFFFF</color>
+    <color name="surface">#FFFFFF</color>
     <color name="grey_border">#E0E0E0</color>
     <color name="text_primary">#1A1A1A</color>
+    <color name="heading">#1B2A4A</color>
 
     <!-- Status -->
     <color name="success">#2E8B57</color>
@@ -38,4 +40,11 @@
     <color name="error_dark">#B3261E</color>
     <color name="warning_light">#FDF3D8</color>
     <color name="warning_dark">#8A6300</color>
+
+    <!-- Admin aliases -->
+    <color name="success_green">#2E8B57</color>
+    <color name="warning_orange">#B26A00</color>
+    <color name="text_hint">#8A8A8A</color>
+    <color name="background_light">#F2F2F2</color>
+    <color name="navy_primary">#1B2A4A</color>
 </resources>

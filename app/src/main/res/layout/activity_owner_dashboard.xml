@@ -53,7 +53,7 @@
         android:id="@+id/ownerBottomNav"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@color/white"
+        android:background="@color/surface"
         app:itemIconTint="@color/bottom_nav_colour_selector"
         app:itemTextColor="@color/bottom_nav_colour_selector"
         app:menu="@menu/owner_bottom_nav_menu"

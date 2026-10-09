@@ -5,7 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.hairgo.app.R
-import com.hairgo.app.databinding.AdminUserItemBinding
+import com.hairgo.app.databinding.AdminItemUserBinding
 import com.hairgo.app.models.UserModel
 
 class AdminUserAdapter(
@@ -15,11 +15,11 @@ class AdminUserAdapter(
     private val onMessage: (UserModel) -> Unit
 ) : RecyclerView.Adapter<AdminUserAdapter.AdminUserViewHolder>() {
 
-    inner class AdminUserViewHolder(val binding: AdminUserItemBinding) :
+    inner class AdminUserViewHolder(val binding: AdminItemUserBinding) :
         RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AdminUserViewHolder {
-        val binding = AdminUserItemBinding.inflate(
+        val binding = AdminItemUserBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
             false

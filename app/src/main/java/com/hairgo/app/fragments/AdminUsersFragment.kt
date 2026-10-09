@@ -8,19 +8,21 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.hairgo.app.activities.SendMessageActivity
 import com.hairgo.app.adapters.AdminUserAdapter
-import com.hairgo.app.databinding.AdminFragmentUsersBinding
+import com.hairgo.app.databinding.FragmentUsersBinding
+import com.hairgo.app.utils.MockDataStore
 
 class AdminUsersFragment : Fragment() {
 
-    private var _binding: AdminFragmentUsersBinding? = null
+    private var _binding: FragmentUsersBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: AdminUserAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        _binding = AdminFragmentUsersBinding.inflate(inflater, container, false)
+        _binding = FragmentUsersBinding.inflate(inflater, container, false)
         return binding.root
     }
 

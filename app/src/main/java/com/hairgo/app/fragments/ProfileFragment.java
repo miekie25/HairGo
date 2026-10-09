@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -23,6 +24,7 @@ import com.hairgo.app.activities.MyReportsActivity;
 import com.hairgo.app.firebase.AuthManager;
 import com.hairgo.app.fragments.ReportProblemBottomSheet;
 import com.hairgo.app.utils.Snackbars;
+import com.hairgo.app.utils.ThemeManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -94,6 +96,15 @@ public class ProfileFragment extends Fragment {
         if (btnMyReports != null) {
             btnMyReports.setOnClickListener(v ->
                     startActivity(new Intent(requireContext(), MyReportsActivity.class)));
+        }
+
+        // Dark mode toggle. Set the initial position before attaching the
+        // listener so restoring the switch does not re-trigger a theme change.
+        MaterialSwitch switchDarkMode = view.findViewById(R.id.switchDarkMode);
+        if (switchDarkMode != null) {
+            switchDarkMode.setChecked(ThemeManager.isDarkEnabled(requireContext()));
+            switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) ->
+                    ThemeManager.setNightMode(requireContext(), isChecked));
         }
     }
 

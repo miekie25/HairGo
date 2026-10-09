@@ -29,7 +29,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="6dp"
                 android:text="Create your account"
-                android:textColor="@color/navy"
+                android:textColor="@color/heading"
                 android:textSize="22sp"
                 android:textStyle="bold" />
 
@@ -48,7 +48,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="6dp"
                 android:text="Full name"
-                android:textColor="@color/navy"
+                android:textColor="@color/heading"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -80,7 +80,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="6dp"
                 android:text="Area"
-                android:textColor="@color/navy"
+                android:textColor="@color/heading"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -112,7 +112,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="6dp"
                 android:text="Select language"
-                android:textColor="@color/navy"
+                android:textColor="@color/heading"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -144,7 +144,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="6dp"
                 android:text="Email address"
-                android:textColor="@color/navy"
+                android:textColor="@color/heading"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -176,7 +176,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="6dp"
                 android:text="Phone number"
-                android:textColor="@color/navy"
+                android:textColor="@color/heading"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -210,7 +210,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="6dp"
                 android:text="Password"
-                android:textColor="@color/navy"
+                android:textColor="@color/heading"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -241,7 +241,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="6dp"
                 android:text="Confirm password"
-                android:textColor="@color/navy"
+                android:textColor="@color/heading"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 

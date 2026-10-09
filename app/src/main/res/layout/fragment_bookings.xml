@@ -13,7 +13,7 @@
         android:layout_marginTop="18dp"
         android:layout_marginHorizontal="16dp"
         android:text="@string/title_my_bookings"
-        android:textColor="@color/navy"
+        android:textColor="@color/heading"
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"

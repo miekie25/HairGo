@@ -36,7 +36,7 @@
                 android:text="Terms &amp; Conditions"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="@color/navy"
+                android:textColor="@color/heading"
                 android:layout_marginBottom="4dp"/>
 
             <TextView
@@ -79,7 +79,7 @@
                             android:text="Terms of Service"
                             android:textSize="15sp"
                             android:textStyle="bold"
-                            android:textColor="@color/navy"/>
+                            android:textColor="@color/heading"/>
 
                         <ImageView
                             android:id="@+id/ivChevronTerms"
@@ -135,7 +135,7 @@
                             android:text="Privacy Policy"
                             android:textSize="15sp"
                             android:textStyle="bold"
-                            android:textColor="@color/navy"/>
+                            android:textColor="@color/heading"/>
 
                         <ImageView
                             android:id="@+id/ivChevronPrivacy"
@@ -178,7 +178,7 @@
                     android:layout_height="wrap_content"
                     android:text="I have read and agree to the Terms of Service and Privacy Policy above."
                     android:textSize="13sp"
-                    android:textColor="@color/navy"/>
+                    android:textColor="@color/heading"/>
             </LinearLayout>
 
             <LinearLayout
@@ -200,7 +200,7 @@
                     android:layout_height="wrap_content"
                     android:text="I consent to HairGo collecting and processing my personal information in accordance with POPIA."
                     android:textSize="13sp"
-                    android:textColor="@color/navy"/>
+                    android:textColor="@color/heading"/>
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
@@ -231,7 +231,7 @@
                         android:layout_height="wrap_content"
                         android:text="I'm not a robot"
                         android:textSize="14sp"
-                        android:textColor="@color/navy"/>
+                        android:textColor="@color/heading"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

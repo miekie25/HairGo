@@ -16,7 +16,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Good morning"
-            android:textColor="@color/navy"
+            android:textColor="@color/heading"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -46,7 +46,7 @@
                     android:orientation="vertical" android:padding="14dp">
                     <TextView android:id="@+id/tvTodayBookingsCount" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="0"
-                        android:textColor="@color/navy" android:textSize="24sp" android:textStyle="bold" />
+                        android:textColor="@color/heading" android:textSize="24sp" android:textStyle="bold" />
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="Bookings today" android:textColor="@color/grey_medium" android:textSize="12sp" />
                 </LinearLayout>
@@ -105,7 +105,7 @@
                     android:orientation="vertical" android:padding="14dp">
                     <TextView android:id="@+id/tvStaffCount" android:layout_width="wrap_content"
                         android:layout_height="wrap_content" android:text="0"
-                        android:textColor="@color/navy" android:textSize="24sp" android:textStyle="bold" />
+                        android:textColor="@color/heading" android:textSize="24sp" android:textStyle="bold" />
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="Staff members" android:textColor="@color/grey_medium" android:textSize="12sp" />
                 </LinearLayout>
@@ -117,7 +117,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="Quick actions"
-            android:textColor="@color/navy"
+            android:textColor="@color/heading"
             android:textSize="16sp"
             android:textStyle="bold" />
 

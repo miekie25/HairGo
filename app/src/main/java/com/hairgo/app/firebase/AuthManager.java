@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.hairgo.app.utils.Constants;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,6 +41,52 @@ public class AuthManager {
     public interface AuthCallback {
         void onSuccess(String role);
         void onFailure(String errorMessage);
+    }
+
+    // Callback for reading the signed-in user's profile document.
+    public interface ProfileCallback {
+        void onSuccess(String name, String role);
+        void onFailure(String errorMessage);
+    }
+
+    /**
+     * Reads the current user's profile from Firestore. Used by screens that need
+     * the user's name or role after the session is already established.
+     */
+    public void loadCurrentUserProfile(ProfileCallback callback) {
+
+        FirebaseUser firebaseUser = getCurrentUser();
+
+        if (firebaseUser == null) {
+            callback.onFailure("Not signed in.");
+            return;
+        }
+
+        db.collection(Constants.COLLECTION_USERS)
+                .document(firebaseUser.getUid())
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+
+                    if (!documentSnapshot.exists()) {
+                        callback.onFailure("User profile was not found.");
+                        return;
+                    }
+
+                    String name = documentSnapshot.getString("name");
+                    String role = documentSnapshot.getString("role");
+
+                    if (role == null || role.trim().isEmpty()) {
+                        callback.onFailure("User role is missing from your profile.");
+                        return;
+                    }
+
+                    callback.onSuccess(name, role.trim().toLowerCase());
+                })
+                .addOnFailureListener(e ->
+                        callback.onFailure(
+                                "Could not load your user profile: " + e.getMessage()
+                        )
+                );
     }
 
     public void registerUser(String name, String surname, String email, String password,

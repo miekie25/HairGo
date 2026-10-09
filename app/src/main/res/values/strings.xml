@@ -158,6 +158,10 @@
     <string name="description">Description</string>
     <string name="describe_the_problem">Describe the problem</string>
 
+    <!-- Appearance -->
+    <string name="appearance">Appearance</string>
+    <string name="dark_mode">Dark mode</string>
+
     <!-- Report a Problem: form -->
     <string name="report_category_label">What went wrong?</string>
     <string name="report_category_required">Please choose a category</string>
@@ -188,6 +192,18 @@
     <string name="reports_loaded_failed">Could not load your reports.</string>
     <string name="report_screenshots_count">%1$d screenshot(s)</string>
     <string name="report_no_screenshots">No screenshots</string>
+
+    <!-- Salon setup (owner registration) -->
+    <string name="salon_setup_intro_title">Set up your salon</string>
+    <string name="salon_setup_intro_body">Add your salon details so clients can find and book you.</string>
+    <string name="continue_label">Continue</string>
+
+    <!-- Admin -->
+    <string name="admin_dashboard_title">Admin</string>
+    <string name="nav_overview">Overview</string>
+    <string name="nav_users">Users</string>
+    <string name="nav_salons">Salons</string>
+    <string name="nav_reports">Reports</string>
 
 
 </resources>
