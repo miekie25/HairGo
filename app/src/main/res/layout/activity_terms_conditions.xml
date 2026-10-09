@@ -243,7 +243,7 @@
                 android:textAllCaps="false"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/white"
+                android:textColor="@color/text_primary"
                 android:enabled="false"
                 app:cornerRadius="14dp"
                 app:backgroundTint="@color/teal"
