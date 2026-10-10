@@ -60,10 +60,6 @@
             android:exported="false" />
 
         <activity
-            android:name=".activities.SalonSetupIntroActivity"
-            android:exported="false" />
-
-        <activity
             android:name=".activities.OtpVerificationActivity"
             android:exported="false" />
 

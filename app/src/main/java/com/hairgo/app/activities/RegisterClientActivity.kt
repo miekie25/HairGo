@@ -5,9 +5,8 @@ import android.os.Bundle
 import android.util.Patterns
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
-import com.hairgo.app.databinding.ActivityRegisterClientBinding
 import com.hairgo.app.R
-
+import com.hairgo.app.databinding.ActivityRegisterClientBinding
 
 class RegisterClientActivity : AppCompatActivity() {
 
@@ -22,11 +21,18 @@ class RegisterClientActivity : AppCompatActivity() {
 
         binding.btnRegister.setOnClickListener {
             if (validateForm()) {
-                // TODO: send data to your PHP REST API (POST /api/register/client)
+                val intent = Intent(this, OtpVerificationActivity::class.java).apply {
+                    putExtra("role", "client")
+                    putExtra("fullName", binding.etFullName.text.toString().trim())
+                    putExtra("email", binding.etEmail.text.toString().trim())
+                    putExtra("phone", binding.etPhone.text.toString().trim())
+                    putExtra("password", binding.etPassword.text.toString())
+                }
+                startActivity(intent)
             }
         }
 
-        // Added: "Already have an account? Log in" link
+        // "Already have an account? Log in" link
         binding.tvLogin.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
