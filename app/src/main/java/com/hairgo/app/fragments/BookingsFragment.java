@@ -36,6 +36,7 @@ public class BookingsFragment extends Fragment {
 
     private RecyclerView rvBookings;
     private TextView tvEmptyState;
+    private BookingSectionAdapter adapter;
     private AuthManager authManager;
     private BookingManager bookingManager;
 
@@ -52,6 +53,15 @@ public class BookingsFragment extends Fragment {
         rvBookings = view.findViewById(R.id.rvBookings);
         tvEmptyState = view.findViewById(R.id.tvEmptyState);
         rvBookings.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        // One adapter for the fragment's lifetime. Reloading updates its data
+        // instead of swapping in a new adapter, which would reset the scroll.
+        adapter = new BookingSectionAdapter(new ArrayList<>(), booking -> {
+            Intent intent = new Intent(getContext(), BookingDetailsActivity.class);
+            intent.putExtra("bookingId", booking.getBookingId());
+            startActivity(intent);
+        });
+        rvBookings.setAdapter(adapter);
 
         authManager = new AuthManager();
         bookingManager = new BookingManager();
@@ -192,11 +202,9 @@ public class BookingsFragment extends Fragment {
 
         rvBookings.setVisibility(View.VISIBLE);
         tvEmptyState.setVisibility(View.GONE);
-        rvBookings.setAdapter(new BookingSectionAdapter(sections, booking -> {
-            Intent intent = new Intent(getContext(), BookingDetailsActivity.class);
-            intent.putExtra("bookingId", booking.getBookingId());
-            startActivity(intent);
-        }));
+
+        // Update in place so the RecyclerView keeps its scroll position.
+        adapter.updateSections(sections);
     }
 
     private String asString(Object value) {
