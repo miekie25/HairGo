@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,6 +37,8 @@ public class BookingDetailsActivity extends AppCompatActivity {
     private androidx.appcompat.widget.AppCompatButton btnCancelBooking;
     private androidx.appcompat.widget.AppCompatButton btnEditBooking;
     private androidx.appcompat.widget.AppCompatButton btnLeaveReview;
+    private ProgressBar progress;
+    private View contentGroup;
     private BookingManager bookingManager;
     private String currentStatus;
     private String bookingId;
@@ -59,6 +62,12 @@ public class BookingDetailsActivity extends AppCompatActivity {
         ImageButton backBtn = findViewById(R.id.header).findViewById(R.id.btnBack);
         backBtn.setOnClickListener(v -> onBackPressed());
 
+        TextView headerTitle = findViewById(R.id.header).findViewById(R.id.tvHeaderTitle);
+        headerTitle.setText(R.string.title_booking_details);
+
+        progress = findViewById(R.id.progress);
+        contentGroup = findViewById(R.id.contentGroup);
+
         if (bookingId == null || bookingId.isEmpty()) {
             showMissingBooking();
             return;
@@ -69,6 +78,9 @@ public class BookingDetailsActivity extends AppCompatActivity {
     }
 
     private void loadBooking() {
+        progress.setVisibility(View.VISIBLE);
+        contentGroup.setVisibility(View.INVISIBLE);
+
         bookingManager.getBookingById(bookingId, new BookingManager.BookingDataCallback() {
             @Override
             public void onSuccess(Map<String, Object> rawBooking) {
@@ -132,8 +144,8 @@ public class BookingDetailsActivity extends AppCompatActivity {
     private void bindBooking(Booking booking) {
         currentStatus = BookingSections.effectiveStatus(booking);
 
-        TextView headerTitle = findViewById(R.id.header).findViewById(R.id.tvHeaderTitle);
-        headerTitle.setText(R.string.title_booking_details);
+        progress.setVisibility(View.GONE);
+        contentGroup.setVisibility(View.VISIBLE);
 
         TextView tvSalonName = findViewById(R.id.tvSalonName);
         TextView tvServiceName = findViewById(R.id.tvServiceName);
@@ -310,6 +322,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
     }
 
     private void showMissingBooking() {
+        progress.setVisibility(View.GONE);
         Toast.makeText(this, R.string.booking_not_found, Toast.LENGTH_SHORT).show();
         finish();
     }

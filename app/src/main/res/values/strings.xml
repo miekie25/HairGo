@@ -104,6 +104,7 @@
     <string name="cancel_booking_confirm_title">Cancel this booking?</string>
     <string name="cancel_booking_confirm_message">This will let the salon know you can\'t make it. This can\'t be undone.</string>
     <string name="btn_keep_booking">Keep Booking</string>
+
     <!-- Still used by BookingDetailsActivity, which has not been moved off demo data yet. -->
     <string name="booking_cancelled_demo">Booking cancelled — this is a demo, real soft-delete wiring comes in Phase 2.</string>
     <string name="booking_cancelled">Booking cancelled.</string>
@@ -168,7 +169,7 @@
     <string name="your_comment">Your Comment</string>
     <string name="tell_us_about_your_experience">Tell us about your experience</string>
     <string name="report_a_problem_title">Report a Problem</string>
-    <string name="let_us_know_whats_wrong">Let us know what\'s wrong</string>
+    <string name="let_us_know_whats_wrong_with_the_app">Let us know what\'s wrong</string>
     <string name="description">Description</string>
     <string name="describe_the_problem">Describe the problem</string>
 

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,6 +39,8 @@ public class SalonProfileActivity extends AppCompatActivity {
     private static final int AVAILABILITY_LOOKAHEAD_DAYS = 30;
 
     private TextView tvNextAvailable;
+    private ProgressBar progress;
+    private View contentGroup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,10 +52,16 @@ public class SalonProfileActivity extends AppCompatActivity {
         ImageButton backBtn = findViewById(R.id.header).findViewById(R.id.btnBack);
         backBtn.setOnClickListener(v -> onBackPressed());
 
+        progress = findViewById(R.id.progress);
+        contentGroup = findViewById(R.id.contentGroup);
+
         if (salonId == null || salonId.isEmpty()) {
             showMissingSalon();
             return;
         }
+
+        progress.setVisibility(View.VISIBLE);
+        contentGroup.setVisibility(View.INVISIBLE);
 
         new SalonManager().getSalonById(salonId, new SalonManager.SalonDataCallback() {
             @Override
@@ -104,6 +113,9 @@ public class SalonProfileActivity extends AppCompatActivity {
     }
 
     private void bindSalon(Salon salon) {
+        progress.setVisibility(View.GONE);
+        contentGroup.setVisibility(View.VISIBLE);
+
         TextView headerTitle = findViewById(R.id.header).findViewById(R.id.tvHeaderTitle);
         headerTitle.setText(salon.getName());
 
@@ -209,6 +221,7 @@ public class SalonProfileActivity extends AppCompatActivity {
     }
 
     private void showMissingSalon() {
+        progress.setVisibility(View.GONE);
         Toast.makeText(this, R.string.salon_not_found, Toast.LENGTH_SHORT).show();
         finish();
     }

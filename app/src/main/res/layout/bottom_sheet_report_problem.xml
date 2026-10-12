@@ -34,7 +34,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="4dp"
-            android:text="@string/let_us_know_whats_wrong"
+            android:text="@string/let_us_know_whats_wrong_with_the_app"
             android:textColor="@color/grey_medium"
             android:textSize="14sp" />
 
