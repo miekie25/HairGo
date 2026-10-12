@@ -81,7 +81,9 @@
     <string name="salon_next_available">Next available: %1$s</string>
     <string name="btn_book_now">Book Now</string>
     <string name="title_book_appointment">Book Appointment</string>
-    <string name="label_select_service">Select a service</string>
+    <string name="label_select_service">Select services</string>
+    <string name="select_services_title">Select services</string>
+    <string name="hint_choose_services">Choose one or more services</string>
     <string name="label_select_date">Select a date</string>
     <string name="label_select_time">Select a time</string>
     <string name="hint_choose_date">Choose a date</string>
@@ -133,6 +135,16 @@
     <string name="report_problem_subtitle">Tell us what isn\'t working</string>
     <string name="booking_not_found">Booking not found.</string>
     <string name="booking_date_format">dd MMM yyyy • hh:mm a</string>
+    <string name="booking_expired_explanation">The salon never accepted or cancelled this booking, so it has expired.</string>
+
+    <!-- Edit / Reschedule -->
+    <string name="btn_edit_booking">Edit Booking</string>
+    <string name="btn_reschedule">Reschedule</string>
+    <string name="title_reschedule_booking">Reschedule Booking</string>
+    <string name="btn_save_changes">Save Changes</string>
+    <string name="booking_updated">Booking updated — waiting for the salon to confirm.</string>
+    <string name="reschedule_confirm_title">Reschedule this booking?</string>
+    <string name="reschedule_confirm_message">Saving sends this booking back to the salon to confirm the new date and time.</string>
 
     <!-- Profile Screen (Nikita's new strings) -->
     <string name="profile_initials_placeholder">JD</string>

@@ -2,12 +2,15 @@ package com.hairgo.app.activities;
 
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -17,21 +20,34 @@ import com.hairgo.app.R;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.fragments.LeaveReviewBottomSheet;
 import com.hairgo.app.models.Booking;
+import com.hairgo.app.utils.BookingSections;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 public class BookingDetailsActivity extends AppCompatActivity {
 
     private TextView tvStatusBadge;
+    private TextView tvExpiredNote;
     private androidx.appcompat.widget.AppCompatButton btnCancelBooking;
+    private androidx.appcompat.widget.AppCompatButton btnEditBooking;
     private androidx.appcompat.widget.AppCompatButton btnLeaveReview;
     private BookingManager bookingManager;
     private String currentStatus;
     private String bookingId;
     private String currentSalonId;
+
+    private final ActivityResultLauncher<Intent> editLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        if (result.getResultCode() == RESULT_OK && bookingManager != null) {
+                            loadBooking();
+                        }
+                    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,8 +98,20 @@ public class BookingDetailsActivity extends AppCompatActivity {
         if (status == null) return null;
 
         Object salonName = raw.get("salonName");
-        Object serviceName = raw.get("serviceName");
         Object salonId = raw.get("salonID");
+
+        List<String> serviceNames = new ArrayList<>();
+        Object namesValue = raw.get("serviceNames");
+        if (namesValue instanceof List) {
+            for (Object item : (List<?>) namesValue) {
+                if (item != null && !item.toString().isEmpty()) serviceNames.add(item.toString());
+            }
+        }
+        if (serviceNames.isEmpty()) {
+            // Legacy bookings stored a single serviceName string.
+            Object single = raw.get("serviceName");
+            if (single != null && !single.toString().isEmpty()) serviceNames.add(single.toString());
+        }
 
         Date dateTime = null;
         Object dateValue = raw.get("dateTime");
@@ -95,13 +123,14 @@ public class BookingDetailsActivity extends AppCompatActivity {
                 bookingId,
                 salonId == null ? null : salonId.toString(),
                 salonName == null ? "" : salonName.toString(),
-                serviceName == null ? "" : serviceName.toString(),
+                serviceNames,
                 dateTime,
-                status.toString());
+                status.toString(),
+                0);
     }
 
     private void bindBooking(Booking booking) {
-        currentStatus = booking.getStatus();
+        currentStatus = BookingSections.effectiveStatus(booking);
 
         TextView headerTitle = findViewById(R.id.header).findViewById(R.id.tvHeaderTitle);
         headerTitle.setText(R.string.title_booking_details);
@@ -110,14 +139,17 @@ public class BookingDetailsActivity extends AppCompatActivity {
         TextView tvServiceName = findViewById(R.id.tvServiceName);
         TextView tvDateTime = findViewById(R.id.tvDateTime);
         tvStatusBadge = findViewById(R.id.tvStatusBadge);
+        tvExpiredNote = findViewById(R.id.tvExpiredNote);
         btnCancelBooking = findViewById(R.id.btnCancelBooking);
+        btnEditBooking = findViewById(R.id.btnEditBooking);
         btnLeaveReview = findViewById(R.id.btnLeaveReview);
         currentSalonId = booking.getSalonId();
 
         btnLeaveReview.setOnClickListener(v -> showLeaveReview());
+        btnEditBooking.setOnClickListener(v -> onEditClicked(booking));
 
         tvSalonName.setText(booking.getSalonName());
-        tvServiceName.setText(booking.getServiceName());
+        tvServiceName.setText(booking.getServiceLabel());
 
         if (booking.getDateTime() != null) {
             SimpleDateFormat format = new SimpleDateFormat(
@@ -129,8 +161,45 @@ public class BookingDetailsActivity extends AppCompatActivity {
 
         updateStatusBadge(currentStatus);
         updateCancelButtonVisibility(currentStatus);
+        updateExpiredNote(currentStatus);
+        updateEditButton(currentStatus);
 
         btnCancelBooking.setOnClickListener(v -> showCancelConfirmation());
+    }
+
+    /**
+     * Only a pending or confirmed booking can be changed. Pending is a plain
+     * edit; confirmed is a reschedule that returns the booking to pending.
+     */
+    private void updateEditButton(String status) {
+        boolean canEdit = "pending".equals(status) || "confirmed".equals(status);
+        btnEditBooking.setVisibility(canEdit ? View.VISIBLE : View.GONE);
+        btnEditBooking.setText("confirmed".equals(status)
+                ? R.string.btn_reschedule
+                : R.string.btn_edit_booking);
+    }
+
+    private void onEditClicked(Booking booking) {
+        if ("confirmed".equals(currentStatus)) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.reschedule_confirm_title)
+                    .setMessage(R.string.reschedule_confirm_message)
+                    .setPositiveButton(R.string.btn_reschedule, (dialog, which) -> launchEdit(booking))
+                    .setNegativeButton(R.string.btn_keep_booking, null)
+                    .show();
+        } else {
+            launchEdit(booking);
+        }
+    }
+
+    private void launchEdit(Booking booking) {
+        Intent intent = new Intent(this, BookAppointmentActivity.class);
+        intent.putExtra("salonId", booking.getSalonId());
+        intent.putExtra("bookingId", booking.getBookingId());
+        intent.putExtra("serviceNames", new ArrayList<>(booking.getServiceNames()));
+        intent.putExtra("dateTimeMillis",
+                booking.getDateTime() == null ? 0L : booking.getDateTime().getTime());
+        editLauncher.launch(intent);
     }
 
     private void updateStatusBadge(String status) {
@@ -147,6 +216,9 @@ public class BookingDetailsActivity extends AppCompatActivity {
             case "cancelled":
                 colorRes = R.color.error;
                 break;
+            case "expired":
+                colorRes = R.color.grey_medium;
+                break;
             case "pending":
             default:
                 colorRes = R.color.warning;
@@ -161,8 +233,9 @@ public class BookingDetailsActivity extends AppCompatActivity {
     }
 
     private void updateCancelButtonVisibility(String status) {
-        // A booking that is already completed or cancelled can no longer be cancelled.
-        if ("completed".equals(status) || "cancelled".equals(status)) {
+        // A booking that is already completed, cancelled or expired can no longer be cancelled.
+        if ("completed".equals(status) || "cancelled".equals(status)
+                || BookingSections.STATUS_EXPIRED.equals(status)) {
             btnCancelBooking.setVisibility(View.GONE);
         } else {
             btnCancelBooking.setVisibility(View.VISIBLE);
@@ -172,6 +245,15 @@ public class BookingDetailsActivity extends AppCompatActivity {
         // that status. This is what enforces the rule, rather than a check inside
         // the review screen.
         btnLeaveReview.setVisibility("completed".equals(status) ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * Explains, on an expired booking, why it is no longer actionable: the salon
+     * never confirmed or cancelled it before the appointment date passed.
+     */
+    private void updateExpiredNote(String status) {
+        tvExpiredNote.setVisibility(
+                BookingSections.STATUS_EXPIRED.equals(status) ? View.VISIBLE : View.GONE);
     }
 
     /**
@@ -211,6 +293,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
                 currentStatus = "cancelled";
                 updateStatusBadge(currentStatus);
                 updateCancelButtonVisibility(currentStatus);
+                updateEditButton(currentStatus);
                 btnCancelBooking.setEnabled(true);
                 Toast.makeText(BookingDetailsActivity.this,
                         R.string.booking_cancelled, Toast.LENGTH_LONG).show();

@@ -1,8 +1,11 @@
 package com.hairgo.app.firebase;
 
+import android.text.TextUtils;
+
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -45,13 +48,24 @@ public class BookingManager {
      * Creates a booking for the logged-in client.
      *
      * <p>The salon and service names are stored on the booking as well as their
-     * ids. Salon services are plain strings rather than documents, so the name
-     * is the only way to label a booking, and keeping a copy here means the
+     * ids. Salon services are plain strings rather than documents, so the names
+     * are the only way to label a booking, and keeping a copy here means the
      * bookings list can render in a single read.
+     *
+     * <p>A booking can cover any number of services. Both a serviceNames array
+     * (the source of truth) and a comma-joined serviceName string are written:
+     * the array is what the app reads, the string keeps older documents and any
+     * external tooling that only knows about serviceName working.
      */
     public void createBooking(String clientId, String salonId, String salonName,
+                              List<String> serviceNames, Date dateTime, BookingCreatedCallback callback) {
+        createBooking(null, clientId, salonId, salonName, serviceNames, dateTime, callback);
+    }
+
+    /** Convenience overload for a single service. */
+    public void createBooking(String clientId, String salonId, String salonName,
                               String serviceName, Date dateTime, BookingCreatedCallback callback) {
-        createBooking(null, clientId, salonId, salonName, serviceName, dateTime, callback);
+        createBooking(null, clientId, salonId, salonName, singleton(serviceName), dateTime, callback);
     }
 
     /**
@@ -64,16 +78,24 @@ public class BookingManager {
      */
     public void createBooking(String documentId, String clientId, String salonId, String salonName,
                               String serviceName, Date dateTime, BookingCreatedCallback callback) {
+        createBooking(documentId, clientId, salonId, salonName, singleton(serviceName), dateTime, callback);
+    }
+
+    public void createBooking(String documentId, String clientId, String salonId, String salonName,
+                              List<String> serviceNames, Date dateTime, BookingCreatedCallback callback) {
         DocumentReference ref = documentId == null
                 ? db.collection("bookings").document()
                 : db.collection("bookings").document(documentId);
+
+        List<String> names = serviceNames == null ? new ArrayList<>() : serviceNames;
 
         Map<String, Object> booking = new HashMap<>();
         booking.put("bookingID", ref.getId());
         booking.put("clientID", clientId);
         booking.put("salonID", salonId);
         booking.put("salonName", salonName);
-        booking.put("serviceName", serviceName);
+        booking.put("serviceNames", names);
+        booking.put("serviceName", TextUtils.join(", ", names));
         booking.put("dateTime", dateTime);
         booking.put("status", "pending");
         booking.put("isDeleted", false);
@@ -182,6 +204,73 @@ public class BookingManager {
         db.collection("bookings").document(bookingId).update("status", newStatus)
                 .addOnSuccessListener(unused -> callback.onSuccess())
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
+     * Edits an existing booking's service, date and time, and returns it to the
+     * pending state so the salon re-confirms it.
+     *
+     * <p>Editing a pending booking keeps it pending; rescheduling a confirmed one
+     * deliberately drops it back to pending rather than changing the time behind
+     * the salon's back. update() is used instead of the createBooking upsert so
+     * unrelated fields on the document survive the change.
+     */
+    public void updateBookingDetails(String bookingId, List<String> serviceNames, Date dateTime,
+                                     BookingCallback callback) {
+        List<String> names = serviceNames == null ? new ArrayList<>() : serviceNames;
+
+        Map<String, Object> update = new HashMap<>();
+        update.put("serviceNames", names);
+        update.put("serviceName", TextUtils.join(", ", names));
+        update.put("dateTime", dateTime);
+        update.put("status", "pending");
+
+        db.collection("bookings").document(bookingId).update(update)
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /** Convenience overload for a single service. */
+    public void updateBookingDetails(String bookingId, String serviceName, Date dateTime,
+                                     BookingCallback callback) {
+        updateBookingDetails(bookingId, singleton(serviceName), dateTime, callback);
+    }
+
+    private static List<String> singleton(String serviceName) {
+        List<String> list = new ArrayList<>();
+        if (serviceName != null && !serviceName.isEmpty()) {
+            list.add(serviceName);
+        }
+        return list;
+    }
+
+    /**
+     * Marks a batch of stale pending bookings as expired in one round-trip.
+     *
+     * <p>A booking expires once its day has passed while still pending, meaning
+     * the salon never accepted or cancelled it. The whole set is written with a
+     * single WriteBatch so the client pays one network cost instead of one per
+     * booking, and so the set either lands together or not at all.
+     */
+    public void expireBookings(List<String> bookingIds, BookingCallback callback) {
+        if (bookingIds == null || bookingIds.isEmpty()) {
+            if (callback != null) callback.onSuccess();
+            return;
+        }
+
+        WriteBatch batch = db.batch();
+        for (String bookingId : bookingIds) {
+            if (bookingId == null || bookingId.isEmpty()) continue;
+            batch.update(db.collection("bookings").document(bookingId), "status", "expired");
+        }
+
+        batch.commit()
+                .addOnSuccessListener(unused -> {
+                    if (callback != null) callback.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onFailure(e.getMessage());
+                });
     }
 
     public void softDeleteBooking(String bookingId, BookingCallback callback) {

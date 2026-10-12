@@ -44,15 +44,48 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <Spinner
-            android:id="@+id/spinnerService"
+        <LinearLayout
+            android:id="@+id/rowService"
             android:layout_width="0dp"
             android:layout_height="52dp"
             android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:background="@drawable/bg_input_rounded"
+            android:paddingHorizontal="16dp"
+            android:clickable="true"
+            android:focusable="true"
             app:layout_constraintTop_toBottomOf="@id/tvServiceLabel"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_check"
+                android:importantForAccessibility="no"
+                app:tint="@color/teal"/>
+
+            <TextView
+                android:id="@+id/tvSelectedServices"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/hint_choose_services"
+                android:textColor="@color/grey_medium"
+                android:textSize="15sp"/>
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_chevron_right"
+                android:importantForAccessibility="no"
+                app:tint="@color/grey_medium"/>
+
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvDateLabel"
@@ -63,7 +96,7 @@
             android:textColor="@color/grey_dark"
             android:textSize="14sp"
             android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@id/spinnerService"
+            app:layout_constraintTop_toBottomOf="@id/rowService"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
