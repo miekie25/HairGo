@@ -7,7 +7,6 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -19,6 +18,7 @@ import com.hairgo.app.adapters.ServiceAdapter;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.Salon;
+import com.hairgo.app.utils.Snackbars;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -222,7 +222,7 @@ public class SalonProfileActivity extends AppCompatActivity {
 
     private void showMissingSalon() {
         progress.setVisibility(View.GONE);
-        Toast.makeText(this, R.string.salon_not_found, Toast.LENGTH_SHORT).show();
-        finish();
+        Snackbars.showThen(findViewById(android.R.id.content),
+                R.string.salon_not_found, this::finish);
     }
 }

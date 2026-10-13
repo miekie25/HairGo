@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.hairgo.app.R;
 import com.hairgo.app.activities.BookingDetailsActivity;
 import com.hairgo.app.adapters.BookingSectionAdapter;
@@ -23,6 +24,7 @@ import com.hairgo.app.firebase.AuthManager;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.models.Booking;
 import com.hairgo.app.utils.BookingSections;
+import com.hairgo.app.utils.BookingStatusNotifier;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +41,8 @@ public class BookingsFragment extends Fragment {
     private BookingSectionAdapter adapter;
     private AuthManager authManager;
     private BookingManager bookingManager;
+    private ListenerRegistration bookingsListener;
+    private boolean receivedData;
 
     @Nullable
     @Override
@@ -68,57 +72,61 @@ public class BookingsFragment extends Fragment {
     }
 
     /**
-     * Covers two cases: the first time the tab is opened, and coming back from
-     * Booking Details after a booking was cancelled.
+     * Listens while the fragment is on screen so bookings stay current in real
+     * time (for example when a booking is confirmed elsewhere). The listener is
+     * removed in onStop so it does not keep reading in the background.
      */
     @Override
-    public void onResume() {
-        super.onResume();
-        if (bookingManager != null) {
-            loadBookings();
-        }
+    public void onStart() {
+        super.onStart();
+        startListening();
     }
 
-    /**
-     * The dashboard keeps this fragment alive and only hides it, so switching
-     * back to the Bookings tab has to re-read the data too.
-     */
     @Override
-    public void onHiddenChanged(boolean hidden) {
-        super.onHiddenChanged(hidden);
-        if (!hidden && bookingManager != null) {
-            loadBookings();
-        }
+    public void onStop() {
+        super.onStop();
+        stopListening();
     }
 
-    private void loadBookings() {
+    private void startListening() {
         FirebaseUser currentUser = authManager.getCurrentUser();
         if (currentUser == null) {
             showBookings(Collections.emptyList());
             return;
         }
 
-        bookingManager.getBookingsForClient(currentUser.getUid(), new BookingManager.BookingListCallback() {
-            @Override
-            public void onSuccess(List<Map<String, Object>> rawBookings) {
-                if (rawBookings == null || rawBookings.isEmpty()) {
-                    // Nothing booked yet, so the empty state is the honest thing to show.
-                    showBookings(Collections.emptyList());
-                    return;
-                }
-                List<Booking> bookings = parseBookings(rawBookings);
-                expireStaleBookings(bookings);
-                showBookings(bookings);
-            }
+        bookingsListener = bookingManager.listenToBookingsForClient(
+                currentUser.getUid(), new BookingManager.BookingListCallback() {
+                    @Override
+                    public void onSuccess(List<Map<String, Object>> rawBookings) {
+                        receivedData = true;
+                        if (rawBookings == null || rawBookings.isEmpty()) {
+                            // Nothing booked yet, so the empty state is the honest thing to show.
+                            showBookings(Collections.emptyList());
+                            return;
+                        }
+                        List<Booking> bookings = parseBookings(rawBookings);
+                        expireStaleBookings(bookings);
+                        showBookings(bookings);
+                    }
 
-            @Override
-            public void onFailure(String errorMessage) {
-                // Firestore can fail on a first run or with no network. Show the
-                // empty state rather than inventing bookings that do not exist.
-                Log.w(TAG, "Could not load bookings: " + errorMessage);
-                showBookings(Collections.emptyList());
-            }
-        });
+                    @Override
+                    public void onFailure(String errorMessage) {
+                        // A transient error after we already have data should not
+                        // wipe the list; only fall back for the very first load.
+                        Log.w(TAG, "Could not load bookings: " + errorMessage);
+                        if (!receivedData) {
+                            showBookings(Collections.emptyList());
+                        }
+                    }
+                });
+    }
+
+    private void stopListening() {
+        if (bookingsListener != null) {
+            bookingsListener.remove();
+            bookingsListener = null;
+        }
     }
 
     /**
@@ -191,6 +199,15 @@ public class BookingsFragment extends Fragment {
 
     private void showBookings(List<Booking> bookings) {
         if (!isAdded()) return;
+
+        // Announce any status change since the list was last seen here.
+        BookingStatusNotifier.notifyChanges(getContext(), bookings);
+
+        // Let the dashboard light its bell dot straight away, without waiting
+        // for the user to leave and come back.
+        if (getActivity() instanceof NotificationDotHost) {
+            ((NotificationDotHost) getActivity()).refreshNotificationDot();
+        }
 
         List<BookingSections.BookingSection> sections = BookingSections.partition(bookings);
 

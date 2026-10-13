@@ -8,7 +8,6 @@ import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,6 +18,9 @@ import com.hairgo.app.R;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.Salon;
+import com.hairgo.app.utils.Notifications;
+import com.hairgo.app.utils.ReminderScheduler;
+import com.hairgo.app.utils.Snackbars;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -51,8 +53,8 @@ public class BookAppointmentActivity extends AppCompatActivity {
 
         String salonId = getIntent().getStringExtra("salonId");
         if (salonId == null || salonId.isEmpty()) {
-            Toast.makeText(this, R.string.salon_not_found, Toast.LENGTH_SHORT).show();
-            finish();
+            Snackbars.showThen(findViewById(android.R.id.content),
+                    R.string.salon_not_found, this::finish);
             return;
         }
 
@@ -214,8 +216,8 @@ public class BookAppointmentActivity extends AppCompatActivity {
     }
 
     private void showMissingSalon() {
-        Toast.makeText(this, R.string.salon_not_found, Toast.LENGTH_SHORT).show();
-        finish();
+        Snackbars.showThen(findViewById(android.R.id.content),
+                R.string.salon_not_found, this::finish);
     }
 
     private void showDatePicker() {
@@ -244,7 +246,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
 
     private void showTimePicker() {
         if (!dateChosen) {
-            Toast.makeText(this, R.string.please_select_date_first, Toast.LENGTH_SHORT).show();
+            Snackbars.show(findViewById(android.R.id.content), R.string.please_select_date_first);
             return;
         }
 
@@ -391,7 +393,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
         findViewById(R.id.btnConfirmBooking).setEnabled(false);
 
         if (isEditing()) {
-            updateBooking();
+            updateBooking(salon);
             return;
         }
 
@@ -404,9 +406,18 @@ public class BookAppointmentActivity extends AppCompatActivity {
                 new BookingManager.BookingCreatedCallback() {
                     @Override
                     public void onSuccess(String bookingId) {
-                        Toast.makeText(BookAppointmentActivity.this,
-                                R.string.booking_created_success, Toast.LENGTH_SHORT).show();
-                        openBookingsTab();
+                        // Tell the user, then line up the 1 day / 1 hour reminders.
+                        Notifications.requestPermission(BookAppointmentActivity.this);
+                        Notifications.show(BookAppointmentActivity.this, bookingId.hashCode(),
+                                Notifications.CHANNEL_UPDATES,
+                                getString(R.string.booking_confirmation_title),
+                                getString(R.string.booking_confirmation_body, salon.getName()),
+                                bookingId);
+                        ReminderScheduler.schedule(BookAppointmentActivity.this, bookingId,
+                                salon.getName(), selectedDateTime.getTime());
+
+                        Snackbars.showThen(findViewById(android.R.id.content),
+                                R.string.booking_created_success, BookAppointmentActivity.this::openBookingsTab);
                     }
 
                     @Override
@@ -422,7 +433,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
      * Saves an edit or reschedule. The booking keeps its id but returns to
      * pending, so the salon re-confirms the new details.
      */
-    private void updateBooking() {
+    private void updateBooking(Salon salon) {
         new BookingManager().updateBookingDetails(
                 editingBookingId,
                 new ArrayList<>(selectedServices),
@@ -430,10 +441,16 @@ public class BookAppointmentActivity extends AppCompatActivity {
                 new BookingManager.BookingCallback() {
                     @Override
                     public void onSuccess() {
-                        Toast.makeText(BookAppointmentActivity.this,
-                                R.string.booking_updated, Toast.LENGTH_SHORT).show();
-                        setResult(RESULT_OK);
-                        finish();
+                        // The old time no longer applies; re-arm reminders for the new one.
+                        ReminderScheduler.cancel(BookAppointmentActivity.this, editingBookingId);
+                        ReminderScheduler.schedule(BookAppointmentActivity.this, editingBookingId,
+                                salon.getName(), selectedDateTime.getTime());
+
+                        Snackbars.showThen(findViewById(android.R.id.content),
+                                R.string.booking_updated, () -> {
+                                    setResult(RESULT_OK);
+                                    finish();
+                                });
                     }
 
                     @Override

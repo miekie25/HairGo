@@ -22,7 +22,6 @@ public class Report {
     public static final String CATEGORY_BOOKING = "booking";
     public static final String CATEGORY_LOGIN = "login_account";
     public static final String CATEGORY_APP_ERROR = "app_error";
-    public static final String CATEGORY_PAYMENT = "payment";
     public static final String CATEGORY_OTHER = "other";
 
     public static final String SEVERITY_LOW = "low";
@@ -43,6 +42,7 @@ public class Report {
     private String deviceModel = "";
     private String osVersion = "";
     private boolean isDeleted = false;
+    private boolean isEdited = false;
 
     /**
      * Populated by Firestore with the server time on write, so a wrong
@@ -50,6 +50,10 @@ public class Report {
      */
     @ServerTimestamp
     private Date createdAt;
+
+    /** Set by Firestore when the user edits the report. */
+    @ServerTimestamp
+    private Date updatedAt;
 
     public Report() {}
 
@@ -101,6 +105,12 @@ public class Report {
     public boolean getIsDeleted() { return isDeleted; }
     public void setIsDeleted(boolean isDeleted) { this.isDeleted = isDeleted; }
 
+    public boolean getIsEdited() { return isEdited; }
+    public void setIsEdited(boolean isEdited) { this.isEdited = isEdited; }
+
     public Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+
+    public Date getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Date updatedAt) { this.updatedAt = updatedAt; }
 }

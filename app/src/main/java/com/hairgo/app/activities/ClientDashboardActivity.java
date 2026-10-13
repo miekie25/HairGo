@@ -2,6 +2,7 @@ package com.hairgo.app.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -16,9 +17,11 @@ import com.hairgo.app.R;
 import com.hairgo.app.firebase.AuthManager;
 import com.hairgo.app.fragments.BookingsFragment;
 import com.hairgo.app.fragments.HomeFragment;
+import com.hairgo.app.fragments.NotificationDotHost;
 import com.hairgo.app.fragments.ProfileFragment;
+import com.hairgo.app.utils.NotificationStore;
 
-public class ClientDashboardActivity extends AppCompatActivity {
+public class ClientDashboardActivity extends AppCompatActivity implements NotificationDotHost {
 
     private static final String STATE_SELECTED_TAB = "selected_tab_id";
     private static final String TAG_PREFIX = "fragment_";
@@ -31,6 +34,7 @@ public class ClientDashboardActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNav;
     private TextView tvGreeting;
+    private View dotNotifications;
     private AuthManager authManager;
 
     @Override
@@ -50,6 +54,10 @@ public class ClientDashboardActivity extends AppCompatActivity {
 
         tvGreeting = findViewById(R.id.tvGreeting);
         bottomNav = findViewById(R.id.bottomNav);
+        dotNotifications = findViewById(R.id.dotNotifications);
+
+        findViewById(R.id.btnNotifications).setOnClickListener(v ->
+                startActivity(new Intent(this, NotificationsActivity.class)));
 
         setGreeting();
 
@@ -84,6 +92,25 @@ public class ClientDashboardActivity extends AppCompatActivity {
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(STATE_SELECTED_TAB, bottomNav.getSelectedItemId());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh the dot every time we come back, e.g. after opening the list.
+        refreshNotificationDot();
+    }
+
+    /**
+     * Shows the bell dot when there are unseen notifications. Called on resume
+     * and by BookingsFragment the moment it posts a status-change notification.
+     */
+    @Override
+    public void refreshNotificationDot() {
+        if (dotNotifications != null) {
+            dotNotifications.setVisibility(
+                    NotificationStore.hasUnread(this) ? View.VISIBLE : View.GONE);
+        }
     }
 
     /**

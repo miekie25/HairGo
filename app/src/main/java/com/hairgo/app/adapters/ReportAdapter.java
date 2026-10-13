@@ -1,5 +1,6 @@
 package com.hairgo.app.adapters;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,9 +24,15 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
             DateTimeFormatter.ofPattern("d MMM yyyy • h:mm a", Locale.getDefault());
 
     private final List<Report> reports;
+    private final OnReportClickListener listener;
 
-    public ReportAdapter(List<Report> reports) {
+    public interface OnReportClickListener {
+        void onReportClick(Report report);
+    }
+
+    public ReportAdapter(List<Report> reports, OnReportClickListener listener) {
         this.reports = reports;
+        this.listener = listener;
     }
 
     @NonNull
@@ -38,7 +45,11 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
 
     @Override
     public void onBindViewHolder(@NonNull ReportViewHolder holder, int position) {
-        bind(holder, reports.get(position));
+        Report report = reports.get(position);
+        bind(holder, report);
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onReportClick(report);
+        });
     }
 
     private void bind(@NonNull ReportViewHolder holder, Report report) {
@@ -57,8 +68,12 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
     }
 
     private void bindStatusBadge(ReportViewHolder holder, String status) {
+        applyStatusBadge(holder.tvStatusBadge, status);
+    }
+
+    public static void applyStatusBadge(TextView view, String status) {
         String normalized = status == null ? "" : status;
-        holder.tvStatusBadge.setText(normalized);
+        view.setText(normalized);
 
         int pillRes;
         int textColorRes;
@@ -82,12 +97,15 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
                 break;
         }
 
-        holder.tvStatusBadge.setBackgroundResource(pillRes);
-        holder.tvStatusBadge.setTextColor(
-                ContextCompat.getColor(holder.itemView.getContext(), textColorRes));
+        view.setBackgroundResource(pillRes);
+        view.setTextColor(ContextCompat.getColor(view.getContext(), textColorRes));
     }
 
     private String categoryLabel(ReportViewHolder holder, String category) {
+        return categoryLabel(holder.itemView.getContext(), category);
+    }
+
+    public static String categoryLabel(Context context, String category) {
         int resId;
         if (Report.CATEGORY_BOOKING.equals(category)) {
             resId = R.string.report_category_booking;
@@ -95,14 +113,12 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
             resId = R.string.report_category_login;
         } else if (Report.CATEGORY_APP_ERROR.equals(category)) {
             resId = R.string.report_category_app_error;
-        } else if (Report.CATEGORY_PAYMENT.equals(category)) {
-            resId = R.string.report_category_payment;
         } else if (Report.CATEGORY_OTHER.equals(category)) {
             resId = R.string.report_category_other;
         } else {
             return category == null ? "" : category;
         }
-        return holder.itemView.getContext().getString(resId);
+        return context.getString(resId);
     }
 
     private String metaLabel(ReportViewHolder holder, Report report) {
