@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
@@ -15,14 +16,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.hairgo.app.R;
 import com.hairgo.app.models.OwnerBooking;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
 public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapter.ViewHolder> {
 
     public interface OnBookingActionListener {
-        void onConfirm(OwnerBooking booking, int position);
-        void onDecline(OwnerBooking booking, int position);
+        void onConfirm(OwnerBooking booking);
+        void onDecline(OwnerBooking booking);
+        void onComplete(OwnerBooking booking);
     }
 
     private final List<OwnerBooking> bookings;
@@ -44,14 +47,23 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         OwnerBooking booking = bookings.get(position);
-        holder.tvClientName.setText(booking.getClientName());
-        holder.tvService.setText(booking.getService());
-        holder.tvDateTime.setText(booking.getDateTime());
-        holder.tvStatusBadge.setText(capitalize(booking.getStatus()));
 
-        // Using the team's existing status color resources instead of hardcoded hex
+        String clientName = booking.getClientName();
+        holder.tvClientName.setText(clientName.isEmpty() ? "Client" : clientName);
+        holder.tvService.setText(booking.getServiceName());
+
+        if (booking.getDateTime() != null) {
+            SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy • HH:mm", Locale.getDefault());
+            holder.tvDateTime.setText(format.format(booking.getDateTime()));
+        } else {
+            holder.tvDateTime.setText("");
+        }
+
+        String status = booking.getStatus();
+        holder.tvStatusBadge.setText(capitalize(status));
+
         int colorRes;
-        switch (booking.getStatus()) {
+        switch (status) {
             case "confirmed":
                 colorRes = R.color.teal;
                 break;
@@ -66,21 +78,27 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
                 colorRes = R.color.warning;
                 break;
         }
-
         Drawable background = holder.tvStatusBadge.getBackground();
         if (background instanceof GradientDrawable) {
             ((GradientDrawable) background.mutate())
                     .setColor(ContextCompat.getColor(holder.itemView.getContext(), colorRes));
         }
 
-        boolean isPending = "pending".equals(booking.getStatus());
-        holder.actionsRow.setVisibility(isPending ? View.VISIBLE : View.GONE);
+        // Pending: Decline / Confirm.  Confirmed and already past: Mark completed.  Otherwise no actions.
+        boolean isPending = "pending".equals(status);
+        boolean canComplete = "confirmed".equals(status) && booking.isPast();
 
-        holder.btnConfirm.setOnClickListener(v -> {
-            if (listener != null) listener.onConfirm(booking, holder.getAdapterPosition());
-        });
+        holder.actionsRow.setVisibility(isPending || canComplete ? View.VISIBLE : View.GONE);
+        holder.btnDecline.setVisibility(isPending ? View.VISIBLE : View.GONE);
+        holder.btnConfirm.setText(canComplete ? "Mark completed" : "Confirm");
+
         holder.btnDecline.setOnClickListener(v -> {
-            if (listener != null) listener.onDecline(booking, holder.getAdapterPosition());
+            if (listener != null) listener.onDecline(booking);
+        });
+        holder.btnConfirm.setOnClickListener(v -> {
+            if (listener == null) return;
+            if (canComplete) listener.onComplete(booking);
+            else listener.onConfirm(booking);
         });
     }
 

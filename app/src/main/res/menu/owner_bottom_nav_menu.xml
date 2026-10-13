@@ -12,11 +12,6 @@
         android:title="Bookings" />
 
     <item
-        android:id="@+id/nav_owner_staff"
-        android:icon="@drawable/ic_owner_staff"
-        android:title="Staff" />
-
-    <item
         android:id="@+id/nav_owner_profile"
         android:icon="@drawable/ic_owner_profile"
         android:title="Profile" />

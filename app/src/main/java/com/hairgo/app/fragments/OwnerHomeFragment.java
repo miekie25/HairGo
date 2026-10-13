@@ -6,34 +6,44 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.hairgo.app.R;
+import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.models.OwnerBooking;
-import com.hairgo.app.models.StaffMember;
-import com.hairgo.app.utils.DashboardData;
+import com.hairgo.app.utils.OwnerSession;
+
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 
 public class OwnerHomeFragment extends Fragment {
+
+    private BookingManager bookingManager;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_owner_home, container, false);
+        return inflater.inflate(R.layout.fragment_owner_home, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        bookingManager = new BookingManager();
         setGreeting(view);
-        refreshStats(view);
         wireQuickActions(view);
-        return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (getView() != null) refreshStats(getView());
+        refreshStats();
     }
 
     private void setGreeting(View view) {
@@ -45,34 +55,51 @@ public class OwnerHomeFragment extends Fragment {
         ((TextView) view.findViewById(R.id.tvGreeting)).setText(greeting);
     }
 
-    private void refreshStats(View view) {
-        List<OwnerBooking> bookings = DashboardData.getBookings();
-        List<StaffMember> staff = DashboardData.getStaff();
+    private void refreshStats() {
+        String salonId = OwnerSession.getSelectedSalonId();
+        if (salonId == null) return; // layout already shows zeros
 
-        int todayCount = 0, pendingCount = 0, revenue = 0;
-        for (OwnerBooking b : bookings) {
-            if (b.getDateTime().startsWith("Today")) todayCount++;
-            if ("pending".equals(b.getStatus())) pendingCount++;
-            if ("confirmed".equals(b.getStatus()) || "completed".equals(b.getStatus())) revenue += b.getPrice();
-        }
+        bookingManager.getBookingsForSalon(salonId, new BookingManager.BookingListCallback() {
+            @Override
+            public void onSuccess(List<Map<String, Object>> raw) {
+                if (!isAdded() || getView() == null) return;
 
-        ((TextView) view.findViewById(R.id.tvTodayBookingsCount)).setText(String.valueOf(todayCount));
-        ((TextView) view.findViewById(R.id.tvPendingCount)).setText(String.valueOf(pendingCount));
-        ((TextView) view.findViewById(R.id.tvMonthRevenue)).setText("R" + revenue);
-        ((TextView) view.findViewById(R.id.tvStaffCount)).setText(String.valueOf(staff.size()));
+                int today = 0, pending = 0, confirmed = 0, completed = 0;
+                for (Map<String, Object> map : raw) {
+                    OwnerBooking booking = OwnerBooking.fromMap(map);
+                    if (booking == null) continue;
+
+                    if (booking.isToday()) today++;
+                    if ("pending".equals(booking.getStatus())) pending++;
+                    if ("confirmed".equals(booking.getStatus()) && !booking.isPast()) confirmed++;
+                    if ("completed".equals(booking.getStatus())) completed++;
+                }
+                setText(R.id.tvTodayBookingsCount, String.valueOf(today));
+                setText(R.id.tvPendingCount, String.valueOf(pending));
+                setText(R.id.tvConfirmedCount, String.valueOf(confirmed));
+                setText(R.id.tvCompletedCount, String.valueOf(completed));
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                // Leave the zeros; the Bookings tab reports load errors.
+            }
+        });
+    }
+
+    private void setText(int viewId, String value) {
+        View root = getView();
+        if (root == null) return;
+        ((TextView) root.findViewById(viewId)).setText(value);
     }
 
     private void wireQuickActions(View view) {
         Button btnViewAllBookings = view.findViewById(R.id.btnViewAllBookings);
-        Button btnManageStaff = view.findViewById(R.id.btnManageStaff);
 
+        // Selecting the tab on the shared bottom nav lets OwnerDashboardActivity swap the fragment.
         btnViewAllBookings.setOnClickListener(v -> {
             BottomNavigationView nav = requireActivity().findViewById(R.id.ownerBottomNav);
             nav.setSelectedItemId(R.id.nav_owner_bookings);
-        });
-        btnManageStaff.setOnClickListener(v -> {
-            BottomNavigationView nav = requireActivity().findViewById(R.id.ownerBottomNav);
-            nav.setSelectedItemId(R.id.nav_owner_staff);
         });
     }
 }
