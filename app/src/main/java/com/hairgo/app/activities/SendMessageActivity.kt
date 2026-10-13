@@ -1,12 +1,12 @@
 package com.hairgo.app.activities
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.hairgo.app.databinding.ActivitySendMessageBinding
+import com.hairgo.app.utils.Snackbars
 
 class SendMessageActivity : AppCompatActivity() {
 
@@ -64,12 +64,11 @@ class SendMessageActivity : AppCompatActivity() {
         db.collection("messages")
             .add(messageData)
             .addOnSuccessListener {
-                Toast.makeText(this, "Message sent to $recipientName", Toast.LENGTH_SHORT).show()
-                finish()
+                Snackbars.showThen(binding.root, "Message sent to $recipientName") { finish() }
             }
             .addOnFailureListener { e ->
                 binding.btnSend.isEnabled = true
-                Toast.makeText(this, "Failed to send message: ${e.message}", Toast.LENGTH_LONG).show()
+                Snackbars.show(binding.root, "Failed to send message: ${e.message}")
             }
     }
 }

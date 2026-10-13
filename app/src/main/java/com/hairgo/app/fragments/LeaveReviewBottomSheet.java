@@ -5,7 +5,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,6 +14,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.hairgo.app.R;
 import com.hairgo.app.databinding.BottomSheetLeaveReviewBinding;
 import com.hairgo.app.firebase.ReviewManager;
+import com.hairgo.app.utils.Snackbars;
 
 /**
  * Collects a star rating and a comment for one completed booking.
@@ -65,7 +65,7 @@ public class LeaveReviewBottomSheet extends BottomSheetDialogFragment {
         String comment = binding.etReviewComment.getText().toString().trim();
 
         if (rating == 0f) {
-            Toast.makeText(getContext(), R.string.review_rating_required, Toast.LENGTH_SHORT).show();
+            Snackbars.show(requireView(), R.string.review_rating_required);
             return;
         }
 
@@ -75,7 +75,7 @@ public class LeaveReviewBottomSheet extends BottomSheetDialogFragment {
         }
 
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
-            Toast.makeText(getContext(), R.string.review_login_required, Toast.LENGTH_SHORT).show();
+            Snackbars.show(requireView(), R.string.review_login_required);
             return;
         }
         String clientId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -93,8 +93,9 @@ public class LeaveReviewBottomSheet extends BottomSheetDialogFragment {
                     @Override
                     public void onSuccess() {
                         if (binding == null) return;
-                        Toast.makeText(getContext(),
-                                R.string.review_submitted, Toast.LENGTH_SHORT).show();
+                        // Anchor to the activity so the pill stays after the sheet closes.
+                        Snackbars.show(requireActivity().findViewById(android.R.id.content),
+                                R.string.review_submitted);
                         dismiss();
                     }
 
@@ -103,9 +104,8 @@ public class LeaveReviewBottomSheet extends BottomSheetDialogFragment {
                         Log.w(TAG, "createReview failed: " + errorMessage);
                         if (binding == null) return;
                         resetSubmitButton();
-                        Toast.makeText(getContext(),
-                                getString(R.string.review_submit_failed, errorMessage),
-                                Toast.LENGTH_LONG).show();
+                        Snackbars.show(requireView(),
+                                getString(R.string.review_submit_failed, errorMessage));
                     }
                 });
     }
@@ -120,7 +120,9 @@ public class LeaveReviewBottomSheet extends BottomSheetDialogFragment {
         Bundle args = getArguments();
         String value = args == null ? null : args.getString(key);
         if (value == null || value.isEmpty()) {
-            Toast.makeText(getContext(), R.string.review_missing_booking, Toast.LENGTH_LONG).show();
+            // Anchor to the activity so the pill stays after the sheet closes.
+            Snackbars.show(requireActivity().findViewById(android.R.id.content),
+                    R.string.review_missing_booking);
             dismiss();
             return null;
         }

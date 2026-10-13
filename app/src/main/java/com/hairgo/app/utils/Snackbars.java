@@ -24,14 +24,37 @@ public final class Snackbars {
     private Snackbars() {}
 
     public static void show(View anchor, @StringRes int messageRes) {
-        show(Snackbar.make(anchor, messageRes, Snackbar.LENGTH_SHORT));
+        style(Snackbar.make(anchor, messageRes, Snackbar.LENGTH_SHORT)).show();
     }
 
     public static void show(View anchor, CharSequence message) {
-        show(Snackbar.make(anchor, message, Snackbar.LENGTH_SHORT));
+        style(Snackbar.make(anchor, message, Snackbar.LENGTH_SHORT)).show();
     }
 
-    private static void show(Snackbar snackbar) {
+    /**
+     * Shows the message, then runs the action once the Snackbar has gone. Used
+     * when the screen has to finish or navigate right after telling the user,
+     * so the message is still seen instead of vanishing with the screen.
+     */
+    public static void showThen(View anchor, @StringRes int messageRes, Runnable action) {
+        showThen(Snackbar.make(anchor, messageRes, Snackbar.LENGTH_SHORT), action);
+    }
+
+    public static void showThen(View anchor, CharSequence message, Runnable action) {
+        showThen(Snackbar.make(anchor, message, Snackbar.LENGTH_SHORT), action);
+    }
+
+    private static void showThen(Snackbar snackbar, Runnable action) {
+        snackbar.addCallback(new Snackbar.Callback() {
+            @Override
+            public void onDismissed(Snackbar dismissed, int event) {
+                action.run();
+            }
+        });
+        style(snackbar).show();
+    }
+
+    private static Snackbar style(Snackbar snackbar) {
         View view = snackbar.getView();
         TextView text = view.findViewById(R.id.snackbar_text);
         if (text != null) {
@@ -45,6 +68,6 @@ public final class Snackbars {
             params.gravity = Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL;
             view.setLayoutParams(params);
         }
-        snackbar.show();
+        return snackbar;
     }
 }

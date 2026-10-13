@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -22,6 +21,7 @@ import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.fragments.LeaveReviewBottomSheet;
 import com.hairgo.app.models.Booking;
 import com.hairgo.app.utils.BookingSections;
+import com.hairgo.app.utils.Snackbars;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -274,7 +274,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
      */
     private void showLeaveReview() {
         if (currentSalonId == null || currentSalonId.isEmpty()) {
-            Toast.makeText(this, R.string.review_missing_booking, Toast.LENGTH_LONG).show();
+            Snackbars.show(findViewById(android.R.id.content), R.string.review_missing_booking);
             return;
         }
         LeaveReviewBottomSheet
@@ -307,24 +307,22 @@ public class BookingDetailsActivity extends AppCompatActivity {
                 updateCancelButtonVisibility(currentStatus);
                 updateEditButton(currentStatus);
                 btnCancelBooking.setEnabled(true);
-                Toast.makeText(BookingDetailsActivity.this,
-                        R.string.booking_cancelled, Toast.LENGTH_LONG).show();
+                Snackbars.show(findViewById(android.R.id.content), R.string.booking_cancelled);
             }
 
             @Override
             public void onFailure(String errorMessage) {
                 btnCancelBooking.setEnabled(true);
-                Toast.makeText(BookingDetailsActivity.this,
-                        getString(R.string.booking_cancel_failed, errorMessage),
-                        Toast.LENGTH_LONG).show();
+                Snackbars.show(findViewById(android.R.id.content),
+                        getString(R.string.booking_cancel_failed, errorMessage));
             }
         });
     }
 
     private void showMissingBooking() {
         progress.setVisibility(View.GONE);
-        Toast.makeText(this, R.string.booking_not_found, Toast.LENGTH_SHORT).show();
-        finish();
+        Snackbars.showThen(findViewById(android.R.id.content),
+                R.string.booking_not_found, this::finish);
     }
 
     private String capitalize(String text) {
