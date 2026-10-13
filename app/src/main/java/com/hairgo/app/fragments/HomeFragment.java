@@ -22,11 +22,12 @@ import com.hairgo.app.activities.SalonProfileActivity;
 import com.hairgo.app.adapters.SalonAdapter;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.Salon;
+import com.hairgo.app.utils.FuzzySearch;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public class HomeFragment extends Fragment {
@@ -150,15 +151,28 @@ public class HomeFragment extends Fragment {
     /**
      * Filtering happens in memory on the cached list. Querying Firestore on every
      * keystroke would burn read quota and add latency for no benefit at this scale.
+     *
+     * Results are scored with {@link FuzzySearch} so typos still match, then
+     * sorted so exact hits (score 1.0) always appear above fuzzy ones.
      */
     private void applyFilter(String query) {
-        String trimmed = query == null ? "" : query.trim().toLowerCase(Locale.getDefault());
+        String trimmed = query == null ? "" : query.trim();
 
         visibleSalons.clear();
-        for (Salon salon : allSalons) {
-            if (trimmed.isEmpty() || matches(salon, trimmed)) {
-                visibleSalons.add(salon);
+
+        if (trimmed.isEmpty()) {
+            visibleSalons.addAll(allSalons);
+        } else {
+            List<Salon> scored = new ArrayList<>();
+            for (Salon salon : allSalons) {
+                if (FuzzySearch.bestScore(trimmed, salon.getName(), salon.getLocation()) > 0) {
+                    scored.add(salon);
+                }
             }
+            // Highest score first so the best match is always on top.
+            scored.sort(Comparator.comparingDouble(
+                    salon -> -FuzzySearch.bestScore(trimmed, salon.getName(), salon.getLocation())));
+            visibleSalons.addAll(scored);
         }
 
         adapter.notifyDataSetChanged();
@@ -166,12 +180,6 @@ public class HomeFragment extends Fragment {
         boolean isEmpty = visibleSalons.isEmpty();
         rvSalons.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
         tvEmptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
-    }
-
-    private boolean matches(Salon salon, String lowerCaseQuery) {
-        String name = salon.getName() == null ? "" : salon.getName().toLowerCase(Locale.getDefault());
-        String location = salon.getLocation() == null ? "" : salon.getLocation().toLowerCase(Locale.getDefault());
-        return name.contains(lowerCaseQuery) || location.contains(lowerCaseQuery);
     }
 
     /**

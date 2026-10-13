@@ -36,6 +36,7 @@ public class BookingsFragment extends Fragment {
 
     private RecyclerView rvBookings;
     private TextView tvEmptyState;
+    private BookingSectionAdapter adapter;
     private AuthManager authManager;
     private BookingManager bookingManager;
 
@@ -52,6 +53,15 @@ public class BookingsFragment extends Fragment {
         rvBookings = view.findViewById(R.id.rvBookings);
         tvEmptyState = view.findViewById(R.id.tvEmptyState);
         rvBookings.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        // One adapter for the fragment's lifetime. Reloading updates its data
+        // instead of swapping in a new adapter, which would reset the scroll.
+        adapter = new BookingSectionAdapter(new ArrayList<>(), booking -> {
+            Intent intent = new Intent(getContext(), BookingDetailsActivity.class);
+            intent.putExtra("bookingId", booking.getBookingId());
+            startActivity(intent);
+        });
+        rvBookings.setAdapter(adapter);
 
         authManager = new AuthManager();
         bookingManager = new BookingManager();
@@ -96,7 +106,9 @@ public class BookingsFragment extends Fragment {
                     showBookings(Collections.emptyList());
                     return;
                 }
-                showBookings(parseBookings(rawBookings));
+                List<Booking> bookings = parseBookings(rawBookings);
+                expireStaleBookings(bookings);
+                showBookings(bookings);
             }
 
             @Override
@@ -127,7 +139,14 @@ public class BookingsFragment extends Fragment {
 
             String salonId = asString(raw.get("salonID"));
             String salonName = asString(raw.get("salonName"));
-            String serviceName = asString(raw.get("serviceName"));
+            List<String> serviceNames = asStringList(raw.get("serviceNames"));
+            if (serviceNames.isEmpty()) {
+                // Legacy bookings stored a single serviceName string.
+                String singleService = asString(raw.get("serviceName"));
+                if (singleService != null && !singleService.isEmpty()) {
+                    serviceNames.add(singleService);
+                }
+            }
             String status = asString(raw.get("status"));
             Date dateTime = asDate(raw.get("dateTime"));
 
@@ -137,11 +156,37 @@ public class BookingsFragment extends Fragment {
             }
 
             parsed.add(new Booking(bookingId, salonId, salonName,
-                    serviceName == null ? "" : serviceName,
-                    dateTime, status));
+                    serviceNames, dateTime, status, 0));
         }
 
         return parsed;
+    }
+
+    /**
+     * Persists expiry for stale pending bookings. The list is bound straight
+     * after this call and derives "expired" from the date itself, so the write
+     * runs in the background and a failure only means Firestore still reads
+     * pending until the next load tries again.
+     */
+    private void expireStaleBookings(List<Booking> bookings) {
+        List<String> staleIds = new ArrayList<>();
+        for (Booking booking : bookings) {
+            if (BookingSections.isExpired(booking)) {
+                staleIds.add(booking.getBookingId());
+            }
+        }
+        if (staleIds.isEmpty()) return;
+
+        bookingManager.expireBookings(staleIds, new BookingManager.BookingCallback() {
+            @Override
+            public void onSuccess() {
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                Log.w(TAG, "Could not expire stale bookings: " + errorMessage);
+            }
+        });
     }
 
     private void showBookings(List<Booking> bookings) {
@@ -157,15 +202,24 @@ public class BookingsFragment extends Fragment {
 
         rvBookings.setVisibility(View.VISIBLE);
         tvEmptyState.setVisibility(View.GONE);
-        rvBookings.setAdapter(new BookingSectionAdapter(sections, booking -> {
-            Intent intent = new Intent(getContext(), BookingDetailsActivity.class);
-            intent.putExtra("bookingId", booking.getBookingId());
-            startActivity(intent);
-        }));
+
+        // Update in place so the RecyclerView keeps its scroll position.
+        adapter.updateSections(sections);
     }
 
     private String asString(Object value) {
         return value == null ? null : value.toString();
+    }
+
+    /** Reads a serviceNames array; returns an empty list when absent or malformed. */
+    private List<String> asStringList(Object value) {
+        List<String> result = new ArrayList<>();
+        if (value instanceof List) {
+            for (Object item : (List<?>) value) {
+                if (item != null && !item.toString().isEmpty()) result.add(item.toString());
+            }
+        }
+        return result;
     }
 
     private Date asDate(Object value) {

@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.hairgo.app.R;
 import com.hairgo.app.models.Booking;
+import com.hairgo.app.utils.BookingSections;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -57,11 +58,11 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingV
                                    @NonNull Booking booking,
                                    OnBookingClickListener listener) {
         holder.tvSalonName.setText(booking.getSalonName());
-        holder.tvServiceName.setText(booking.getServiceName());
+        holder.tvServiceName.setText(booking.getServiceLabel());
         holder.tvDateTime.setText(formatRelativeDate(booking.getDateTime()));
         bindSalonPhoto(holder, booking);
 
-        String status = booking.getStatus();
+        String status = BookingSections.effectiveStatus(booking);
         holder.tvStatusBadge.setText(status == null ? "" : status);
 
         int pillRes;
@@ -78,6 +79,10 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingV
             case "cancelled":
                 pillRes = R.drawable.bg_pill_cancelled;
                 textColorRes = R.color.error_dark;
+                break;
+            case "expired":
+                pillRes = R.drawable.bg_pill_expired;
+                textColorRes = R.color.grey_medium;
                 break;
             case "pending":
             default:

@@ -13,6 +13,11 @@ public class BookingSections {
     public static final int TYPE_UPCOMING = 0;
     public static final int TYPE_PAST = 1;
 
+    private static final String STATUS_PENDING = "pending";
+    private static final String STATUS_COMPLETED = "completed";
+    private static final String STATUS_CANCELLED = "cancelled";
+    public static final String STATUS_EXPIRED = "expired";
+
     public static class BookingSection {
         private final int type;
         private final List<Booking> bookings;
@@ -69,11 +74,36 @@ public class BookingSections {
     private static boolean isPast(Booking booking) {
         if (booking == null) return false;
 
-        String status = booking.getStatus();
-        if ("completed".equals(status) || "cancelled".equals(status)) {
+        String status = effectiveStatus(booking);
+        if (STATUS_COMPLETED.equals(status) || STATUS_CANCELLED.equals(status)
+                || STATUS_EXPIRED.equals(status)) {
             return true;
         }
 
+        return isDateBeforeToday(booking);
+    }
+
+    /**
+     * A pending booking expires once its day has passed, because the salon never
+     * accepted or cancelled it. Other statuses are never treated as expired.
+     */
+    public static boolean isExpired(Booking booking) {
+        if (booking == null) return false;
+        if (!STATUS_PENDING.equals(booking.getStatus())) return false;
+        return isDateBeforeToday(booking);
+    }
+
+    /**
+     * The status a booking should be shown as. A stale pending booking reads as
+     * "expired" so the list and details screen agree without a round-trip, while
+     * every other booking keeps the status stored in Firestore.
+     */
+    public static String effectiveStatus(Booking booking) {
+        if (booking == null) return null;
+        return isExpired(booking) ? STATUS_EXPIRED : booking.getStatus();
+    }
+
+    private static boolean isDateBeforeToday(Booking booking) {
         if (booking.getDateTime() == null) return false;
 
         LocalDate bookingDate = booking.getDateTime()

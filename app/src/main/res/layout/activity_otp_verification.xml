@@ -38,7 +38,7 @@
                 android:text="Verify your number"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="@color/navy"
+                android:textColor="@color/heading"
                 android:layout_marginBottom="6dp"/>
 
             <TextView
@@ -68,7 +68,7 @@
                     android:maxLength="1"
                     android:textSize="22sp"
                     android:textStyle="bold"
-                    android:textColor="@color/navy"/>
+                    android:textColor="@color/heading"/>
 
                 <EditText
                     android:id="@+id/etOtp2"
@@ -81,7 +81,7 @@
                     android:maxLength="1"
                     android:textSize="22sp"
                     android:textStyle="bold"
-                    android:textColor="@color/navy"/>
+                    android:textColor="@color/heading"/>
 
                 <EditText
                     android:id="@+id/etOtp3"
@@ -94,7 +94,7 @@
                     android:maxLength="1"
                     android:textSize="22sp"
                     android:textStyle="bold"
-                    android:textColor="@color/navy"/>
+                    android:textColor="@color/heading"/>
 
                 <EditText
                     android:id="@+id/etOtp4"
@@ -106,7 +106,7 @@
                     android:maxLength="1"
                     android:textSize="22sp"
                     android:textStyle="bold"
-                    android:textColor="@color/navy"/>
+                    android:textColor="@color/heading"/>
             </LinearLayout>
 
             <TextView

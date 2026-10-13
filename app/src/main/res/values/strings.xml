@@ -71,6 +71,8 @@
     <string name="nav_bookings">Bookings</string>
     <string name="nav_profile">Profile</string>
     <string name="dashboard_welcome_default">Welcome back</string>
+    <string name="title_home">Find a Salon</string>
+    <string name="home_subtitle">Search for a salon and make a booking</string>
     <string name="hint_search_salons">Search salons or locations</string>
     <string name="no_salons_found">No salons found</string>
     <string name="salon_photo_desc">Salon photo</string>
@@ -79,7 +81,9 @@
     <string name="salon_next_available">Next available: %1$s</string>
     <string name="btn_book_now">Book Now</string>
     <string name="title_book_appointment">Book Appointment</string>
-    <string name="label_select_service">Select a service</string>
+    <string name="label_select_service">Select services</string>
+    <string name="select_services_title">Select services</string>
+    <string name="hint_choose_services">Choose one or more services</string>
     <string name="label_select_date">Select a date</string>
     <string name="label_select_time">Select a time</string>
     <string name="hint_choose_date">Choose a date</string>
@@ -100,6 +104,7 @@
     <string name="cancel_booking_confirm_title">Cancel this booking?</string>
     <string name="cancel_booking_confirm_message">This will let the salon know you can\'t make it. This can\'t be undone.</string>
     <string name="btn_keep_booking">Keep Booking</string>
+
     <!-- Still used by BookingDetailsActivity, which has not been moved off demo data yet. -->
     <string name="booking_cancelled_demo">Booking cancelled — this is a demo, real soft-delete wiring comes in Phase 2.</string>
     <string name="booking_cancelled">Booking cancelled.</string>
@@ -131,6 +136,16 @@
     <string name="report_problem_subtitle">Tell us what isn\'t working</string>
     <string name="booking_not_found">Booking not found.</string>
     <string name="booking_date_format">dd MMM yyyy • hh:mm a</string>
+    <string name="booking_expired_explanation">The salon never accepted or cancelled this booking, so it has expired.</string>
+
+    <!-- Edit / Reschedule -->
+    <string name="btn_edit_booking">Edit Booking</string>
+    <string name="btn_reschedule">Reschedule</string>
+    <string name="title_reschedule_booking">Reschedule Booking</string>
+    <string name="btn_save_changes">Save Changes</string>
+    <string name="booking_updated">Booking updated — waiting for the salon to confirm.</string>
+    <string name="reschedule_confirm_title">Reschedule this booking?</string>
+    <string name="reschedule_confirm_message">Saving sends this booking back to the salon to confirm the new date and time.</string>
 
     <!-- Profile Screen (Nikita's new strings) -->
     <string name="profile_initials_placeholder">JD</string>
@@ -154,9 +169,13 @@
     <string name="your_comment">Your Comment</string>
     <string name="tell_us_about_your_experience">Tell us about your experience</string>
     <string name="report_a_problem_title">Report a Problem</string>
-    <string name="let_us_know_whats_wrong">Let us know what\'s wrong</string>
+    <string name="let_us_know_whats_wrong_with_the_app">Let us know what\'s wrong</string>
     <string name="description">Description</string>
     <string name="describe_the_problem">Describe the problem</string>
+
+    <!-- Appearance -->
+    <string name="appearance">Appearance</string>
+    <string name="dark_mode">Dark mode</string>
 
     <!-- Report a Problem: form -->
     <string name="report_category_label">What went wrong?</string>
@@ -188,6 +207,18 @@
     <string name="reports_loaded_failed">Could not load your reports.</string>
     <string name="report_screenshots_count">%1$d screenshot(s)</string>
     <string name="report_no_screenshots">No screenshots</string>
+
+    <!-- Salon setup (owner registration) -->
+    <string name="salon_setup_intro_title">Set up your salon</string>
+    <string name="salon_setup_intro_body">Add your salon details so clients can find and book you.</string>
+    <string name="continue_label">Continue</string>
+
+    <!-- Admin -->
+    <string name="admin_dashboard_title">Admin</string>
+    <string name="nav_overview">Overview</string>
+    <string name="nav_users">Users</string>
+    <string name="nav_salons">Salons</string>
+    <string name="nav_reports">Reports</string>
 
 
 </resources>

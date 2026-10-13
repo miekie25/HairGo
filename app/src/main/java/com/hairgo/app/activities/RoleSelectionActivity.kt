@@ -19,8 +19,8 @@ class RoleSelectionActivity : AppCompatActivity() {
             startActivity(Intent(this, RegisterClientActivity::class.java))
         }
 
-        binding.cardStylist.setOnClickListener {
-            startActivity(Intent(this, RegisterStylistStep1Activity::class.java))
+        binding.cardOwner.setOnClickListener {
+            startActivity(Intent(this, RegisterOwnerActivity::class.java))
         }
     }
 }

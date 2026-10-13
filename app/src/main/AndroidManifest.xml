@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
+        android:name=".HairGoApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -45,7 +46,7 @@
             android:name=".activities.ForgotPasswordActivity"
             android:exported="false" />
 
-        <!-- Thabo's registration flow -->
+        <!-- Registration flow -->
         <activity
             android:name=".activities.RoleSelectionActivity"
             android:exported="false" />
@@ -55,11 +56,7 @@
             android:exported="false" />
 
         <activity
-            android:name=".activities.RegisterStylistStep1Activity"
-            android:exported="false" />
-
-        <activity
-            android:name=".activities.RegisterStylistStep2Activity"
+            android:name=".activities.RegisterOwnerActivity"
             android:exported="false" />
 
         <activity
@@ -70,7 +67,7 @@
             android:name=".activities.TermsConditionsActivity"
             android:exported="false" />
 
-        <!-- Post-login screens -->
+        <!-- Post-login screens: client -->
         <activity
             android:name=".activities.ClientDashboardActivity"
             android:exported="false" />
@@ -91,7 +88,22 @@
             android:name=".activities.MyReportsActivity"
             android:exported="false" />
 
-        <activity android:name=".activities.OwnerDashboardActivity"
+        <!-- Post-login screens: owner -->
+        <activity
+            android:name=".activities.OwnerDashboardActivity"
+            android:exported="false" />
+
+        <!-- Admin -->
+        <activity
+            android:name=".activities.AdminDashboardActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.ReportDetailActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.SendMessageActivity"
             android:exported="false" />
 
     </application>

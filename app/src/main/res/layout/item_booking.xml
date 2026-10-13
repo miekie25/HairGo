@@ -13,7 +13,7 @@
     app:cardElevation="1dp"
     app:strokeWidth="1dp"
     app:strokeColor="@color/grey_border"
-    app:cardBackgroundColor="@color/white">
+    app:cardBackgroundColor="@color/surface">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -40,7 +40,7 @@
             android:layout_marginStart="12dp"
             android:maxLines="1"
             android:ellipsize="end"
-            android:textColor="@color/navy"
+            android:textColor="@color/heading"
             android:textSize="15sp"
             android:textStyle="bold"
             app:layout_constraintTop_toTopOf="@id/ivSalonPhoto"

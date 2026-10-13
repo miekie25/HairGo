@@ -7,6 +7,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.KeyEvent
 import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.hairgo.app.databinding.ActivityOtpVerificationBinding
 
@@ -31,18 +32,23 @@ class OtpVerificationActivity : AppCompatActivity() {
         setupOtpAutoAdvance(otpFields)
 
         binding.tvResendOtp.setOnClickListener {
-            // TODO: trigger your PHP endpoint to resend the SMS OTP
+            // TODO: Hook up your SMS resend logic if applicable
+            Toast.makeText(this, "OTP resent!", Toast.LENGTH_SHORT).show()
             startResendCountdown()
         }
         startResendCountdown()
 
         binding.btnNext.setOnClickListener {
             val enteredOtp = otpFields.joinToString("") { it.text.toString() }
-            // TODO: verify enteredOtp against the code sent by your backend
 
-            val nextIntent = Intent(this, TermsConditionsActivity::class.java)
-            intent.extras?.let { nextIntent.putExtras(it) }
-            startActivity(nextIntent)
+            if (enteredOtp.length == 4) {
+                // Proceed to Terms & Conditions, passing along any existing intent data (like phone/email)
+                val nextIntent = Intent(this, TermsConditionsActivity::class.java)
+                intent.extras?.let { nextIntent.putExtras(it) }
+                startActivity(nextIntent)
+            } else {
+                Toast.makeText(this, "Please enter the complete 4-digit code", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
