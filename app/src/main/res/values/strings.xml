@@ -230,5 +230,25 @@
     <string name="nav_salons">Salons</string>
     <string name="nav_reports">Reports</string>
 
+    <!-- Notifications -->
+    <string name="notification_channel_reminders">Appointment reminders</string>
+    <string name="notification_channel_reminders_desc">Reminders before your upcoming appointments</string>
+    <string name="notification_channel_updates">Booking updates</string>
+    <string name="notification_channel_updates_desc">Confirmations and status changes for your bookings</string>
+    <string name="notification_default_title">HairGo</string>
+    <string name="booking_confirmation_title">Booking request sent</string>
+    <string name="booking_confirmation_body">Your booking request to %1$s is waiting for confirmation.</string>
+    <string name="reminder_title">Appointment reminder</string>
+    <string name="reminder_body">Your appointment at %1$s is %2$s.</string>
+    <string name="reminder_when_tomorrow">tomorrow</string>
+    <string name="reminder_when_hour">in 1 hour</string>
+    <string name="status_change_title">Booking updated</string>
+    <string name="status_change_body">%1$s: your booking is now %2$s.</string>
+
+    <!-- In-app notifications screen (bell icon) -->
+    <string name="title_notifications">Notifications</string>
+    <string name="notifications_subtitle">Updates about your bookings</string>
+    <string name="no_notifications_found">No notifications yet</string>
+    <string name="clear_all">Clear all</string>
 
 </resources>

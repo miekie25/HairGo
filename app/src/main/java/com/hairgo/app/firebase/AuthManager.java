@@ -6,6 +6,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.hairgo.app.utils.Constants;
 
 import java.util.HashMap;
@@ -35,6 +37,33 @@ public class AuthManager {
 
     public void signOut() {
         mAuth.signOut();
+    }
+
+    /**
+     * Fetches this device's FCM registration token and stores it on the
+     * signed-in user's profile, so booking notifications can reach the device.
+     */
+    public void saveFcmToken() {
+        if (getCurrentUser() == null) return;
+        FirebaseMessaging.getInstance().getToken()
+                .addOnSuccessListener(this::saveFcmToken);
+    }
+
+    /** Stores an already-known token; used by the messaging service. */
+    public void saveFcmToken(String token) {
+        if (token == null || token.isEmpty()) return;
+
+        FirebaseUser user = getCurrentUser();
+        if (user == null) return;
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("fcmToken", token);
+        updates.put("fcmUpdatedAt", FieldValue.serverTimestamp());
+
+        // merge() so only the token fields are touched on the existing profile.
+        db.collection(Constants.COLLECTION_USERS)
+                .document(user.getUid())
+                .set(updates, SetOptions.merge());
     }
 
     // Callback used when registration/login finishes
@@ -116,8 +145,10 @@ public class AuthManager {
                     db.collection("users")
                             .document(uid)
                             .set(newUser)
-                            .addOnSuccessListener(unused ->
-                                    callback.onSuccess("client"))
+                            .addOnSuccessListener(unused -> {
+                                saveFcmToken();
+                                callback.onSuccess("client");
+                            })
                             .addOnFailureListener(e ->
                                     callback.onFailure(
                                             "Account created, but saving profile failed: "
@@ -179,6 +210,7 @@ public class AuthManager {
                                     return;
                                 }
 
+                                saveFcmToken();
                                 callback.onSuccess(role.trim().toLowerCase());
                             })
 

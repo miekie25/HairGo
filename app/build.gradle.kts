@@ -61,6 +61,13 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-messaging")
+
+    // Background work for appointment reminders
+    implementation("androidx.work:work-runtime:2.9.1")
+    // Guava is already bundled by Firebase at runtime; naming it here exposes its
+    // ListenableFuture to the compiler (WorkManager's Worker API needs it).
+    implementation("com.google.guava:guava:32.1.3-android")
 
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")

@@ -21,6 +21,7 @@ import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.fragments.LeaveReviewBottomSheet;
 import com.hairgo.app.models.Booking;
 import com.hairgo.app.utils.BookingSections;
+import com.hairgo.app.utils.ReminderScheduler;
 import com.hairgo.app.utils.Snackbars;
 
 import java.text.SimpleDateFormat;
@@ -307,6 +308,8 @@ public class BookingDetailsActivity extends AppCompatActivity {
                 updateCancelButtonVisibility(currentStatus);
                 updateEditButton(currentStatus);
                 btnCancelBooking.setEnabled(true);
+                // Drop any pending reminders for a booking that is now cancelled.
+                ReminderScheduler.cancel(BookingDetailsActivity.this, bookingId);
                 Snackbars.show(findViewById(android.R.id.content), R.string.booking_cancelled);
             }
 

@@ -18,6 +18,8 @@ import com.hairgo.app.R;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.Salon;
+import com.hairgo.app.utils.Notifications;
+import com.hairgo.app.utils.ReminderScheduler;
 import com.hairgo.app.utils.Snackbars;
 
 import java.text.SimpleDateFormat;
@@ -391,7 +393,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
         findViewById(R.id.btnConfirmBooking).setEnabled(false);
 
         if (isEditing()) {
-            updateBooking();
+            updateBooking(salon);
             return;
         }
 
@@ -404,6 +406,16 @@ public class BookAppointmentActivity extends AppCompatActivity {
                 new BookingManager.BookingCreatedCallback() {
                     @Override
                     public void onSuccess(String bookingId) {
+                        // Tell the user, then line up the 1 day / 1 hour reminders.
+                        Notifications.requestPermission(BookAppointmentActivity.this);
+                        Notifications.show(BookAppointmentActivity.this, bookingId.hashCode(),
+                                Notifications.CHANNEL_UPDATES,
+                                getString(R.string.booking_confirmation_title),
+                                getString(R.string.booking_confirmation_body, salon.getName()),
+                                bookingId);
+                        ReminderScheduler.schedule(BookAppointmentActivity.this, bookingId,
+                                salon.getName(), selectedDateTime.getTime());
+
                         Snackbars.showThen(findViewById(android.R.id.content),
                                 R.string.booking_created_success, BookAppointmentActivity.this::openBookingsTab);
                     }
@@ -421,7 +433,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
      * Saves an edit or reschedule. The booking keeps its id but returns to
      * pending, so the salon re-confirms the new details.
      */
-    private void updateBooking() {
+    private void updateBooking(Salon salon) {
         new BookingManager().updateBookingDetails(
                 editingBookingId,
                 new ArrayList<>(selectedServices),
@@ -429,6 +441,11 @@ public class BookAppointmentActivity extends AppCompatActivity {
                 new BookingManager.BookingCallback() {
                     @Override
                     public void onSuccess() {
+                        // The old time no longer applies; re-arm reminders for the new one.
+                        ReminderScheduler.cancel(BookAppointmentActivity.this, editingBookingId);
+                        ReminderScheduler.schedule(BookAppointmentActivity.this, editingBookingId,
+                                salon.getName(), selectedDateTime.getTime());
+
                         Snackbars.showThen(findViewById(android.R.id.content),
                                 R.string.booking_updated, () -> {
                                     setResult(RESULT_OK);

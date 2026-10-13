@@ -4,6 +4,7 @@ import android.text.TextUtils;
 
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
@@ -141,6 +142,31 @@ public class BookingManager {
                     callback.onSuccess(bookings);
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
+     * Real-time version of {@link #getBookingsForClient}: fires the callback now
+     * and again on every change to the client's bookings, so a status update made
+     * anywhere shows up without the user reloading.
+     *
+     * <p>Returns the {@link ListenerRegistration} so the caller can stop listening
+     * (for example in the fragment's onStop) and avoid background reads.
+     */
+    public ListenerRegistration listenToBookingsForClient(String clientId, BookingListCallback callback) {
+        return db.collection("bookings")
+                .whereEqualTo("clientID", clientId)
+                .whereEqualTo("isDeleted", false)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) {
+                        callback.onFailure(error.getMessage());
+                        return;
+                    }
+                    List<Map<String, Object>> bookings = new ArrayList<>();
+                    if (snapshots != null) {
+                        for (QueryDocumentSnapshot doc : snapshots) bookings.add(doc.getData());
+                    }
+                    callback.onSuccess(bookings);
+                });
     }
 
     public void getBookingsForSalon(String salonId, BookingListCallback callback) {
