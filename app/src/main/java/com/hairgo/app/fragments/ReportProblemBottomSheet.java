@@ -1,10 +1,13 @@
 package com.hairgo.app.fragments;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Base64;
 import android.util.Patterns;
 import android.util.Log;
 import android.view.Gravity;
@@ -13,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -42,6 +46,9 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
 
     private static final String TAG = "ReportProblemBottomSheet";
 
+    public static final String RESULT_REPORT_UPDATED = "report_updated";
+    private static final String ARG_REPORT_ID = "report_id";
+
     private static final int MAX_SCREENSHOTS = 3;
     private static final int MIN_DESCRIPTION = 10;
     private static final int MAX_DESCRIPTION = 500;
@@ -53,6 +60,10 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
 
     private final List<Uri> screenshotUris = new ArrayList<>();
 
+    /** Non-null when the sheet is editing an existing report. */
+    private String editReportId;
+    private Report editingReport;
+
     /** Cached from users/{uid} so the submit path doesn't re-read it every time. */
     private boolean userLoaded = false;
     private String cachedName = "";
@@ -63,6 +74,15 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
 
     public static ReportProblemBottomSheet newInstance() {
         return new ReportProblemBottomSheet();
+    }
+
+    /** Edit mode: loads the report with this id and saves changes to it. */
+    public static ReportProblemBottomSheet newInstance(String reportId) {
+        ReportProblemBottomSheet sheet = new ReportProblemBottomSheet();
+        Bundle args = new Bundle();
+        args.putString(ARG_REPORT_ID, reportId);
+        sheet.setArguments(args);
+        return sheet;
     }
 
     @Override
@@ -86,8 +106,18 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         reportManager = new ReportManager();
+
+        if (getArguments() != null) {
+            editReportId = getArguments().getString(ARG_REPORT_ID);
+        }
+
         setupClickListeners();
-        loadUserInfo();
+
+        if (editReportId != null) {
+            loadReportForEdit();
+        } else {
+            loadUserInfo();
+        }
     }
 
     private void setupClickListeners() {
@@ -157,6 +187,111 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
         if (!TextUtils.isEmpty(role)) cachedRole = role;
 
         userLoaded = true;
+    }
+
+    // ---------------------------------------------------------------------
+    // Edit mode
+    // ---------------------------------------------------------------------
+
+    private void loadReportForEdit() {
+        reportManager.getReport(editReportId, new ReportManager.ReportLoadCallback() {
+            @Override
+            public void onSuccess(Report report) {
+                if (!isAdded() || binding == null) return;
+                editingReport = report;
+                prefillForEdit(report);
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (!isAdded()) return;
+                Log.w(TAG, "Could not load report for edit: " + errorMessage);
+                dismiss();
+            }
+        });
+    }
+
+    private void prefillForEdit(Report report) {
+        binding.tvSheetTitle.setText(R.string.report_edit_title);
+        binding.tvSheetSubtitle.setVisibility(View.GONE);
+        binding.btnSubmitReport.setText(R.string.report_edit_button);
+
+        binding.cgCategory.check(chipIdForCategory(report.getCategory()));
+        binding.cgSeverity.check(chipIdForSeverity(report.getSeverity()));
+        binding.etProblemDescription.setText(report.getDescription());
+        binding.etContactEmail.setText(report.getUserEmail());
+
+        // Screenshots can't be changed here, so show them read-only.
+        binding.btnAddScreenshot.setVisibility(View.GONE);
+        List<String> shots = report.getScreenshots();
+        if (shots == null || shots.isEmpty()) {
+            binding.tvScreenshotLabel.setVisibility(View.GONE);
+        } else {
+            for (String encoded : shots) addExistingThumbnail(encoded);
+        }
+    }
+
+    private int chipIdForCategory(String category) {
+        if (Report.CATEGORY_BOOKING.equals(category)) return R.id.chipCategoryBooking;
+        if (Report.CATEGORY_LOGIN.equals(category)) return R.id.chipCategoryLogin;
+        if (Report.CATEGORY_APP_ERROR.equals(category)) return R.id.chipCategoryAppError;
+        return R.id.chipCategoryOther;
+    }
+
+    private int chipIdForSeverity(String severity) {
+        if (Report.SEVERITY_LOW.equals(severity)) return R.id.chipSeverityLow;
+        if (Report.SEVERITY_HIGH.equals(severity)) return R.id.chipSeverityHigh;
+        return R.id.chipSeverityMedium;
+    }
+
+    private void addExistingThumbnail(String encoded) {
+        try {
+            byte[] bytes = Base64.decode(encoded, Base64.DEFAULT);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            if (bitmap == null) return;
+
+            ImageView image = new ImageView(requireContext());
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(72), dp(72));
+            params.setMarginEnd(dp(8));
+            image.setLayoutParams(params);
+            image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            image.setImageBitmap(bitmap);
+            binding.llScreenshotThumbs.addView(image);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void saveEdit(String category, String description, String contactEmail) {
+        setSubmitting(true);
+
+        editingReport.setCategory(category);
+        editingReport.setSeverity(selectedSeverity());
+        editingReport.setDescription(description);
+        if (!TextUtils.isEmpty(contactEmail)) {
+            editingReport.setUserEmail(contactEmail);
+        }
+
+        reportManager.updateReport(editingReport, new ReportManager.ReportCallback() {
+            @Override
+            public void onSuccess() {
+                if (!isAdded()) return;
+                Bundle result = new Bundle();
+                result.putString(ARG_REPORT_ID, editReportId);
+                getParentFragmentManager().setFragmentResult(RESULT_REPORT_UPDATED, result);
+
+                View activityRoot = requireActivity().findViewById(android.R.id.content);
+                dismiss();
+                Snackbars.show(activityRoot, R.string.report_updated);
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (!isAdded()) return;
+                Log.w(TAG, "Report update failed: " + errorMessage);
+                setSubmitting(false);
+                showMessage(R.string.report_save_failed);
+            }
+        });
     }
 
     // ---------------------------------------------------------------------
@@ -274,6 +409,11 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
             return;
         }
 
+        if (editReportId != null) {
+            saveEdit(category, description, contactEmail);
+            return;
+        }
+
         FirebaseUser user = auth.getCurrentUser();
         if (user == null) {
             showMessage(R.string.report_login_required);
@@ -386,10 +526,15 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
         if (binding == null) return;
         binding.btnSubmitReport.setEnabled(!submitting);
         if (submitting) {
-            binding.btnSubmitReport.setText(screenshotUris.isEmpty()
-                    ? R.string.report_submitting : R.string.report_uploading);
+            if (editReportId != null) {
+                binding.btnSubmitReport.setText(R.string.report_saving);
+            } else {
+                binding.btnSubmitReport.setText(screenshotUris.isEmpty()
+                        ? R.string.report_submitting : R.string.report_uploading);
+            }
         } else {
-            binding.btnSubmitReport.setText(R.string.submit_report);
+            binding.btnSubmitReport.setText(editReportId != null
+                    ? R.string.report_edit_button : R.string.submit_report);
         }
     }
 
@@ -401,7 +546,6 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
         if (checkedId == R.id.chipCategoryBooking) return Report.CATEGORY_BOOKING;
         if (checkedId == R.id.chipCategoryLogin) return Report.CATEGORY_LOGIN;
         if (checkedId == R.id.chipCategoryAppError) return Report.CATEGORY_APP_ERROR;
-        if (checkedId == R.id.chipCategoryPayment) return Report.CATEGORY_PAYMENT;
         if (checkedId == R.id.chipCategoryOther) return Report.CATEGORY_OTHER;
         return null;
     }

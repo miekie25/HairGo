@@ -21,6 +21,7 @@
             android:layout_marginBottom="16dp" />
 
         <TextView
+            android:id="@+id/tvSheetTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/report_a_problem_title"
@@ -30,6 +31,7 @@
             android:layout_gravity="center_horizontal" />
 
         <TextView
+            android:id="@+id/tvSheetSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
@@ -77,13 +79,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/report_category_app_error" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipCategoryPayment"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/report_category_payment" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipCategoryOther"
@@ -202,6 +197,7 @@
 
         <!-- Screenshots -->
         <TextView
+            android:id="@+id/tvScreenshotLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"

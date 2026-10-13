@@ -3,6 +3,7 @@ package com.hairgo.app.utils;
 import android.graphics.Color;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -36,9 +37,14 @@ public final class Snackbars {
         if (text != null) {
             text.setTextColor(Color.WHITE);
         }
-        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) view.getLayoutParams();
-        params.gravity = Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL;
-        view.setLayoutParams(params);
+        // Only the normal content-anchored Snackbar uses FrameLayout params;
+        // inside a bottom sheet it is a CoordinatorLayout, so skip centering.
+        ViewGroup.LayoutParams current = view.getLayoutParams();
+        if (current instanceof FrameLayout.LayoutParams) {
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) current;
+            params.gravity = Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL;
+            view.setLayoutParams(params);
+        }
         snackbar.show();
     }
 }

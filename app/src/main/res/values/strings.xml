@@ -183,7 +183,6 @@
     <string name="report_category_booking">Booking issue</string>
     <string name="report_category_login">Login / Account</string>
     <string name="report_category_app_error">App error</string>
-    <string name="report_category_payment">Payment</string>
     <string name="report_category_other">Other</string>
     <string name="report_severity_label">Severity</string>
     <string name="report_severity_low">Low</string>
@@ -207,6 +206,17 @@
     <string name="reports_loaded_failed">Could not load your reports.</string>
     <string name="report_screenshots_count">%1$d screenshot(s)</string>
     <string name="report_no_screenshots">No screenshots</string>
+    <string name="report_screenshots_heading">Screenshots</string>
+    <string name="report_no_description">No description</string>
+    <string name="report_edit">Edit report</string>
+    <string name="report_edit_title">Edit report</string>
+    <string name="report_edit_button">Save changes</string>
+    <string name="report_updated">Report updated.</string>
+    <string name="report_save_failed">Couldn\'t save your changes. Please try again.</string>
+    <string name="report_saving">Saving…</string>
+    <string name="report_tap_image_hint">Tap image to enlarge</string>
+    <string name="report_tap_to_close">Tap anywhere to close</string>
+    <string name="close">Close</string>
 
     <!-- Salon setup (owner registration) -->
     <string name="salon_setup_intro_title">Set up your salon</string>

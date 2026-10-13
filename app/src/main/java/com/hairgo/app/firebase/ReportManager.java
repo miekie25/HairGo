@@ -12,6 +12,7 @@ import android.util.Base64;
 import androidx.exifinterface.media.ExifInterface;
 
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.hairgo.app.models.Report;
@@ -22,7 +23,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,6 +44,7 @@ public class ReportManager {
     private static final String FIELD_USER_ID = "userID";
     private static final String FIELD_IS_DELETED = "isDeleted";
     private static final String FIELD_CREATED_AT = "createdAt";
+    private static final String FIELD_UPDATED_AT = "updatedAt";
 
     private static final int MAX_DIMENSION = 1024;
     private static final int INITIAL_QUALITY = 70;
@@ -67,6 +71,11 @@ public class ReportManager {
         void onFailure(String errorMessage);
     }
 
+    public interface ReportLoadCallback {
+        void onSuccess(Report report);
+        void onFailure(String errorMessage);
+    }
+
     public interface ScreenshotEncodeCallback {
         void onSuccess(String base64Image);
         void onFailure(String errorMessage);
@@ -87,6 +96,25 @@ public class ReportManager {
                 .document(report.getReportID())
                 .set(report)
                 .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /** Loads one report by id, used to prefill the edit form. */
+    public void getReport(String reportId, ReportLoadCallback callback) {
+        if (reportId == null || reportId.isEmpty()) {
+            callback.onFailure("Report has no reportID");
+            return;
+        }
+
+        db.collection(COLLECTION_REPORTS).document(reportId).get()
+                .addOnSuccessListener(doc -> {
+                    Report report = doc != null && doc.exists() ? doc.toObject(Report.class) : null;
+                    if (report == null) {
+                        callback.onFailure("Report not found");
+                    } else {
+                        callback.onSuccess(report);
+                    }
+                })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
@@ -248,6 +276,31 @@ public class ReportManager {
                     }
                     callback.onSuccess(reports);
                 })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
+     * Saves a user's edit to their own report. Only content fields change;
+     * status, createdAt, the owner and device info are left alone.
+     */
+    public void updateReport(Report report, ReportCallback callback) {
+        if (report == null || report.getReportID() == null || report.getReportID().isEmpty()) {
+            callback.onFailure("Report has no reportID");
+            return;
+        }
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("category", report.getCategory());
+        updates.put("severity", report.getSeverity());
+        updates.put("description", report.getDescription());
+        updates.put("userEmail", report.getUserEmail());
+        updates.put("screenshots", report.getScreenshots());
+        updates.put("isEdited", true);
+        updates.put(FIELD_UPDATED_AT, FieldValue.serverTimestamp());
+
+        db.collection(COLLECTION_REPORTS).document(report.getReportID())
+                .update(updates)
+                .addOnSuccessListener(unused -> callback.onSuccess())
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
