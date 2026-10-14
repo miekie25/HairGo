@@ -90,9 +90,35 @@ public class BookingManager {
 
         List<String> names = serviceNames == null ? new ArrayList<>() : serviceNames;
 
+        // Look up the client's own name first so the salon owner can see who booked.
+        // A client may read their own users document. If the lookup fails for any
+        // reason (offline, a seeded client with no profile), the booking is still
+        // created, just without a name.
+        if (clientId == null || clientId.isEmpty()) {
+            writeBooking(ref, clientId, "", salonId, salonName, names, dateTime, callback);
+            return;
+        }
+
+        db.collection("users").document(clientId).get()
+                .addOnSuccessListener(doc -> {
+                    String first = doc.getString("name");
+                    String last = doc.getString("surname");
+                    String clientName = ((first == null ? "" : first) + " "
+                            + (last == null ? "" : last)).trim();
+                    writeBooking(ref, clientId, clientName, salonId, salonName, names, dateTime, callback);
+                })
+                .addOnFailureListener(e ->
+                        writeBooking(ref, clientId, "", salonId, salonName, names, dateTime, callback));
+    }
+
+    /** Writes the booking document once the client's name (possibly empty) is known. */
+    private void writeBooking(DocumentReference ref, String clientId, String clientName,
+                              String salonId, String salonName, List<String> names,
+                              Date dateTime, BookingCreatedCallback callback) {
         Map<String, Object> booking = new HashMap<>();
         booking.put("bookingID", ref.getId());
         booking.put("clientID", clientId);
+        booking.put("clientName", clientName);
         booking.put("salonID", salonId);
         booking.put("salonName", salonName);
         booking.put("serviceNames", names);

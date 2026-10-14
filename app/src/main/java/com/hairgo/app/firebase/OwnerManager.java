@@ -64,8 +64,19 @@ public class OwnerManager {
     // --------------------------------------------------------- registration
 
     /**
-     * Creates a salon-owner account: Firebase Auth user, users/{uid} with role "owner",
-     * and their first salon. The registration flow's final button should call this.
+     * Account-only owner signup: Firebase Auth user plus users/{uid} with role "owner".
+     * No salon is created here. The dashboard prompts the owner to add their first salon
+     * (name, location, services), so clients never see a placeholder salon.
+     */
+    public void registerOwner(String fullName, String email, String password, String phone,
+                              AuthManager.AuthCallback callback) {
+        registerOwner(fullName, email, password, phone, null, null, null, callback);
+    }
+
+    /**
+     * Creates a salon-owner account and, if a salon name is given, their first salon.
+     * The role is written as "owner" at creation, never changed afterwards, so it works
+     * with rules that stop users editing their own role.
      * Mirrors the field names AuthManager.registerUser writes for clients.
      */
     public void registerOwner(String fullName, String email, String password, String phone,
@@ -96,21 +107,30 @@ public class OwnerManager {
                     newUser.put("isDeleted", false);
 
                     db.collection("users").document(uid).set(newUser)
-                            .addOnSuccessListener(unused ->
-                                    new SalonManager().createSalon(uid, salonName, location, services,
-                                            new SalonManager.SalonCreatedCallback() {
-                                                @Override
-                                                public void onSuccess(String salonId) {
-                                                    callback.onSuccess("owner");
-                                                }
+                            .addOnSuccessListener(unused -> {
+                                // Same as the client flow: let this device receive notifications.
+                                new AuthManager().saveFcmToken();
 
-                                                @Override
-                                                public void onFailure(String errorMessage) {
-                                                    callback.onFailure(
-                                                            "Account created, but saving your salon failed: "
-                                                                    + errorMessage);
-                                                }
-                                            }))
+                                if (salonName == null || salonName.trim().isEmpty()) {
+                                    callback.onSuccess("owner");
+                                    return;
+                                }
+
+                                new SalonManager().createSalon(uid, salonName, location, services,
+                                        new SalonManager.SalonCreatedCallback() {
+                                            @Override
+                                            public void onSuccess(String salonId) {
+                                                callback.onSuccess("owner");
+                                            }
+
+                                            @Override
+                                            public void onFailure(String errorMessage) {
+                                                callback.onFailure(
+                                                        "Account created, but saving your salon failed: "
+                                                                + errorMessage);
+                                            }
+                                        });
+                            })
                             .addOnFailureListener(e ->
                                     callback.onFailure("Account created, but saving profile failed: "
                                             + e.getMessage()));
