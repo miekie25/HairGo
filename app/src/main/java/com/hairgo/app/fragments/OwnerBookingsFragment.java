@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.firebase.firestore.ListenerRegistration;
 import com.hairgo.app.R;
 import com.hairgo.app.adapters.OwnerBookingAdapter;
 import com.hairgo.app.firebase.BookingManager;
@@ -34,6 +35,8 @@ public class OwnerBookingsFragment extends Fragment {
     private TextView tvEmpty;
     private SwipeRefreshLayout swipeRefresh;
     private BookingManager bookingManager;
+    private ListenerRegistration bookingsListener;
+    private boolean receivedData;
 
     @Nullable
     @Override
@@ -70,31 +73,44 @@ public class OwnerBookingsFragment extends Fragment {
 
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         rv.setAdapter(adapter);
-        swipeRefresh.setOnRefreshListener(this::loadBookings);
+        swipeRefresh.setOnRefreshListener(this::refresh);
+    }
+
+    /**
+     * Listens while the fragment is on screen so the salon's bookings stay
+     * current in real time (a new client booking, or a status change made
+     * elsewhere, shows up without a manual refresh). The listener is removed in
+     * onStop so it does not keep reading in the background.
+     */
+    @Override
+    public void onStart() {
+        super.onStart();
+        startListening();
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        loadBookings();
+    public void onStop() {
+        super.onStop();
+        stopListening();
     }
 
-    private void loadBookings() {
+    private void startListening() {
         String salonId = OwnerSession.getSelectedSalonId();
         if (salonId == null) {
             bookings.clear();
-            adapter.notifyDataSetChanged();
+            if (adapter != null) adapter.notifyDataSetChanged();
             swipeRefresh.setRefreshing(false);
             showEmpty("Add a salon to start receiving bookings");
             return;
         }
 
         swipeRefresh.setRefreshing(true);
-        bookingManager.getBookingsForSalon(salonId, new BookingManager.BookingListCallback() {
+        bookingsListener = bookingManager.listenToBookingsForSalon(salonId, new BookingManager.BookingListCallback() {
             @Override
             public void onSuccess(List<Map<String, Object>> raw) {
                 if (!isAdded()) return;
 
+                receivedData = true;
                 bookings.clear();
                 for (Map<String, Object> map : raw) {
                     OwnerBooking booking = OwnerBooking.fromMap(map);
@@ -110,9 +126,28 @@ public class OwnerBookingsFragment extends Fragment {
             public void onFailure(String errorMessage) {
                 if (!isAdded()) return;
                 swipeRefresh.setRefreshing(false);
-                Toast.makeText(getContext(), "Could not load bookings", Toast.LENGTH_SHORT).show();
+                // A transient error after we already have data should not wipe
+                // the list; only fall back to the empty state on the first load.
+                if (!receivedData) {
+                    bookings.clear();
+                    adapter.notifyDataSetChanged();
+                    showEmpty("Could not load bookings");
+                }
             }
         });
+    }
+
+    private void stopListening() {
+        if (bookingsListener != null) {
+            bookingsListener.remove();
+            bookingsListener = null;
+        }
+    }
+
+    /** Pull-to-refresh re-attaches the listener so a fresh snapshot is fetched. */
+    private void refresh() {
+        stopListening();
+        startListening();
     }
 
     /** Upcoming bookings first (soonest at the top), then past ones (most recent first). */

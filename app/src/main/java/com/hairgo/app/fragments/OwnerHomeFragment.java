@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.hairgo.app.R;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.models.OwnerBooking;
@@ -24,6 +25,7 @@ import java.util.Map;
 public class OwnerHomeFragment extends Fragment {
 
     private BookingManager bookingManager;
+    private ListenerRegistration statsListener;
 
     @Nullable
     @Override
@@ -40,26 +42,32 @@ public class OwnerHomeFragment extends Fragment {
         wireQuickActions(view);
     }
 
+    /**
+     * Listens while the fragment is on screen so the stat cards stay current in
+     * real time (a new booking or a status change updates the counts). The
+     * listener is removed in onStop so it does not keep reading in the background.
+     */
     @Override
-    public void onResume() {
-        super.onResume();
-        refreshStats();
+    public void onStart() {
+        super.onStart();
+        startListening();
     }
 
-    private void setGreeting(View view) {
-        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        String greeting;
-        if (hour < 12) greeting = "Good morning";
-        else if (hour < 17) greeting = "Good afternoon";
-        else greeting = "Good evening";
-        ((TextView) view.findViewById(R.id.tvGreeting)).setText(greeting);
+    @Override
+    public void onStop() {
+        super.onStop();
+        stopListening();
     }
 
-    private void refreshStats() {
+    private void startListening() {
         String salonId = OwnerSession.getSelectedSalonId();
-        if (salonId == null) return; // layout already shows zeros
+        if (salonId == null) {
+            // No salon yet: the cards have nothing to count.
+            resetStats();
+            return;
+        }
 
-        bookingManager.getBookingsForSalon(salonId, new BookingManager.BookingListCallback() {
+        statsListener = bookingManager.listenToBookingsForSalon(salonId, new BookingManager.BookingListCallback() {
             @Override
             public void onSuccess(List<Map<String, Object>> raw) {
                 if (!isAdded() || getView() == null) return;
@@ -82,9 +90,32 @@ public class OwnerHomeFragment extends Fragment {
 
             @Override
             public void onFailure(String errorMessage) {
-                // Leave the zeros; the Bookings tab reports load errors.
+                // Leave the current values; the Bookings tab reports load errors.
             }
         });
+    }
+
+    private void stopListening() {
+        if (statsListener != null) {
+            statsListener.remove();
+            statsListener = null;
+        }
+    }
+
+    private void resetStats() {
+        setText(R.id.tvTodayBookingsCount, "0");
+        setText(R.id.tvPendingCount, "0");
+        setText(R.id.tvConfirmedCount, "0");
+        setText(R.id.tvCompletedCount, "0");
+    }
+
+    private void setGreeting(View view) {
+        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        String greeting;
+        if (hour < 12) greeting = "Good morning";
+        else if (hour < 17) greeting = "Good afternoon";
+        else greeting = "Good evening";
+        ((TextView) view.findViewById(R.id.tvGreeting)).setText(greeting);
     }
 
     private void setText(int viewId, String value) {

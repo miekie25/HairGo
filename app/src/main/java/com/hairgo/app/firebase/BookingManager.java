@@ -209,6 +209,31 @@ public class BookingManager {
     }
 
     /**
+     * Real-time version of {@link #getBookingsForSalon}: fires the callback now
+     * and again on every change to the salon's bookings, so a new client booking
+     * (or a status change) shows up without the owner refreshing.
+     *
+     * <p>Returns the {@link ListenerRegistration} so the caller can stop
+     * listening (for example in the fragment's onStop) and avoid background reads.
+     */
+    public ListenerRegistration listenToBookingsForSalon(String salonId, BookingListCallback callback) {
+        return db.collection("bookings")
+                .whereEqualTo("salonID", salonId)
+                .whereEqualTo("isDeleted", false)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) {
+                        callback.onFailure(error.getMessage());
+                        return;
+                    }
+                    List<Map<String, Object>> bookings = new ArrayList<>();
+                    if (snapshots != null) {
+                        for (QueryDocumentSnapshot doc : snapshots) bookings.add(doc.getData());
+                    }
+                    callback.onSuccess(bookings);
+                });
+    }
+
+    /**
      * Returns the bookings a salon has for one specific day. Used to work out
      * which time slots are already taken before showing the time picker.
      *
