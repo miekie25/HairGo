@@ -2,11 +2,16 @@ package com.hairgo.app.activities
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.util.Patterns
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.hairgo.app.R
 import com.hairgo.app.databinding.ActivityRegisterClientBinding
+import java.util.Locale
 
 class RegisterClientActivity : AppCompatActivity() {
 
@@ -33,10 +38,36 @@ class RegisterClientActivity : AppCompatActivity() {
         }
 
         // "Already have an account? Log in" link
+        highlightLoginText()
+
         binding.tvLogin.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
         }
+    }
+
+    private fun highlightLoginText() {
+        val fullText = binding.tvLogin.text.toString()
+        val highlight = "Log in"
+
+        val startIndex = fullText
+            .lowercase(Locale.getDefault())
+            .indexOf(highlight.lowercase(Locale.getDefault()))
+
+        if (startIndex == -1) {
+            return
+        }
+
+        val spannable = SpannableString(fullText)
+
+        spannable.setSpan(
+            ForegroundColorSpan(ContextCompat.getColor(this, R.color.teal)),
+            startIndex,
+            startIndex + highlight.length,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+
+        binding.tvLogin.text = spannable
     }
 
     private fun setupDropdowns() {

@@ -315,6 +315,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="14dp"
                 android:text="Already have an account? Log in"
                 android:textColor="@color/grey_medium"
                 android:textSize="14sp" />
