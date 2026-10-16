@@ -23,7 +23,7 @@
                 android:id="@+id/btnBack"
                 android:layout_width="28dp"
                 android:layout_height="28dp"
-                android:src="@drawable/ic_back_arrow"
+                android:src="@drawable/ic_back"
                 android:padding="2dp"
                 android:layout_marginBottom="16dp"
                 android:clickable="true"
@@ -31,20 +31,22 @@
                 android:background="?attr/selectableItemBackgroundBorderless"/>
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Terms &amp; Conditions"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="@color/heading"
+                android:textAlignment="center"
                 android:layout_marginBottom="4dp"/>
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Please review before you finish creating your account"
                 android:textSize="13sp"
                 android:textColor="@color/grey_medium"
+                android:textAlignment="center"
                 android:layout_marginBottom="20dp"/>
 
             <com.google.android.material.card.MaterialCardView
@@ -170,7 +172,7 @@
                     android:id="@+id/cbTermsAgree"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:buttonTint="@color/teal"/>
+                    app:buttonTint="@color/navy"/>
 
                 <TextView
                     android:layout_width="0dp"
@@ -192,7 +194,7 @@
                     android:id="@+id/cbPopiaConsent"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:buttonTint="@color/teal"/>
+                    app:buttonTint="@color/navy"/>
 
                 <TextView
                     android:layout_width="0dp"
@@ -223,7 +225,7 @@
                         android:id="@+id/cbNotRobot"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        app:buttonTint="@color/teal"/>
+                        app:buttonTint="@color/navy"/>
 
                     <TextView
                         android:layout_width="0dp"
@@ -243,10 +245,10 @@
                 android:textAllCaps="false"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/background_light"
                 android:enabled="false"
                 app:cornerRadius="14dp"
-                app:backgroundTint="@color/teal"
+                app:backgroundTint="@color/navy"
                 app:elevation="0dp"/>
 
         </LinearLayout>

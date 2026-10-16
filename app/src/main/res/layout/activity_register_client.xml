@@ -276,7 +276,7 @@
                 android:textAllCaps="false"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                app:backgroundTint="@color/teal"
+                app:backgroundTint="@color/navy"
                 app:cornerRadius="16dp"
                 app:elevation="4dp" />
 
