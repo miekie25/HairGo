@@ -1,5 +1,7 @@
 package com.hairgo.app.firebase;
 
+import android.util.Log;
+
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -11,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 
 public class ReviewManager {
+    private static final String TAG = "ReviewManager";
+
     private FirebaseFirestore db;
 
     public ReviewManager() {
@@ -89,7 +93,18 @@ public class ReviewManager {
                     Map<String, Object> update = new HashMap<>();
                     update.put("avgRating", avgRating);
 
-                    db.collection("salons").document(salonId).update(update);
-                });
+                    // The write is checked rather than fire-and-forget so a
+                    // rejected update (for example a security-rules denial)
+                    // shows up in the log instead of failing silently.
+                    db.collection("salons").document(salonId).update(update)
+                            .addOnSuccessListener(unused ->
+                                    Log.d(TAG, "avgRating=" + avgRating
+                                            + " saved for salon " + salonId))
+                            .addOnFailureListener(e ->
+                                    Log.e(TAG, "avgRating save FAILED for salon "
+                                            + salonId, e));
+                })
+                .addOnFailureListener(e ->
+                        Log.e(TAG, "Could not read reviews for salon " + salonId, e));
     }
 }

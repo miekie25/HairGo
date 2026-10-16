@@ -102,6 +102,18 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    /**
+     * Reloads when the fragment becomes visible again, so a rating changed by a
+     * review (or a new salon) is reflected without a manual refresh.
+     */
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (salonManager != null) {
+            loadSalons();
+        }
+    }
+
     private void loadSalons() {
         salonManager.getAllSalons(new SalonManager.SalonListCallback() {
             @Override

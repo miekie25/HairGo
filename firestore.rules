@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && getUserRole() == 'admin';
+    }
+
+    // USERS
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if false;
+    }
+
+    // SALONS
+    match /salons/{salonId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      // Owner or admin may change anything. Any signed-in user may update ONLY
+      // avgRating, which the review flow recalculates when a review is added.
+      allow update: if isSignedIn() && (
+        resource.data.ownerID == request.auth.uid ||
+        isAdmin() ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avgRating'])
+      );
+      allow delete: if false;
+    }
+
+    // BOOKINGS
+    match /bookings/{bookingId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.clientID == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.clientID == request.auth.uid ||
+        isAdmin() ||
+        get(/databases/$(database)/documents/salons/$(resource.data.salonID)).data.ownerID == request.auth.uid
+      );
+      allow delete: if false;
+    }
+
+    // REVIEWS
+    match /reviews/{reviewId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.clientID == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.clientID == request.auth.uid || isAdmin());
+      allow delete: if false;
+    }
+
+    // MESSAGES
+    match /messages/{messageId} {
+      allow read: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid ||
+        resource.data.recipientUid == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // REPORTS
+    match /reports/{reportId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+
+      // Admin can do anything. The owner can edit their own report only
+      // while it is still pending, and only these content fields.
+      allow update: if isAdmin() || (
+        isOwner(resource.data.userID)
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+             'category', 'severity', 'description', 'userEmail',
+             'screenshots', 'isEdited', 'updatedAt'
+           ])
+      );
+
+      allow delete: if false;
+    }
+  }
+}

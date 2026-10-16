@@ -86,7 +86,13 @@ public class SalonManager {
         db.collection("salons").whereEqualTo("isDeleted", false).get()
                 .addOnSuccessListener(query -> {
                     List<Map<String, Object>> salons = new ArrayList<>();
-                    for (QueryDocumentSnapshot doc : query) salons.add(doc.getData());
+                    for (QueryDocumentSnapshot doc : query) {
+                        // Use the real document id, never a possibly-stale
+                        // salonID field, so ids stay consistent everywhere.
+                        Map<String, Object> data = new HashMap<>(doc.getData());
+                        data.put("salonID", doc.getId());
+                        salons.add(data);
+                    }
                     callback.onSuccess(salons);
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
@@ -99,7 +105,13 @@ public class SalonManager {
                 .get()
                 .addOnSuccessListener(query -> {
                     List<Map<String, Object>> salons = new ArrayList<>();
-                    for (QueryDocumentSnapshot doc : query) salons.add(doc.getData());
+                    for (QueryDocumentSnapshot doc : query) {
+                        // Use the real document id, never a possibly-stale
+                        // salonID field, so ids stay consistent everywhere.
+                        Map<String, Object> data = new HashMap<>(doc.getData());
+                        data.put("salonID", doc.getId());
+                        salons.add(data);
+                    }
                     callback.onSuccess(salons);
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
