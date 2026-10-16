@@ -18,9 +18,11 @@ import androidx.core.content.ContextCompat;
 import com.google.firebase.Timestamp;
 import com.hairgo.app.R;
 import com.hairgo.app.firebase.BookingManager;
+import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.fragments.LeaveReviewBottomSheet;
 import com.hairgo.app.models.Booking;
 import com.hairgo.app.utils.BookingSections;
+import com.hairgo.app.utils.MapsHelper;
 import com.hairgo.app.utils.ReminderScheduler;
 import com.hairgo.app.utils.Snackbars;
 
@@ -35,6 +37,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
 
     private TextView tvStatusBadge;
     private TextView tvExpiredNote;
+    private TextView tvSalonLocation;
     private androidx.appcompat.widget.AppCompatButton btnCancelBooking;
     private androidx.appcompat.widget.AppCompatButton btnEditBooking;
     private androidx.appcompat.widget.AppCompatButton btnLeaveReview;
@@ -153,6 +156,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
         TextView tvDateTime = findViewById(R.id.tvDateTime);
         tvStatusBadge = findViewById(R.id.tvStatusBadge);
         tvExpiredNote = findViewById(R.id.tvExpiredNote);
+        tvSalonLocation = findViewById(R.id.tvSalonLocation);
         btnCancelBooking = findViewById(R.id.btnCancelBooking);
         btnEditBooking = findViewById(R.id.btnEditBooking);
         btnLeaveReview = findViewById(R.id.btnLeaveReview);
@@ -163,6 +167,10 @@ public class BookingDetailsActivity extends AppCompatActivity {
 
         tvSalonName.setText(booking.getSalonName());
         tvServiceName.setText(booking.getServiceLabel());
+
+        // Location is loaded separately because it lives on the salon, not the
+        // booking. The row hides itself if the salon cannot be resolved.
+        loadSalonLocation();
 
         if (booking.getDateTime() != null) {
             SimpleDateFormat format = new SimpleDateFormat(
@@ -178,6 +186,45 @@ public class BookingDetailsActivity extends AppCompatActivity {
         updateEditButton(currentStatus);
 
         btnCancelBooking.setOnClickListener(v -> showCancelConfirmation());
+    }
+
+    /**
+     * Loads the salon's location and turns the row into a tap-to-open-Google-Maps
+     * link. The row stays hidden when the salon cannot be resolved (deleted or
+     * offline), so the screen never shows an empty location line.
+     */
+    private void loadSalonLocation() {
+        if (currentSalonId == null || currentSalonId.isEmpty()) {
+            tvSalonLocation.setVisibility(View.GONE);
+            return;
+        }
+
+        new SalonManager().getSalonById(currentSalonId, new SalonManager.SalonDataCallback() {
+            @Override
+            public void onSuccess(Map<String, Object> salonData) {
+                bindLocation(salonData == null ? null : asString(salonData.get("location")));
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                tvSalonLocation.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void bindLocation(String location) {
+        if (location == null || location.trim().isEmpty()) {
+            tvSalonLocation.setVisibility(View.GONE);
+            return;
+        }
+
+        tvSalonLocation.setText(location);
+        tvSalonLocation.setOnClickListener(v -> MapsHelper.openLocation(this, location));
+        tvSalonLocation.setVisibility(View.VISIBLE);
+    }
+
+    private String asString(Object value) {
+        return value == null ? null : value.toString();
     }
 
     /**

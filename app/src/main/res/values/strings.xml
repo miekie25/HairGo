@@ -100,6 +100,9 @@
     <string name="title_booking_details">Booking Details</string>
     <string name="label_service">Service</string>
     <string name="label_date_time">Date &amp; Time</string>
+    <string name="label_location">Location</string>
+    <string name="maps_open_location">Open in Google Maps</string>
+    <string name="maps_app_not_found">No app available to open this location</string>
     <string name="btn_cancel_booking">Cancel Booking</string>
     <string name="cancel_booking_confirm_title">Cancel this booking?</string>
     <string name="cancel_booking_confirm_message">This will let the salon know you can\'t make it. This can\'t be undone.</string>

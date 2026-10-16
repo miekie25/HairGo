@@ -2,6 +2,7 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
@@ -75,13 +76,36 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
+        <TextView
+            android:id="@+id/tvSalonLocation"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="4dp"
+            android:drawablePadding="6dp"
+            android:drawableStart="@drawable/ic_location"
+            android:drawableEnd="@drawable/ic_chevron_right"
+            android:drawableTint="@color/teal_primary"
+            android:contentDescription="@string/maps_open_location"
+            android:textColor="@color/teal_primary"
+            android:textSize="15sp"
+            app:layout_constraintTop_toBottomOf="@id/tvSalonName"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:text="Sandton, Johannesburg"/>
+
         <View
             android:id="@+id/divider1"
             android:layout_width="0dp"
             android:layout_height="1dp"
             android:layout_marginTop="20dp"
             android:background="@color/grey_border"
-            app:layout_constraintTop_toBottomOf="@id/tvSalonName"
+            app:layout_constraintTop_toBottomOf="@id/tvSalonLocation"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
