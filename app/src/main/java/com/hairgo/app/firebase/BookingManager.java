@@ -250,7 +250,9 @@ public class BookingManager {
                 .get()
                 .addOnSuccessListener(query -> {
                     List<Map<String, Object>> bookings = new ArrayList<>();
-                    for (QueryDocumentSnapshot doc : query) bookings.add(doc.getData());
+                    for (QueryDocumentSnapshot doc : query) {
+                        if (holdsTimeSlot(doc)) bookings.add(doc.getData());
+                    }
                     callback.onSuccess(bookings);
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
@@ -271,7 +273,9 @@ public class BookingManager {
                 .get()
                 .addOnSuccessListener(query -> {
                     List<Map<String, Object>> bookings = new ArrayList<>();
-                    for (QueryDocumentSnapshot doc : query) bookings.add(doc.getData());
+                    for (QueryDocumentSnapshot doc : query) {
+                        if (holdsTimeSlot(doc)) bookings.add(doc.getData());
+                    }
                     callback.onSuccess(bookings);
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
@@ -372,5 +376,15 @@ public class BookingManager {
         db.collection("bookings").document(bookingId).update(update)
                 .addOnSuccessListener(unused -> callback.onSuccess())
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
+     * A cancelled or expired booking no longer holds its time slot. The salon-wide
+     * availability queries use this so a declined booking can stay visible to the
+     * client as "cancelled" without blocking that time for anyone else.
+     */
+    private static boolean holdsTimeSlot(QueryDocumentSnapshot doc) {
+        String status = doc.getString("status");
+        return !"cancelled".equals(status) && !"expired".equals(status);
     }
 }

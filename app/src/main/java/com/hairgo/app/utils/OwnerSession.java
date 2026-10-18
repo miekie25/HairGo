@@ -6,7 +6,9 @@ import android.content.SharedPreferences;
 import com.hairgo.app.models.OwnerSalon;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Holds who the logged-in owner is and which of their salons is currently selected.
@@ -20,6 +22,8 @@ public class OwnerSession {
     private static List<OwnerSalon> salons = new ArrayList<>();
     private static String selectedSalonId;
     private static String ownerName = "";
+    // Client names already looked up this session. "" means looked up, no name found.
+    private static final Map<String, String> clientNames = new HashMap<>();
 
     private OwnerSession() {}
 
@@ -61,10 +65,20 @@ public class OwnerSession {
 
     public static void setOwnerName(String name) { ownerName = name == null ? "" : name; }
 
+    /** Returns null if this client has not been looked up yet. */
+    public static String getCachedClientName(String clientId) {
+        return clientNames.get(clientId);
+    }
+
+    public static void cacheClientName(String clientId, String name) {
+        clientNames.put(clientId, name == null ? "" : name);
+    }
+
     /** Call on logout so the next account never sees this owner's data. */
     public static void clear() {
         salons = new ArrayList<>();
         selectedSalonId = null;
         ownerName = "";
+        clientNames.clear();
     }
 }

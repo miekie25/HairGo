@@ -16,6 +16,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.hairgo.app.R;
+import com.hairgo.app.firebase.AuthManager;
 import com.hairgo.app.firebase.OwnerManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.fragments.OwnerBookingsFragment;
@@ -67,28 +68,81 @@ public class OwnerDashboardActivity extends AppCompatActivity {
             return true;
         });
 
-        loadOwnerData();
+        // Nothing owner-only is shown until the account has been verified as an owner.
+        bottomNav.setVisibility(View.INVISIBLE);
+        verifyOwnerThenLoad();
     }
 
-    /** Owner name first, then their salons; tabs only load once both are known. */
-    private void loadOwnerData() {
+    /**
+     * Being signed in is not enough: the account must actually be an owner and must not be
+     * deactivated. One read of users/{uid} gives the name, the role and the deactivated flag.
+     * Anyone else is sent to the screen that matches their role.
+     */
+    private void verifyOwnerThenLoad() {
         progress.setVisibility(View.VISIBLE);
 
-        ownerManager.getOwnerName(ownerId, new OwnerManager.OwnerCallback<String>() {
+        ownerManager.getOwnerProfile(ownerId, new OwnerManager.OwnerCallback<OwnerManager.OwnerProfile>() {
             @Override
-            public void onSuccess(String name) {
+            public void onSuccess(OwnerManager.OwnerProfile profile) {
                 if (isFinishing() || isDestroyed()) return;
-                OwnerSession.setOwnerName(name);
-                tvGreeting.setText(name.isEmpty() ? "Welcome back" : "Welcome back, " + name);
+
+                if (profile.deleted) {
+                    new AuthManager().signOut();
+                    OwnerSession.clear();
+                    Toast.makeText(OwnerDashboardActivity.this,
+                            "This account has been deactivated.", Toast.LENGTH_LONG).show();
+                    goToLogin();
+                    return;
+                }
+
+                if (!"owner".equals(profile.role)) {
+                    Toast.makeText(OwnerDashboardActivity.this,
+                            "This area is for salon owners only.", Toast.LENGTH_LONG).show();
+                    redirectByRole(profile.role);
+                    return;
+                }
+
+                OwnerSession.setOwnerName(profile.name);
+                tvGreeting.setText(profile.name.isEmpty()
+                        ? "Welcome back" : "Welcome back, " + profile.name);
                 loadSalons();
             }
 
             @Override
             public void onFailure(String errorMessage) {
                 if (isFinishing() || isDestroyed()) return;
-                loadSalons();
+                // Fail closed: if the role cannot be confirmed, do not show owner screens.
+                progress.setVisibility(View.GONE);
+                Toast.makeText(OwnerDashboardActivity.this,
+                        "Could not verify your account. Please log in again.",
+                        Toast.LENGTH_LONG).show();
+                goToLogin();
             }
         });
+    }
+
+    private void goToLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    /** Sends a signed-in non-owner to the dashboard that belongs to their role. */
+    private void redirectByRole(String role) {
+        Class<?> target;
+        if ("client".equals(role)) {
+            target = ClientDashboardActivity.class;
+        } else if ("admin".equals(role)) {
+            target = AdminDashboardActivity.class;
+        } else {
+            goToLogin();
+            return;
+        }
+        Intent intent = new Intent(this, target);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private void loadSalons() {
@@ -98,6 +152,7 @@ public class OwnerDashboardActivity extends AppCompatActivity {
                 if (isFinishing() || isDestroyed()) return;
                 OwnerSession.setSalons(OwnerDashboardActivity.this, salons);
                 progress.setVisibility(View.GONE);
+                bottomNav.setVisibility(View.VISIBLE);
                 updateSalonPicker();
                 loadTab(currentTabId);
 
@@ -114,6 +169,7 @@ public class OwnerDashboardActivity extends AppCompatActivity {
                 progress.setVisibility(View.GONE);
                 Toast.makeText(OwnerDashboardActivity.this,
                         "Could not load your salons", Toast.LENGTH_SHORT).show();
+                bottomNav.setVisibility(View.VISIBLE);
                 updateSalonPicker();
                 loadTab(currentTabId);
             }

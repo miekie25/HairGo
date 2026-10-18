@@ -10,9 +10,10 @@ public class OwnerBooking {
 
     private final String bookingId;
     private final String clientId;
-    private final String clientName; // may be empty until createBooking stores it
+    private String clientName; // may be empty until it is stored or looked up
     private final String serviceName;
     private final Date dateTime;
+    private boolean cancelledByClient;
     private String status; // "pending", "confirmed", "completed" (cancelled bookings are soft-deleted)
 
     public OwnerBooking(String bookingId, String clientId, String clientName,
@@ -41,10 +42,16 @@ public class OwnerBooking {
         String clientName = asString(raw.get("clientName"));
         String service = asString(raw.get("serviceName"));
 
-        return new OwnerBooking(id, asString(raw.get("clientID")),
+        OwnerBooking booking = new OwnerBooking(id, asString(raw.get("clientID")),
                 clientName == null ? "" : clientName,
                 service == null ? "" : service,
                 date, status);
+
+        // The client's own Cancel sets isDeleted true; the owner's Decline leaves it false.
+        // That is how the two kinds of cancellation are told apart.
+        booking.cancelledByClient = "cancelled".equals(status)
+                && Boolean.TRUE.equals(raw.get("isDeleted"));
+        return booking;
     }
 
     private static String asString(Object value) {
@@ -60,6 +67,11 @@ public class OwnerBooking {
                 && a.get(Calendar.DAY_OF_YEAR) == b.get(Calendar.DAY_OF_YEAR);
     }
 
+    /** Still ahead of us and still needs the salon to turn up: pending or confirmed. */
+    public boolean isActiveUpcoming() {
+        return ("pending".equals(status) || "confirmed".equals(status)) && !isPast();
+    }
+
     public boolean isPast() {
         return dateTime != null && dateTime.before(new Date());
     }
@@ -67,8 +79,10 @@ public class OwnerBooking {
     public String getBookingId() { return bookingId; }
     public String getClientId() { return clientId; }
     public String getClientName() { return clientName; }
+    public void setClientName(String clientName) { this.clientName = clientName == null ? "" : clientName; }
     public String getServiceName() { return serviceName; }
     public Date getDateTime() { return dateTime; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public boolean isCancelledByClient() { return cancelledByClient; }
 }

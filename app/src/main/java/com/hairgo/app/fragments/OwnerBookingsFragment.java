@@ -15,28 +15,44 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.hairgo.app.R;
 import com.hairgo.app.adapters.OwnerBookingAdapter;
 import com.hairgo.app.firebase.BookingManager;
+import com.hairgo.app.firebase.OwnerManager;
 import com.hairgo.app.models.OwnerBooking;
 import com.hairgo.app.utils.OwnerSession;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OwnerBookingsFragment extends Fragment {
 
-    private final List<OwnerBooking> bookings = new ArrayList<>();
+    private static final int FILTER_ALL = 0;
+    private static final int FILTER_PENDING = 1;
+    private static final int FILTER_UPCOMING = 2;
+    private static final int FILTER_PAST = 3;
+
+    /** Everything loaded for the selected salon. */
+    private final List<OwnerBooking> allBookings = new ArrayList<>();
+    /** What the list currently shows after the filter chips are applied. */
+    private final List<OwnerBooking> shownBookings = new ArrayList<>();
+    /** Clients whose name is currently being looked up, so each is fetched only once. */
+    private final Set<String> pendingLookups = new HashSet<>();
+
+    private int currentFilter = FILTER_ALL;
     private OwnerBookingAdapter adapter;
     private TextView tvEmpty;
     private SwipeRefreshLayout swipeRefresh;
     private BookingManager bookingManager;
+    private OwnerManager ownerManager;
     private ListenerRegistration bookingsListener;
-    private boolean receivedData;
 
     @Nullable
     @Override
@@ -49,12 +65,14 @@ public class OwnerBookingsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         bookingManager = new BookingManager();
+        ownerManager = new OwnerManager();
 
         RecyclerView rv = view.findViewById(R.id.rvOwnerBookings);
         tvEmpty = view.findViewById(R.id.tvBookingsEmpty);
         swipeRefresh = view.findViewById(R.id.swipeRefreshBookings);
+        ChipGroup chipGroup = view.findViewById(R.id.chipGroupFilter);
 
-        adapter = new OwnerBookingAdapter(bookings, new OwnerBookingAdapter.OnBookingActionListener() {
+        adapter = new OwnerBookingAdapter(shownBookings, new OwnerBookingAdapter.OnBookingActionListener() {
             @Override
             public void onConfirm(OwnerBooking booking) {
                 updateStatus(booking, "confirmed");
@@ -73,68 +91,70 @@ public class OwnerBookingsFragment extends Fragment {
 
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         rv.setAdapter(adapter);
-        swipeRefresh.setOnRefreshListener(this::refresh);
+        swipeRefresh.setOnRefreshListener(this::startListening);
+
+        chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) return;
+            int id = checkedIds.get(0);
+            if (id == R.id.chipPending) currentFilter = FILTER_PENDING;
+            else if (id == R.id.chipUpcoming) currentFilter = FILTER_UPCOMING;
+            else if (id == R.id.chipPast) currentFilter = FILTER_PAST;
+            else currentFilter = FILTER_ALL;
+            applyFilter();
+        });
     }
 
-    /**
-     * Listens while the fragment is on screen so the salon's bookings stay
-     * current in real time (a new client booking, or a status change made
-     * elsewhere, shows up without a manual refresh). The listener is removed in
-     * onStop so it does not keep reading in the background.
-     */
     @Override
-    public void onStart() {
-        super.onStart();
+    public void onResume() {
+        super.onResume();
         startListening();
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
+    public void onPause() {
+        super.onPause();
         stopListening();
     }
 
+    /**
+     * Keeps the list live while this tab is on screen: new requests and client cancellations
+     * appear on their own. Pull-to-refresh simply restarts the listener.
+     */
     private void startListening() {
+        stopListening();
+
         String salonId = OwnerSession.getSelectedSalonId();
         if (salonId == null) {
-            bookings.clear();
-            if (adapter != null) adapter.notifyDataSetChanged();
+            allBookings.clear();
             swipeRefresh.setRefreshing(false);
-            showEmpty("Add a salon to start receiving bookings");
+            applyFilter();
             return;
         }
 
         swipeRefresh.setRefreshing(true);
-        bookingsListener = bookingManager.listenToBookingsForSalon(salonId, new BookingManager.BookingListCallback() {
-            @Override
-            public void onSuccess(List<Map<String, Object>> raw) {
-                if (!isAdded()) return;
+        bookingsListener = ownerManager.listenToSalonBookings(salonId,
+                new BookingManager.BookingListCallback() {
+                    @Override
+                    public void onSuccess(List<Map<String, Object>> raw) {
+                        if (!isAdded()) return;
 
-                receivedData = true;
-                bookings.clear();
-                for (Map<String, Object> map : raw) {
-                    OwnerBooking booking = OwnerBooking.fromMap(map);
-                    if (booking != null) bookings.add(booking);
-                }
-                sortBookings();
-                adapter.notifyDataSetChanged();
-                swipeRefresh.setRefreshing(false);
-                showEmpty("No bookings yet");
-            }
+                        allBookings.clear();
+                        for (Map<String, Object> map : raw) {
+                            OwnerBooking booking = OwnerBooking.fromMap(map);
+                            if (booking != null) allBookings.add(booking);
+                        }
+                        swipeRefresh.setRefreshing(false);
+                        resolveMissingClientNames();
+                        refreshList();
+                    }
 
-            @Override
-            public void onFailure(String errorMessage) {
-                if (!isAdded()) return;
-                swipeRefresh.setRefreshing(false);
-                // A transient error after we already have data should not wipe
-                // the list; only fall back to the empty state on the first load.
-                if (!receivedData) {
-                    bookings.clear();
-                    adapter.notifyDataSetChanged();
-                    showEmpty("Could not load bookings");
-                }
-            }
-        });
+                    @Override
+                    public void onFailure(String errorMessage) {
+                        if (!isAdded()) return;
+                        swipeRefresh.setRefreshing(false);
+                        Toast.makeText(getContext(), "Could not load bookings", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void stopListening() {
@@ -144,27 +164,114 @@ public class OwnerBookingsFragment extends Fragment {
         }
     }
 
-    /** Pull-to-refresh re-attaches the listener so a fresh snapshot is fetched. */
-    private void refresh() {
-        stopListening();
-        startListening();
+    /**
+     * Bookings made before clientName was stored have no name on them. Fill those in from the
+     * client's profile, once per client. If a profile cannot be read or has no name, the card
+     * shows "Unknown client".
+     */
+    private void resolveMissingClientNames() {
+        for (OwnerBooking booking : allBookings) {
+            if (!booking.getClientName().isEmpty()) continue;
+
+            String clientId = booking.getClientId();
+            if (clientId == null || clientId.isEmpty()) continue;
+
+            String cached = OwnerSession.getCachedClientName(clientId);
+            if (cached != null) {
+                booking.setClientName(cached);
+                continue;
+            }
+
+            if (!pendingLookups.add(clientId)) continue; // already being fetched
+
+            ownerManager.getClientName(clientId, new OwnerManager.OwnerCallback<String>() {
+                @Override
+                public void onSuccess(String name) {
+                    OwnerSession.cacheClientName(clientId, name);
+                    pendingLookups.remove(clientId);
+                    if (!isAdded()) return;
+                    for (OwnerBooking b : allBookings) {
+                        if (clientId.equals(b.getClientId()) && b.getClientName().isEmpty()) {
+                            b.setClientName(name);
+                        }
+                    }
+                    adapter.notifyDataSetChanged();
+                }
+
+                @Override
+                public void onFailure(String errorMessage) {
+                    // Not cached, so a later refresh can try again. The card shows "Unknown client".
+                    pendingLookups.remove(clientId);
+                }
+            });
+        }
     }
 
-    /** Upcoming bookings first (soonest at the top), then past ones (most recent first). */
+    /** Re-sorts everything and re-applies the current filter. */
+    private void refreshList() {
+        sortBookings();
+        applyFilter();
+    }
+
+    /**
+     * Bookings that still need attention come first (soonest at the top). Everything else
+     * (completed, cancelled, expired, or already past) follows, most recent first.
+     */
     private void sortBookings() {
-        final Date now = new Date();
-        Collections.sort(bookings, (a, b) -> {
+        Collections.sort(allBookings, (a, b) -> {
+            boolean aActive = a.isActiveUpcoming();
+            boolean bActive = b.isActiveUpcoming();
+            if (aActive != bActive) return aActive ? -1 : 1;
+
             Date ta = a.getDateTime();
             Date tb = b.getDateTime();
             if (ta == null && tb == null) return 0;
             if (ta == null) return 1;
             if (tb == null) return -1;
-
-            boolean aPast = ta.before(now);
-            boolean bPast = tb.before(now);
-            if (aPast != bPast) return aPast ? 1 : -1;
-            return aPast ? tb.compareTo(ta) : ta.compareTo(tb);
+            return aActive ? ta.compareTo(tb) : tb.compareTo(ta);
         });
+    }
+
+    private void applyFilter() {
+        shownBookings.clear();
+        for (OwnerBooking booking : allBookings) {
+            if (matchesFilter(booking)) shownBookings.add(booking);
+        }
+        adapter.notifyDataSetChanged();
+
+        tvEmpty.setText(emptyMessage());
+        tvEmpty.setVisibility(shownBookings.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private boolean matchesFilter(OwnerBooking booking) {
+        switch (currentFilter) {
+            case FILTER_PENDING:
+                return "pending".equals(booking.getStatus());
+            case FILTER_UPCOMING:
+                return booking.isActiveUpcoming();
+            case FILTER_PAST:
+                return !booking.isActiveUpcoming();
+            case FILTER_ALL:
+            default:
+                return true;
+        }
+    }
+
+    private String emptyMessage() {
+        if (OwnerSession.getSelectedSalonId() == null) {
+            return "Add a salon to start receiving bookings";
+        }
+        switch (currentFilter) {
+            case FILTER_PENDING:
+                return "No pending requests";
+            case FILTER_UPCOMING:
+                return "No upcoming bookings";
+            case FILTER_PAST:
+                return "No past bookings";
+            case FILTER_ALL:
+            default:
+                return "No bookings yet";
+        }
     }
 
     private void updateStatus(OwnerBooking booking, String newStatus) {
@@ -174,8 +281,7 @@ public class OwnerBookingsFragment extends Fragment {
                     public void onSuccess() {
                         if (!isAdded()) return;
                         booking.setStatus(newStatus);
-                        int index = bookings.indexOf(booking);
-                        if (index >= 0) adapter.notifyItemChanged(index);
+                        refreshList();
                     }
 
                     @Override
@@ -189,36 +295,9 @@ public class OwnerBookingsFragment extends Fragment {
     private void confirmDecline(OwnerBooking booking) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Decline this booking?")
-                .setMessage("The time slot will become available again.")
-                .setPositiveButton("Decline", (dialog, which) -> declineBooking(booking))
+                .setMessage("The client will see it as cancelled, and the time slot becomes available again.")
+                .setPositiveButton("Decline", (dialog, which) -> updateStatus(booking, "cancelled"))
                 .setNegativeButton("Keep", null)
                 .show();
-    }
-
-    private void declineBooking(OwnerBooking booking) {
-        // cancelBooking also soft-deletes the booking, which is what frees the time slot.
-        bookingManager.cancelBooking(booking.getBookingId(), new BookingManager.BookingCallback() {
-            @Override
-            public void onSuccess() {
-                if (!isAdded()) return;
-                int index = bookings.indexOf(booking);
-                if (index >= 0) {
-                    bookings.remove(index);
-                    adapter.notifyItemRemoved(index);
-                }
-                showEmpty("No bookings yet");
-            }
-
-            @Override
-            public void onFailure(String errorMessage) {
-                if (!isAdded()) return;
-                Toast.makeText(getContext(), "Could not decline booking", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void showEmpty(String message) {
-        tvEmpty.setText(message);
-        tvEmpty.setVisibility(bookings.isEmpty() ? View.VISIBLE : View.GONE);
     }
 }

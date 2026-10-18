@@ -4,6 +4,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.hairgo.app.models.OwnerSalon;
 
@@ -31,7 +32,20 @@ public class OwnerManager {
         void onFailure(String errorMessage);
     }
 
-    /** Reads the owner's first name from users/{uid}. */
+    /** What the dashboard needs to know about the signed-in user before showing owner screens. */
+    public static class OwnerProfile {
+        public final String name;
+        public final String role;
+        public final boolean deleted;
+
+        OwnerProfile(String name, String role, boolean deleted) {
+            this.name = name;
+            this.role = role;
+            this.deleted = deleted;
+        }
+    }
+
+    /** Reads the owner's first name from users/{uid}. Kept so older callers still compile. */
     public void getOwnerName(String uid, OwnerCallback<String> callback) {
         db.collection("users").document(uid).get()
                 .addOnSuccessListener(doc -> {
@@ -39,6 +53,73 @@ public class OwnerManager {
                     callback.onSuccess(name == null ? "" : name);
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /** Reads the signed-in user's name, role and deactivated flag from users/{uid}. */
+    public void getOwnerProfile(String uid, OwnerCallback<OwnerProfile> callback) {
+        db.collection("users").document(uid).get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) {
+                        callback.onFailure("User profile was not found.");
+                        return;
+                    }
+                    String name = doc.getString("name");
+                    String role = doc.getString("role");
+                    Boolean deleted = doc.getBoolean("isDeleted");
+                    callback.onSuccess(new OwnerProfile(
+                            name == null ? "" : name,
+                            role == null ? "" : role.trim().toLowerCase(),
+                            Boolean.TRUE.equals(deleted)));
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
+     * Looks up a client's full name from their profile, for bookings made before
+     * clientName was stored on the booking. Returns "" if the profile has no name.
+     */
+    public void getClientName(String uid, OwnerCallback<String> callback) {
+        db.collection("users").document(uid).get()
+                .addOnSuccessListener(doc -> {
+                    String first = doc.getString("name");
+                    String last = doc.getString("surname");
+                    String full = ((first == null ? "" : first) + " "
+                            + (last == null ? "" : last)).trim();
+                    callback.onSuccess(full);
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
+     * Live feed of one salon's bookings: fires now and again on every change, so a new request
+     * or a client's cancellation appears without refreshing. Remove the returned registration
+     * when the screen stops (onPause) to avoid background reads.
+     *
+     * <p>A client's cancellation is stored as status "cancelled" plus isDeleted true, which
+     * BookingManager.getBookingsForSalon hides. This query keeps those, so the owner sees them
+     * as cancelled. Any other soft-deleted booking stays hidden. A single equality filter, so
+     * no index is needed.
+     */
+    public ListenerRegistration listenToSalonBookings(String salonId,
+                                                      BookingManager.BookingListCallback callback) {
+        return db.collection("bookings")
+                .whereEqualTo("salonID", salonId)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) {
+                        callback.onFailure(error.getMessage());
+                        return;
+                    }
+                    List<Map<String, Object>> bookings = new ArrayList<>();
+                    if (snapshots != null) {
+                        for (QueryDocumentSnapshot doc : snapshots) {
+                            boolean deleted = Boolean.TRUE.equals(doc.getBoolean("isDeleted"));
+                            String status = doc.getString("status");
+                            if (deleted && !"cancelled".equals(status)) continue;
+                            bookings.add(doc.getData());
+                        }
+                    }
+                    callback.onSuccess(bookings);
+                });
     }
 
     /** All non-deleted salons owned by this user. Equality filters only, so no index is needed. */

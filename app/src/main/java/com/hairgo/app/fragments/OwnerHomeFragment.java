@@ -12,7 +12,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.firebase.firestore.ListenerRegistration;
 import com.hairgo.app.R;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.models.OwnerBooking;
@@ -25,7 +24,6 @@ import java.util.Map;
 public class OwnerHomeFragment extends Fragment {
 
     private BookingManager bookingManager;
-    private ListenerRegistration statsListener;
 
     @Nullable
     @Override
@@ -42,32 +40,26 @@ public class OwnerHomeFragment extends Fragment {
         wireQuickActions(view);
     }
 
-    /**
-     * Listens while the fragment is on screen so the stat cards stay current in
-     * real time (a new booking or a status change updates the counts). The
-     * listener is removed in onStop so it does not keep reading in the background.
-     */
     @Override
-    public void onStart() {
-        super.onStart();
-        startListening();
+    public void onResume() {
+        super.onResume();
+        refreshStats();
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        stopListening();
+    private void setGreeting(View view) {
+        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        String greeting;
+        if (hour < 12) greeting = "Good morning";
+        else if (hour < 17) greeting = "Good afternoon";
+        else greeting = "Good evening";
+        ((TextView) view.findViewById(R.id.tvGreeting)).setText(greeting);
     }
 
-    private void startListening() {
+    private void refreshStats() {
         String salonId = OwnerSession.getSelectedSalonId();
-        if (salonId == null) {
-            // No salon yet: the cards have nothing to count.
-            resetStats();
-            return;
-        }
+        if (salonId == null) return; // layout already shows zeros
 
-        statsListener = bookingManager.listenToBookingsForSalon(salonId, new BookingManager.BookingListCallback() {
+        bookingManager.getBookingsForSalon(salonId, new BookingManager.BookingListCallback() {
             @Override
             public void onSuccess(List<Map<String, Object>> raw) {
                 if (!isAdded() || getView() == null) return;
@@ -77,7 +69,10 @@ public class OwnerHomeFragment extends Fragment {
                     OwnerBooking booking = OwnerBooking.fromMap(map);
                     if (booking == null) continue;
 
-                    if (booking.isToday()) today++;
+                    // Cancelled and expired bookings stay in the list now, so they must not count.
+                    boolean live = !"cancelled".equals(booking.getStatus())
+                            && !"expired".equals(booking.getStatus());
+                    if (booking.isToday() && live) today++;
                     if ("pending".equals(booking.getStatus())) pending++;
                     if ("confirmed".equals(booking.getStatus()) && !booking.isPast()) confirmed++;
                     if ("completed".equals(booking.getStatus())) completed++;
@@ -90,32 +85,9 @@ public class OwnerHomeFragment extends Fragment {
 
             @Override
             public void onFailure(String errorMessage) {
-                // Leave the current values; the Bookings tab reports load errors.
+                // Leave the zeros; the Bookings tab reports load errors.
             }
         });
-    }
-
-    private void stopListening() {
-        if (statsListener != null) {
-            statsListener.remove();
-            statsListener = null;
-        }
-    }
-
-    private void resetStats() {
-        setText(R.id.tvTodayBookingsCount, "0");
-        setText(R.id.tvPendingCount, "0");
-        setText(R.id.tvConfirmedCount, "0");
-        setText(R.id.tvCompletedCount, "0");
-    }
-
-    private void setGreeting(View view) {
-        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        String greeting;
-        if (hour < 12) greeting = "Good morning";
-        else if (hour < 17) greeting = "Good afternoon";
-        else greeting = "Good evening";
-        ((TextView) view.findViewById(R.id.tvGreeting)).setText(greeting);
     }
 
     private void setText(int viewId, String value) {

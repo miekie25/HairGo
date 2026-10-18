@@ -49,7 +49,7 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
         OwnerBooking booking = bookings.get(position);
 
         String clientName = booking.getClientName();
-        holder.tvClientName.setText(clientName.isEmpty() ? "Client" : clientName);
+        holder.tvClientName.setText(clientName.isEmpty() ? "Unknown client" : clientName);
         holder.tvService.setText(booking.getServiceName());
 
         if (booking.getDateTime() != null) {
@@ -60,7 +60,14 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
         }
 
         String status = booking.getStatus();
-        holder.tvStatusBadge.setText(capitalize(status));
+        // Tell the two kinds of cancellation apart for the owner.
+        String label;
+        if ("cancelled".equals(status)) {
+            label = booking.isCancelledByClient() ? "Client cancelled" : "Declined";
+        } else {
+            label = capitalize(status);
+        }
+        holder.tvStatusBadge.setText(label);
 
         int colorRes;
         switch (status) {
@@ -72,6 +79,9 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
                 break;
             case "cancelled":
                 colorRes = R.color.error;
+                break;
+            case "expired":
+                colorRes = R.color.grey_medium;
                 break;
             case "pending":
             default:
