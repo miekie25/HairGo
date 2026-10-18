@@ -9,7 +9,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
 
         <include layout="@layout/view_auth_header"/>
 
@@ -17,18 +18,19 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:paddingHorizontal="24dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="32dp">
 
             <!-- Welcome title -->
             <TextView
                 android:id="@+id/tvWelcome"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="4dp"
-                android:text="Welcome to HairGo 👋 "
+                android:layout_marginBottom="6dp"
+                android:text="Welcome to HairGo 👋"
                 android:textColor="@color/heading"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold"
                 android:textAlignment="center"/>
 
@@ -40,18 +42,19 @@
                 android:text="Tell us how you'll be using the app"
                 android:textSize="14sp"
                 android:textColor="@color/grey_medium"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="32dp"
                 android:textAlignment="center"/>
 
+            <!-- Client Card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardClient"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="3dp"
+                android:layout_marginBottom="20dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
                 app:strokeColor="@color/text_primary"
-                app:strokeWidth="1dp"
+                app:strokeWidth="1.5dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground">
@@ -59,57 +62,60 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="18dp">
+                    android:orientation="horizontal"
+                    android:padding="24dp">
 
                     <TextView
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
                         android:background="@drawable/bg_otp_box_focused"
                         android:gravity="center"
                         android:text="💇"
-                        android:textSize="22sp" />
+                        android:textSize="26sp" />
 
                     <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_weight="1"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:orientation="vertical"
-                        android:paddingHorizontal="14dp">
+                        android:paddingHorizontal="16dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="I'm a Client"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/text_primary"/>
+                            android:textColor="@color/text_primary"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
+                            android:layout_marginTop="4dp"
+                            android:lineSpacingExtra="2dp"
                             android:text="Book appointments with salons near you"
-                            android:textSize="12.5sp"
-                            android:textColor="@color/text_primary"/>
+                            android:textColor="@color/text_primary"
+                            android:textSize="13.5sp" />
                     </LinearLayout>
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_chevron_right"/>
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/text_primary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Salon Owner Card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardOwner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="3dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
                 app:strokeColor="@color/grey_dark"
-                app:strokeWidth="1dp"
+                app:strokeWidth="1.5dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground">
@@ -119,46 +125,49 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="18dp">
+                    android:padding="24dp">
 
                     <TextView
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
                         android:background="@drawable/bg_otp_box_focused"
                         android:gravity="center"
                         android:text="🏪"
-                        android:textSize="22sp"/>
+                        android:textSize="26sp"/>
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_weight="1"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:paddingHorizontal="14dp">
+                        android:paddingHorizontal="16dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="I'm a Salon Owner"
-                            android:textSize="16sp"
+                            android:textSize="18sp"
                             android:textStyle="bold"
                             android:textColor="@color/text_primary"/>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
+                            android:layout_marginTop="4dp"
                             android:text="Set up your salon and list the services you offer"
-                            android:textSize="12.5sp"
-                            android:textColor="@color/text_primary"/>
+                            android:textSize="13.5sp"
+                            android:textColor="@color/text_primary"
+                            android:lineSpacingExtra="2dp"/>
                     </LinearLayout>
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_chevron_right"/>
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/text_primary"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

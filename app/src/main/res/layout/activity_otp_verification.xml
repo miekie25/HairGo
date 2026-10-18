@@ -25,7 +25,7 @@
                 android:layout_width="28dp"
                 android:layout_height="28dp"
                 android:layout_gravity="start"
-                android:src="@drawable/ic_back_arrow"
+                android:src="@drawable/ic_back"
                 android:padding="2dp"
                 android:layout_marginBottom="16dp"
                 android:clickable="true"
@@ -45,66 +45,94 @@
                 android:id="@+id/tvOtpSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="We've sent a 4-digit code to your number"
+                android:text="We've sent a 6-digit code to your number"
                 android:textSize="13.5sp"
                 android:textColor="@color/grey_medium"
                 android:gravity="center"
                 android:layout_marginBottom="32dp"/>
 
+            <!-- 6-digit OTP Input Container -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
+                android:gravity="center"
                 android:layout_marginBottom="24dp">
 
                 <EditText
                     android:id="@+id/etOtp1"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:layout_marginEnd="12dp"
+                    android:layout_width="48dp"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="6dp"
                     android:background="@drawable/bg_otp_box_selector"
                     android:gravity="center"
                     android:inputType="number"
                     android:maxLength="1"
-                    android:textSize="22sp"
+                    android:textSize="20sp"
                     android:textStyle="bold"
                     android:textColor="@color/heading"/>
 
                 <EditText
                     android:id="@+id/etOtp2"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:layout_marginEnd="12dp"
+                    android:layout_width="48dp"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="6dp"
                     android:background="@drawable/bg_otp_box_selector"
                     android:gravity="center"
                     android:inputType="number"
                     android:maxLength="1"
-                    android:textSize="22sp"
+                    android:textSize="20sp"
                     android:textStyle="bold"
                     android:textColor="@color/heading"/>
 
                 <EditText
                     android:id="@+id/etOtp3"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:layout_marginEnd="12dp"
+                    android:layout_width="48dp"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="6dp"
                     android:background="@drawable/bg_otp_box_selector"
                     android:gravity="center"
                     android:inputType="number"
                     android:maxLength="1"
-                    android:textSize="22sp"
+                    android:textSize="20sp"
                     android:textStyle="bold"
                     android:textColor="@color/heading"/>
 
                 <EditText
                     android:id="@+id/etOtp4"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
+                    android:layout_width="48dp"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="6dp"
                     android:background="@drawable/bg_otp_box_selector"
                     android:gravity="center"
                     android:inputType="number"
                     android:maxLength="1"
-                    android:textSize="22sp"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/heading"/>
+
+                <EditText
+                    android:id="@+id/etOtp5"
+                    android:layout_width="48dp"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_otp_box_selector"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/heading"/>
+
+                <EditText
+                    android:id="@+id/etOtp6"
+                    android:layout_width="48dp"
+                    android:layout_height="52dp"
+                    android:background="@drawable/bg_otp_box_selector"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textSize="20sp"
                     android:textStyle="bold"
                     android:textColor="@color/heading"/>
             </LinearLayout>
@@ -114,7 +142,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Resend OTP"
-                android:textColor="@color/teal"
+                android:textColor="@color/navy"
                 android:textStyle="bold"
                 android:textSize="14sp"
                 android:padding="8dp"
