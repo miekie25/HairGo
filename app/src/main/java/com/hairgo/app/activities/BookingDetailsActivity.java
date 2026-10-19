@@ -20,6 +20,7 @@ import com.hairgo.app.R;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.fragments.LeaveReviewBottomSheet;
+import com.hairgo.app.fragments.ReportProblemBottomSheet;
 import com.hairgo.app.models.Booking;
 import com.hairgo.app.utils.BookingSections;
 import com.hairgo.app.utils.MapsHelper;
@@ -41,6 +42,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
     private androidx.appcompat.widget.AppCompatButton btnCancelBooking;
     private androidx.appcompat.widget.AppCompatButton btnEditBooking;
     private androidx.appcompat.widget.AppCompatButton btnLeaveReview;
+    private androidx.appcompat.widget.AppCompatButton btnReportSalon;
     private ProgressBar progress;
     private View contentGroup;
     private BookingManager bookingManager;
@@ -160,10 +162,12 @@ public class BookingDetailsActivity extends AppCompatActivity {
         btnCancelBooking = findViewById(R.id.btnCancelBooking);
         btnEditBooking = findViewById(R.id.btnEditBooking);
         btnLeaveReview = findViewById(R.id.btnLeaveReview);
+        btnReportSalon = findViewById(R.id.btnReportSalon);
         currentSalonId = booking.getSalonId();
 
         btnLeaveReview.setOnClickListener(v -> showLeaveReview());
         btnEditBooking.setOnClickListener(v -> onEditClicked(booking));
+        btnReportSalon.setOnClickListener(v -> showReportSalon(booking));
 
         tvSalonName.setText(booking.getSalonName());
         tvServiceName.setText(booking.getServiceLabel());
@@ -328,6 +332,20 @@ public class BookingDetailsActivity extends AppCompatActivity {
         LeaveReviewBottomSheet
                 .newInstance(bookingId, currentSalonId)
                 .show(getSupportFragmentManager(), "leave_review");
+    }
+
+    /**
+     * Opens the report sheet pre-filled with this booking's salon and booking
+     * id. Falls back to a message if the booking has no resolvable salon.
+     */
+    private void showReportSalon(Booking booking) {
+        if (currentSalonId == null || currentSalonId.isEmpty()) {
+            Snackbars.show(findViewById(android.R.id.content), R.string.report_salon_unavailable);
+            return;
+        }
+        ReportProblemBottomSheet
+                .newInstanceForSalon(currentSalonId, booking.getSalonName(), bookingId)
+                .show(getSupportFragmentManager(), "report_problem");
     }
 
     private void showCancelConfirmation() {

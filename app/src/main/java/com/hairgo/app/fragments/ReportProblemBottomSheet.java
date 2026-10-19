@@ -14,6 +14,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -35,11 +36,14 @@ import com.hairgo.app.BuildConfig;
 import com.hairgo.app.R;
 import com.hairgo.app.databinding.BottomSheetReportProblemBinding;
 import com.hairgo.app.firebase.ReportManager;
+import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.Report;
 import com.hairgo.app.utils.Snackbars;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
@@ -48,6 +52,9 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
 
     public static final String RESULT_REPORT_UPDATED = "report_updated";
     private static final String ARG_REPORT_ID = "report_id";
+    private static final String ARG_SALON_ID = "salon_id";
+    private static final String ARG_SALON_NAME = "salon_name";
+    private static final String ARG_BOOKING_ID = "booking_id";
 
     private static final int MAX_SCREENSHOTS = 3;
     private static final int MIN_DESCRIPTION = 10;
@@ -63,6 +70,19 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
     /** Non-null when the sheet is editing an existing report. */
     private String editReportId;
     private Report editingReport;
+
+    /**
+     * Set when the sheet is opened from a salon or a booking, so the salon issue
+     * can be pre-filled. bookingId is also stored on the report when present.
+     */
+    private String presetSalonId;
+    private String presetSalonName;
+    private String presetBookingId;
+
+    /** Salon name -> id, filled from the live salon list for the picker. */
+    private final List<String> salonNames = new ArrayList<>();
+    private final Map<String, String> salonNameToId = new HashMap<>();
+    private boolean salonsLoaded = false;
 
     /** Cached from users/{uid} so the submit path doesn't re-read it every time. */
     private boolean userLoaded = false;
@@ -81,6 +101,22 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
         ReportProblemBottomSheet sheet = new ReportProblemBottomSheet();
         Bundle args = new Bundle();
         args.putString(ARG_REPORT_ID, reportId);
+        sheet.setArguments(args);
+        return sheet;
+    }
+
+    /**
+     * Opened from a salon screen or a booking: starts on the Salon issue type
+     * with the salon pre-filled (and the booking noted when the report is
+     * raised from a specific booking).
+     */
+    public static ReportProblemBottomSheet newInstanceForSalon(
+            String salonId, String salonName, String bookingId) {
+        ReportProblemBottomSheet sheet = new ReportProblemBottomSheet();
+        Bundle args = new Bundle();
+        args.putString(ARG_SALON_ID, salonId);
+        args.putString(ARG_SALON_NAME, salonName);
+        args.putString(ARG_BOOKING_ID, bookingId);
         sheet.setArguments(args);
         return sheet;
     }
@@ -109,6 +145,9 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
 
         if (getArguments() != null) {
             editReportId = getArguments().getString(ARG_REPORT_ID);
+            presetSalonId = getArguments().getString(ARG_SALON_ID);
+            presetSalonName = getArguments().getString(ARG_SALON_NAME);
+            presetBookingId = getArguments().getString(ARG_BOOKING_ID);
         }
 
         setupClickListeners();
@@ -117,6 +156,7 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
             loadReportForEdit();
         } else {
             loadUserInfo();
+            applyPresetSalon();
         }
     }
 
@@ -127,6 +167,32 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
         binding.cgCategory.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (!checkedIds.isEmpty() && binding != null) {
                 binding.tvCategoryError.setVisibility(View.GONE);
+            }
+        });
+
+        // App issue <-> Salon issue: swaps the category section for the salon
+        // picker. The severity, description and screenshot fields stay shared.
+        binding.cgReportType.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (binding == null) return;
+            applyReportType(checkedIds.contains(R.id.chipTypeApp));
+        });
+
+        binding.cgSalonCategory.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (!checkedIds.isEmpty() && binding != null) {
+                binding.tvSalonCategoryError.setVisibility(View.GONE);
+            }
+        });
+
+        binding.actSalon.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (binding != null) binding.tvSalonError.setVisibility(View.GONE);
             }
         });
 
@@ -148,6 +214,141 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
             }
         });
         binding.tvCharCounter.setText(getString(R.string.report_char_counter, 0));
+    }
+
+    /**
+     * Shows the app-issue category chips or the salon picker, depending on the
+     * chosen report type. The salon list is only fetched when first needed.
+     */
+    private void applyReportType(boolean appIssue) {
+        if (binding == null) return;
+
+        binding.llAppCategory.setVisibility(appIssue ? View.VISIBLE : View.GONE);
+        binding.llSalonFields.setVisibility(appIssue ? View.GONE : View.VISIBLE);
+
+        if (!appIssue) {
+            ensureSalonsLoaded();
+        }
+    }
+
+    /** Pre-selects Salon issue and fills the salon when opened with that context. */
+    private void applyPresetSalon() {
+        if (binding == null || presetSalonId == null || presetSalonId.isEmpty()) return;
+
+        binding.cgReportType.check(R.id.chipTypeSalon);
+        applyReportType(false);
+
+        if (presetSalonName != null) {
+            binding.actSalon.setText(presetSalonName, false);
+        }
+        // A report raised from a booking is tied to that booking's salon, so the
+        // picker is locked to keep salonID and bookingID consistent.
+        if (presetBookingId != null && !presetBookingId.isEmpty()) {
+            binding.actSalon.setEnabled(false);
+        }
+    }
+
+    private void ensureSalonsLoaded() {
+        if (salonsLoaded) return;
+        salonsLoaded = true;
+        loadSalons();
+    }
+
+    /** Fills the salon dropdown with every live salon (name -> id). */
+    private void loadSalons() {
+        new SalonManager().getAllSalons(new SalonManager.SalonListCallback() {
+            @Override
+            public void onSuccess(List<Map<String, Object>> salons) {
+                if (!isAdded() || binding == null) return;
+
+                salonNames.clear();
+                salonNameToId.clear();
+
+                for (Map<String, Object> salon : salons) {
+                    if (salon == null) continue;
+                    Object idValue = salon.get("salonID");
+                    Object nameValue = salon.get("name");
+                    if (idValue == null || nameValue == null) continue;
+
+                    String id = idValue.toString();
+                    String name = nameValue.toString();
+                    if (id.isEmpty() || name.trim().isEmpty()) continue;
+
+                    salonNames.add(name);
+                    salonNameToId.put(name, id);
+                }
+
+                // Keep the preset salon usable even if the live list didn't include it.
+                if (presetSalonName != null && !presetSalonName.isEmpty()
+                        && presetSalonId != null && !salonNameToId.containsKey(presetSalonName)) {
+                    salonNames.add(presetSalonName);
+                    salonNameToId.put(presetSalonName, presetSalonId);
+                }
+
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                        requireContext(), android.R.layout.simple_dropdown_item_1line, salonNames);
+                binding.actSalon.setAdapter(adapter);
+                binding.actSalon.setThreshold(0);
+
+                // Setting the adapter can clear the field via the filter, so put
+                // the pre-filled salon back if it was wiped.
+                if (presetSalonName != null && !presetSalonName.isEmpty()
+                        && binding.actSalon.getText().toString().trim().isEmpty()) {
+                    binding.actSalon.setText(presetSalonName, false);
+                }
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (!isAdded() || binding == null) return;
+                Log.w(TAG, "Could not load salons for reporting: " + errorMessage);
+                Snackbars.show(binding.getRoot(), R.string.report_salon_unavailable);
+            }
+        });
+    }
+
+    private boolean isSalonIssue() {
+        return binding != null && binding.chipTypeSalon.isChecked();
+    }
+
+    /**
+     * Turns the typed/picked salon name into a salon id, or null when it does
+     * not match a known salon locally (used as the required-field check).
+     */
+    private String resolveSalonId(String salonName) {
+        if (salonName == null || salonName.isEmpty()) return null;
+
+        if (presetSalonId != null && presetSalonName != null
+                && salonName.equalsIgnoreCase(presetSalonName)) {
+            return presetSalonId;
+        }
+
+        String exact = salonNameToId.get(salonName);
+        if (exact != null) return exact;
+
+        for (Map.Entry<String, String> entry : salonNameToId.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(salonName)) return entry.getValue();
+        }
+        return null;
+    }
+
+    private int chipIdForSalonCategory(String category) {
+        if (Report.CATEGORY_SALON_SCAM.equals(category)) return R.id.chipSalonScam;
+        if (Report.CATEGORY_SALON_SAFETY.equals(category)) return R.id.chipSalonSafety;
+        if (Report.CATEGORY_SALON_HARASSMENT.equals(category)) return R.id.chipSalonHarassment;
+        return R.id.chipSalonOther;
+    }
+
+    @Nullable
+    private String selectedSalonCategory() {
+        if (binding == null) return null;
+        int checkedId = binding.cgSalonCategory.getCheckedChipId();
+        if (checkedId == View.NO_ID) return null;
+        if (checkedId == R.id.chipSalonScam) return Report.CATEGORY_SALON_SCAM;
+        if (checkedId == R.id.chipSalonSafety) return Report.CATEGORY_SALON_SAFETY;
+        if (checkedId == R.id.chipSalonHarassment) return Report.CATEGORY_SALON_HARASSMENT;
+        if (checkedId == R.id.chipSalonOther) return Report.CATEGORY_OTHER;
+        return null;
     }
 
     /**
@@ -216,7 +417,24 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
         binding.tvSheetSubtitle.setVisibility(View.GONE);
         binding.btnSubmitReport.setText(R.string.report_edit_button);
 
-        binding.cgCategory.check(chipIdForCategory(report.getCategory()));
+        // The report type is fixed once a report exists: an app report can't
+        // become a salon report (or the reverse) by editing it.
+        binding.cgReportType.setEnabled(false);
+
+        if (Report.TYPE_SALON.equals(report.getType())) {
+            presetSalonId = report.getSalonID();
+            presetSalonName = report.getSalonName();
+            binding.cgReportType.check(R.id.chipTypeSalon);
+            applyReportType(false);
+            binding.actSalon.setText(report.getSalonName() == null ? "" : report.getSalonName(), false);
+            binding.actSalon.setEnabled(false);
+            binding.cgSalonCategory.check(chipIdForSalonCategory(report.getCategory()));
+        } else {
+            binding.cgReportType.check(R.id.chipTypeApp);
+            applyReportType(true);
+            binding.cgCategory.check(chipIdForCategory(report.getCategory()));
+        }
+
         binding.cgSeverity.check(chipIdForSeverity(report.getSeverity()));
         binding.etProblemDescription.setText(report.getDescription());
         binding.etContactEmail.setText(report.getUserEmail());
@@ -379,10 +597,36 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
     // ---------------------------------------------------------------------
 
     private void submitReport() {
-        String category = selectedCategory();
-        if (category == null) {
-            binding.tvCategoryError.setVisibility(View.VISIBLE);
-            return;
+        boolean salonIssue = isSalonIssue();
+        String salonId = null;
+        String salonName = null;
+        String bookingId = null;
+        String category;
+
+        if (salonIssue) {
+            salonName = binding.actSalon.getText().toString().trim();
+            salonId = resolveSalonId(salonName);
+            if (salonId == null) {
+                binding.tvSalonError.setVisibility(View.VISIBLE);
+                binding.actSalon.requestFocus();
+                return;
+            }
+            binding.tvSalonError.setVisibility(View.GONE);
+
+            category = selectedSalonCategory();
+            if (category == null) {
+                binding.tvSalonCategoryError.setVisibility(View.VISIBLE);
+                return;
+            }
+            binding.tvSalonCategoryError.setVisibility(View.GONE);
+
+            bookingId = presetBookingId;
+        } else {
+            category = selectedCategory();
+            if (category == null) {
+                binding.tvCategoryError.setVisibility(View.VISIBLE);
+                return;
+            }
         }
 
         String description = binding.etProblemDescription.getText().toString().trim();
@@ -422,14 +666,23 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
 
         setSubmitting(true);
 
+        // Copies for the async callbacks below (the originals can't be captured
+        // in a lambda because they are assigned in a branch).
+        final boolean fSalonIssue = salonIssue;
+        final String fSalonId = salonId;
+        final String fSalonName = salonName;
+        final String fBookingId = bookingId;
+
         if (userLoaded) {
-            beginSubmission(user.getUid(), category, description, contactEmail);
+            beginSubmission(user.getUid(), fSalonIssue, category,
+                    fSalonId, fSalonName, fBookingId, description, contactEmail);
         } else {
             db.collection("users").document(user.getUid()).get()
                     .addOnSuccessListener(document -> {
                         if (!isAdded()) return;
                         cacheUserDocument(document);
-                        beginSubmission(user.getUid(), category, description, contactEmail);
+                        beginSubmission(user.getUid(), fSalonIssue, category,
+                                fSalonId, fSalonName, fBookingId, description, contactEmail);
                     })
                     .addOnFailureListener(e -> {
                         if (!isAdded()) return;
@@ -440,7 +693,9 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
-    private void beginSubmission(String uid, String category, String description, String contactEmail) {
+    private void beginSubmission(String uid, boolean salonIssue, String category,
+                                 String salonId, String salonName, String bookingId,
+                                 String description, String contactEmail) {
         String severity = selectedSeverity();
 
         Report report = new Report();
@@ -452,6 +707,10 @@ public class ReportProblemBottomSheet extends BottomSheetDialogFragment {
                 : (auth.getCurrentUser() != null && auth.getCurrentUser().getEmail() != null
                     ? auth.getCurrentUser().getEmail() : "")));
         report.setUserRole(cachedRole);
+        report.setType(salonIssue ? Report.TYPE_SALON : Report.TYPE_APP);
+        report.setSalonID(salonId == null ? "" : salonId);
+        report.setSalonName(salonName == null ? "" : salonName);
+        report.setBookingID(bookingId == null ? "" : bookingId);
         report.setCategory(category);
         report.setSeverity(severity);
         report.setDescription(description);

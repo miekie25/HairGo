@@ -162,6 +162,17 @@ public class MyReportsActivity extends AppCompatActivity {
             tvSeverity.setVisibility(View.GONE);
         }
 
+        // Salon issues also say which salon was reported.
+        TextView tvSalon = view.findViewById(R.id.tvSalon);
+        String salonName = report.getSalonName();
+        if (Report.TYPE_SALON.equals(report.getType())
+                && salonName != null && !salonName.trim().isEmpty()) {
+            tvSalon.setText(getString(R.string.report_salon_meta, salonName.trim()));
+            tvSalon.setVisibility(View.VISIBLE);
+        } else {
+            tvSalon.setVisibility(View.GONE);
+        }
+
         String description = report.getDescription();
         tvDescription.setText(description == null || description.isEmpty()
                 ? getString(R.string.report_no_description) : description);

@@ -113,6 +113,12 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
             resId = R.string.report_category_login;
         } else if (Report.CATEGORY_APP_ERROR.equals(category)) {
             resId = R.string.report_category_app_error;
+        } else if (Report.CATEGORY_SALON_SCAM.equals(category)) {
+            resId = R.string.report_category_scam;
+        } else if (Report.CATEGORY_SALON_SAFETY.equals(category)) {
+            resId = R.string.report_category_safety;
+        } else if (Report.CATEGORY_SALON_HARASSMENT.equals(category)) {
+            resId = R.string.report_category_harassment;
         } else if (Report.CATEGORY_OTHER.equals(category)) {
             resId = R.string.report_category_other;
         } else {
@@ -131,6 +137,20 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         String screenshotLabel = screenshotCount > 0
                 ? holder.itemView.getContext().getString(R.string.report_screenshots_count, screenshotCount)
                 : holder.itemView.getContext().getString(R.string.report_no_screenshots);
+
+        String salonName = report.getSalonName();
+        boolean salonReport = Report.TYPE_SALON.equals(report.getType())
+                && salonName != null && !salonName.trim().isEmpty();
+
+        if (salonReport) {
+            // Salon issues read as "Salon: <name> • <severity> • <screenshots>".
+            String salonLabel = holder.itemView.getContext()
+                    .getString(R.string.report_salon_meta, salonName.trim());
+            StringBuilder meta = new StringBuilder(salonLabel);
+            if (!severityLabel.isEmpty()) meta.append(" • ").append(severityLabel);
+            meta.append(" • ").append(screenshotLabel);
+            return meta.toString();
+        }
 
         if (severityLabel.isEmpty()) return screenshotLabel;
         return severityLabel + " • " + screenshotLabel;

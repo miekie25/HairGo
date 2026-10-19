@@ -33,7 +33,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="invisible"
-            app:constraint_referenced_ids="ivSalonIcon,tvSalonName,llLocation,llRating,divider,tvServicesLabel,rvServices,btnBook"/>
+            app:constraint_referenced_ids="ivSalonIcon,tvSalonName,llLocation,llRating,divider,tvServicesLabel,rvServices,btnBook,btnReportSalon"/>
 
         <ImageView
             android:id="@+id/ivSalonIcon"
@@ -175,11 +175,25 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:layout_marginHorizontal="24dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="0dp"
             android:text="@string/btn_book_now"
             android:background="@drawable/bg_button_teal"
             style="@style/ButtonPrimary"
             app:layout_constraintTop_toBottomOf="@id/rvServices"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Client-side action: report this salon to the platform team. -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnReportSalon"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginBottom="24dp"
+            android:text="@string/report_salon_action"
+            style="@style/ButtonSecondaryOutline"
+            app:layout_constraintTop_toBottomOf="@id/btnBook"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 

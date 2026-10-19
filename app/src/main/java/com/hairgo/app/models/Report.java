@@ -24,6 +24,19 @@ public class Report {
     public static final String CATEGORY_APP_ERROR = "app_error";
     public static final String CATEGORY_OTHER = "other";
 
+    /**
+     * What the report is about. An "app" report keeps the original app
+     * categories above; a "salon" report uses the salon categories below and
+     * also carries salonID/salonName (and bookingID when raised from a booking).
+     */
+    public static final String TYPE_APP = "app";
+    public static final String TYPE_SALON = "salon";
+
+    /** Categories used when a client reports a salon to the platform. */
+    public static final String CATEGORY_SALON_SCAM = "scam";
+    public static final String CATEGORY_SALON_SAFETY = "safety_concern";
+    public static final String CATEGORY_SALON_HARASSMENT = "harassment";
+
     public static final String SEVERITY_LOW = "low";
     public static final String SEVERITY_MEDIUM = "medium";
     public static final String SEVERITY_HIGH = "high";
@@ -33,6 +46,10 @@ public class Report {
     private String userName = "";
     private String userEmail = "";
     private String userRole = "";
+    private String type = TYPE_APP;
+    private String salonID = "";
+    private String salonName = "";
+    private String bookingID = "";
     private String category = "";
     private String severity = "";
     private String description = "";
@@ -71,6 +88,18 @@ public class Report {
 
     public String getUserRole() { return userRole; }
     public void setUserRole(String userRole) { this.userRole = userRole; }
+
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
+    public String getSalonID() { return salonID; }
+    public void setSalonID(String salonID) { this.salonID = salonID; }
+
+    public String getSalonName() { return salonName; }
+    public void setSalonName(String salonName) { this.salonName = salonName; }
+
+    public String getBookingID() { return bookingID; }
+    public void setBookingID(String bookingID) { this.bookingID = bookingID; }
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }

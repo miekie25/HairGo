@@ -215,6 +215,22 @@
     <string name="report_remove_screenshot">Remove screenshot</string>
     <string name="report_char_counter">%1$d/500</string>
     <string name="report_uploading">Preparing screenshots…</string>
+    <string name="report_type_label">What are you reporting?</string>
+    <string name="report_type_app">App issue</string>
+    <string name="report_type_salon">Salon issue</string>
+    <string name="report_salon_label">Which salon?</string>
+    <string name="report_salon_hint">Search for a salon</string>
+    <string name="report_salon_required">Please choose a salon</string>
+    <string name="report_salon_category_label">What kind of issue?</string>
+    <string name="report_salon_category_required">Please choose a category</string>
+    <string name="report_category_scam">Scam</string>
+    <string name="report_category_safety">Safety concern</string>
+    <string name="report_category_harassment">Harassment</string>
+    <string name="report_salon_action">Report this salon</string>
+    <string name="report_salon_meta">Salon: %1$s</string>
+    <string name="report_salon_unavailable">Salon information is unavailable.</string>
+    <string name="report_salon_title">Report a salon</string>
+    <string name="report_salon_subtitle">Report a salon to the HairGo team</string>
 
     <!-- My Reports -->
     <string name="title_my_reports">My Reports</string>

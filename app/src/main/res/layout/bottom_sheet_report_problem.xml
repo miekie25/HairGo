@@ -40,17 +40,18 @@
             android:textColor="@color/grey_medium"
             android:textSize="14sp" />
 
-        <!-- Category -->
+        <!-- Report type: what the report is about. Salon adds a salon picker
+             and swaps the category chips; everything below stays shared. -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="@string/report_category_label"
+            android:text="@string/report_type_label"
             android:textColor="@color/grey_medium"
             android:textSize="12sp" />
 
         <com.google.android.material.chip.ChipGroup
-            android:id="@+id/cgCategory"
+            android:id="@+id/cgReportType"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
@@ -60,43 +61,183 @@
             app:singleSelection="true">
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chipCategoryBooking"
+                android:id="@+id/chipTypeApp"
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/report_category_booking" />
+                android:checked="true"
+                android:text="@string/report_type_app" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chipCategoryLogin"
+                android:id="@+id/chipTypeSalon"
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/report_category_login" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipCategoryAppError"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/report_category_app_error" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipCategoryOther"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/report_category_other" />
+                android:text="@string/report_type_salon" />
         </com.google.android.material.chip.ChipGroup>
 
-        <TextView
-            android:id="@+id/tvCategoryError"
-            android:layout_width="wrap_content"
+        <!-- App issue: the original category chips -->
+        <LinearLayout
+            android:id="@+id/llAppCategory"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="@string/report_category_required"
-            android:textColor="@color/error_dark"
-            android:textSize="12sp"
-            android:visibility="gone" />
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/report_category_label"
+                android:textColor="@color/grey_medium"
+                android:textSize="12sp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/cgCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="4dp"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCategoryBooking"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/report_category_booking" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCategoryLogin"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/report_category_login" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCategoryAppError"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/report_category_app_error" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCategoryOther"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/report_category_other" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <TextView
+                android:id="@+id/tvCategoryError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/report_category_required"
+                android:textColor="@color/error_dark"
+                android:textSize="12sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Salon issue: pick the salon, then the salon-specific category -->
+        <LinearLayout
+            android:id="@+id/llSalonFields"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/report_salon_label"
+                android:textColor="@color/grey_medium"
+                android:textSize="12sp" />
+
+            <android.widget.AutoCompleteTextView
+                android:id="@+id/actSalon"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_input_rounded"
+                android:hint="@string/report_salon_hint"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:maxLines="1"
+                android:padding="14dp"
+                android:textColor="@color/grey_dark"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/tvSalonError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/report_salon_required"
+                android:textColor="@color/error_dark"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/report_salon_category_label"
+                android:textColor="@color/grey_medium"
+                android:textSize="12sp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/cgSalonCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="4dp"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSalonScam"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/report_category_scam" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSalonSafety"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/report_category_safety" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSalonHarassment"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/report_category_harassment" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSalonOther"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/report_category_other" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <TextView
+                android:id="@+id/tvSalonCategoryError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/report_salon_category_required"
+                android:textColor="@color/error_dark"
+                android:textSize="12sp"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <!-- Severity -->
         <TextView

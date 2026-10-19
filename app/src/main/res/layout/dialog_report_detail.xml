@@ -67,6 +67,15 @@
                 android:textColor="@color/grey_medium"
                 android:textSize="13sp" />
 
+            <TextView
+                android:id="@+id/tvSalon"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/grey_medium"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"

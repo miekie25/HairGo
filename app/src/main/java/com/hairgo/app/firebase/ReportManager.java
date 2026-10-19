@@ -15,6 +15,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.WriteBatch;
 import com.hairgo.app.models.Report;
 
 import java.io.ByteArrayOutputStream;
@@ -45,6 +46,10 @@ public class ReportManager {
     private static final String FIELD_IS_DELETED = "isDeleted";
     private static final String FIELD_CREATED_AT = "createdAt";
     private static final String FIELD_UPDATED_AT = "updatedAt";
+    private static final String FIELD_TYPE = "type";
+
+    /** Firestore caps a batch at 500 writes; 400 leaves headroom. */
+    private static final int BACKFILL_BATCH_SIZE = 400;
 
     private static final int MAX_DIMENSION = 1024;
     private static final int INITIAL_QUALITY = 70;
@@ -78,6 +83,11 @@ public class ReportManager {
 
     public interface ScreenshotEncodeCallback {
         void onSuccess(String base64Image);
+        void onFailure(String errorMessage);
+    }
+
+    public interface BackfillCallback {
+        void onComplete(int updated);
         void onFailure(String errorMessage);
     }
 
@@ -276,6 +286,55 @@ public class ReportManager {
                     }
                     callback.onSuccess(reports);
                 })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
+     * One-off migration for reports created before salon reports existed: those
+     * documents have no type field, so the admin type filters would skip them.
+     * Only an admin may write this field (see firestore.rules), which is why the
+     * admin dashboard triggers it. Safe to re-run: only docs without a type are
+     * touched.
+     */
+    public void backfillMissingReportTypes(BackfillCallback callback) {
+        db.collection(COLLECTION_REPORTS)
+                .get()
+                .addOnSuccessListener(query -> {
+                    List<DocumentReference> missing = new ArrayList<>();
+                    for (com.google.firebase.firestore.QueryDocumentSnapshot doc : query) {
+                        String type = doc.getString(FIELD_TYPE);
+                        if (type == null || type.trim().isEmpty()) {
+                            missing.add(doc.getReference());
+                        }
+                    }
+
+                    if (missing.isEmpty()) {
+                        callback.onComplete(0);
+                        return;
+                    }
+
+                    updateTypesInBatches(missing, 0, 0, callback);
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /** Commits the backfill in chunks, carrying the running total forward. */
+    private void updateTypesInBatches(List<DocumentReference> refs, int offset,
+                                      int updated, BackfillCallback callback) {
+        if (offset >= refs.size()) {
+            callback.onComplete(updated);
+            return;
+        }
+
+        int end = Math.min(offset + BACKFILL_BATCH_SIZE, refs.size());
+        WriteBatch batch = db.batch();
+        for (int i = offset; i < end; i++) {
+            batch.update(refs.get(i), FIELD_TYPE, Report.TYPE_APP);
+        }
+
+        batch.commit()
+                .addOnSuccessListener(unused ->
+                        updateTypesInBatches(refs, end, updated + (end - offset), callback))
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 

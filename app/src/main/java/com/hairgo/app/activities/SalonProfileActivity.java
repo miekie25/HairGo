@@ -17,6 +17,7 @@ import com.hairgo.app.R;
 import com.hairgo.app.adapters.ServiceAdapter;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.SalonManager;
+import com.hairgo.app.fragments.ReportProblemBottomSheet;
 import com.hairgo.app.models.Salon;
 import com.hairgo.app.utils.Snackbars;
 
@@ -139,6 +140,12 @@ public class SalonProfileActivity extends AppCompatActivity {
             intent.putExtra("salonId", salon.getSalonId());
             startActivity(intent);
         });
+
+        // Report the salon to the platform, pre-filled with this salon.
+        findViewById(R.id.btnReportSalon).setOnClickListener(v ->
+                ReportProblemBottomSheet
+                        .newInstanceForSalon(salon.getSalonId(), salon.getName(), null)
+                        .show(getSupportFragmentManager(), "report_problem"));
     }
 
     /**

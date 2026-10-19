@@ -35,7 +35,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="invisible"
-            app:constraint_referenced_ids="tvStatusBadge,tvExpiredNote,tvSalonName,divider1,tvServiceLabel,tvServiceName,tvDateTimeLabel,tvDateTime,divider2,btnCancelBooking,btnEditBooking,btnLeaveReview"/>
+            app:constraint_referenced_ids="tvStatusBadge,tvExpiredNote,tvSalonName,divider1,tvServiceLabel,tvServiceName,tvDateTimeLabel,tvDateTime,divider2,btnCancelBooking,btnEditBooking,btnLeaveReview,btnReportSalon"/>
 
         <TextView
             android:id="@+id/tvStatusBadge"
@@ -203,6 +203,19 @@
             android:text="@string/leave_a_review"
             style="@style/ButtonPrimary"
             app:layout_constraintTop_toBottomOf="@id/btnEditBooking"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Client-side action: report this salon to the platform team, with the
+             booking noted so the admin can trace it back. Visible for any status. -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnReportSalon"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/report_salon_action"
+            style="@style/ButtonSecondaryOutline"
+            app:layout_constraintTop_toBottomOf="@id/btnLeaveReview"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
