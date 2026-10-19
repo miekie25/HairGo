@@ -47,8 +47,11 @@ public class OwnerDashboardActivity extends AppCompatActivity {
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            // Not signed in (e.g. launched directly for testing): send to login.
-            startActivity(new Intent(this, LoginActivity.class));
+            // Not signed in (e.g. launched directly for testing): drop back to
+            // Welcome on a clean stack.
+            Intent intent = new Intent(this, WelcomeActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
             finish();
             return;
         }
@@ -91,7 +94,7 @@ public class OwnerDashboardActivity extends AppCompatActivity {
                     OwnerSession.clear();
                     Toast.makeText(OwnerDashboardActivity.this,
                             "This account has been deactivated.", Toast.LENGTH_LONG).show();
-                    goToLogin();
+                    goToWelcome();
                     return;
                 }
 
@@ -116,13 +119,14 @@ public class OwnerDashboardActivity extends AppCompatActivity {
                 Toast.makeText(OwnerDashboardActivity.this,
                         "Could not verify your account. Please log in again.",
                         Toast.LENGTH_LONG).show();
-                goToLogin();
+                goToWelcome();
             }
         });
     }
 
-    private void goToLogin() {
-        Intent intent = new Intent(this, LoginActivity.class);
+    /** Wiped stack back to Welcome: used whenever the session cannot be trusted. */
+    private void goToWelcome() {
+        Intent intent = new Intent(this, WelcomeActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
@@ -136,7 +140,7 @@ public class OwnerDashboardActivity extends AppCompatActivity {
         } else if ("admin".equals(role)) {
             target = AdminDashboardActivity.class;
         } else {
-            goToLogin();
+            goToWelcome();
             return;
         }
         Intent intent = new Intent(this, target);

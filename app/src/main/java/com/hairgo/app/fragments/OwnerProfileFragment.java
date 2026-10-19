@@ -18,7 +18,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
 import com.hairgo.app.R;
-import com.hairgo.app.activities.LoginActivity;
+import com.hairgo.app.activities.WelcomeActivity;
 import com.hairgo.app.firebase.AuthManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.OwnerSalon;
@@ -66,7 +66,9 @@ public class OwnerProfileFragment extends Fragment {
             // Build the navigation up front so the snackbar callback below does
             // not need this fragment to still be attached when it runs.
             FragmentActivity activity = requireActivity();
-            Intent intent = new Intent(activity, LoginActivity.class);
+            // Land on Welcome (not Login) with a wiped stack, so Back exits
+            // the app instead of returning to the dashboard.
+            Intent intent = new Intent(activity, WelcomeActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
             // Confirmation first, then the exact sign-out flow as before

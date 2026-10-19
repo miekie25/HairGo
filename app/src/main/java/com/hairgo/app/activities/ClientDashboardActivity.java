@@ -47,7 +47,11 @@ public class ClientDashboardActivity extends AppCompatActivity implements Notifi
         // This screen shows a client's own bookings, so bail out if the session
         // is gone rather than rendering an empty shell.
         if (!authManager.isLoggedIn()) {
-            startActivity(new Intent(this, LoginActivity.class));
+            // Session is gone: drop back to Welcome on a clean stack rather
+            // than piling Login on top of this screen.
+            Intent intent = new Intent(this, WelcomeActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
             finish();
             return;
         }

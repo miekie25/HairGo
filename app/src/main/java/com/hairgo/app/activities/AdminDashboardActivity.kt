@@ -68,7 +68,7 @@ class AdminDashboardActivity : AppCompatActivity() {
      */
     private fun verifyAdminAccess(tvAdminName: TextView, savedInstanceState: Bundle?) {
         if (!authManager.isLoggedIn) {
-            redirectToLogin()
+            redirectToWelcome()
             return
         }
 
@@ -76,7 +76,7 @@ class AdminDashboardActivity : AppCompatActivity() {
             override fun onSuccess(name: String?, role: String?) {
                 if (role != "admin") {
                     authManager.signOut()
-                    redirectToLogin()
+                    redirectToWelcome()
                     return
                 }
 
@@ -93,7 +93,7 @@ class AdminDashboardActivity : AppCompatActivity() {
 
             override fun onFailure(errorMessage: String?) {
                 authManager.signOut()
-                redirectToLogin()
+                redirectToWelcome()
             }
         })
     }
@@ -106,12 +106,13 @@ class AdminDashboardActivity : AppCompatActivity() {
             getString(R.string.logout_success)
         ) {
             authManager.signOut()
-            redirectToLogin()
+            redirectToWelcome()
         }
     }
 
-    private fun redirectToLogin() {
-        val intent = Intent(this, LoginActivity::class.java)
+    private fun redirectToWelcome() {
+        // Wiped stack: after a sign-out the user starts over at Welcome.
+        val intent = Intent(this, WelcomeActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()

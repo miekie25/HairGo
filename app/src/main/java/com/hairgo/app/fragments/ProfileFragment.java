@@ -21,8 +21,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.hairgo.app.R;
-import com.hairgo.app.activities.LoginActivity;
 import com.hairgo.app.activities.MyReportsActivity;
+import com.hairgo.app.activities.WelcomeActivity;
 import com.hairgo.app.firebase.AuthManager;
 import com.hairgo.app.fragments.ReportProblemBottomSheet;
 import com.hairgo.app.utils.Snackbars;
@@ -299,7 +299,9 @@ public class ProfileFragment extends Fragment {
         // message has been seen, so it must not depend on this fragment still
         // being attached (a rotation during the snackbar would detach it).
         FragmentActivity activity = requireActivity();
-        Intent intent = new Intent(activity, LoginActivity.class);
+        // Land on Welcome (not Login) with a wiped stack, so Back exits
+        // the app instead of returning to the dashboard.
+        Intent intent = new Intent(activity, WelcomeActivity.class);
         intent.setFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK |
                         Intent.FLAG_ACTIVITY_CLEAR_TASK

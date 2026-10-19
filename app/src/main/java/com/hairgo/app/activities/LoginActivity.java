@@ -108,6 +108,10 @@ public class LoginActivity extends AppCompatActivity {
                                                 LoginActivity.this,
                                                 OwnerDashboardActivity.class
                                         )
+                                        // Wipe Welcome/Login so Back exits
+                                        // instead of returning to them.
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                                                Intent.FLAG_ACTIVITY_CLEAR_TASK)
                                 );
 
                             } else if ("admin".equals(role)) {
@@ -117,6 +121,10 @@ public class LoginActivity extends AppCompatActivity {
                                                 LoginActivity.this,
                                                 AdminDashboardActivity.class
                                         )
+                                        // Wipe Welcome/Login so Back exits
+                                        // instead of returning to them.
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                                                Intent.FLAG_ACTIVITY_CLEAR_TASK)
                                 );
 
                             } else if ("client".equals(role)) {
@@ -126,6 +134,10 @@ public class LoginActivity extends AppCompatActivity {
                                                 LoginActivity.this,
                                                 ClientDashboardActivity.class
                                         )
+                                        // Wipe Welcome/Login so Back exits
+                                        // instead of returning to them.
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                                                Intent.FLAG_ACTIVITY_CLEAR_TASK)
                                 );
 
                             } else {
