@@ -58,7 +58,9 @@ public class LoginActivity extends AppCompatActivity {
             clearErrors();
 
             String email = etUsername.getText().toString().trim();
-            String password = etPassword.getText().toString().trim();
+            // Passwords are used exactly as typed: trimming here would lock out
+            // accounts whose password starts or ends with a space.
+            String password = etPassword.getText().toString();
 
             if (email.isEmpty()) {
 

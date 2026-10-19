@@ -211,6 +211,16 @@ public class ProfileFragment extends Fragment {
             return;
         }
 
+        // Same South African format rule as the sign-up forms; the normalised
+        // value is stored so Firestore keeps one consistent format.
+        phone = normalizePhone(phone);
+        if (!phone.matches("\\+27\\d{9}")) {
+            etProfilePhone.setError("Enter a valid SA number, e.g. 0821234567 or +27821234567.");
+            etProfilePhone.requestFocus();
+            return;
+        }
+        etProfilePhone.setError(null);
+
         String uid = currentUser.getUid();
 
         Map<String, Object> profileUpdates = new HashMap<>();
@@ -252,6 +262,21 @@ public class ProfileFragment extends Fragment {
 
                     Snackbars.show(requireView(), "Could not update profile.");
                 });
+    }
+
+    /**
+     * Normalises a South African number to E.164 (+27...). Accepts 0-prefixed,
+     * +27-prefixed and bare 27 numbers with spaces or dashes; anything else is
+     * returned unchanged and fails the matches() check in saveProfile().
+     */
+    private String normalizePhone(String raw) {
+        String value = raw.trim().replaceAll("[\\s-]", "");
+        if (value.startsWith("0")) {
+            value = "+27" + value.substring(1);
+        } else if (value.startsWith("27")) {
+            value = "+" + value;
+        }
+        return value;
     }
 
     /**

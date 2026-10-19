@@ -30,7 +30,7 @@ class RegisterClientActivity : AppCompatActivity() {
                     putExtra("role", "client")
                     putExtra("fullName", binding.etFullName.text.toString().trim())
                     putExtra("email", binding.etEmail.text.toString().trim())
-                    putExtra("phone", binding.etPhone.text.toString().trim())
+                    putExtra("phone", normalizePhone(binding.etPhone.text.toString()))
                     putExtra("password", binding.etPassword.text.toString())
                 }
                 startActivity(intent)
@@ -102,15 +102,18 @@ class RegisterClientActivity : AppCompatActivity() {
             isValid = false
         } else binding.tilEmail.error = null
 
-        val phone = binding.etPhone.text.toString().trim()
-        if (phone.length < 9) {
-            binding.tilPhone.error = "Enter a valid phone number"
+        val phone = normalizePhone(binding.etPhone.text.toString())
+        if (!PHONE_PATTERN.matches(phone)) {
+            binding.tilPhone.error = "Enter a valid SA number, e.g. 0821234567 or +27821234567"
             isValid = false
         } else binding.tilPhone.error = null
 
         val password = binding.etPassword.text.toString()
         if (password.length < 8) {
             binding.tilPassword.error = "Password must be at least 8 characters"
+            isValid = false
+        } else if (!password.any { it.isLetter() } || !password.any { it.isDigit() }) {
+            binding.tilPassword.error = "Password must include at least one letter and one number"
             isValid = false
         } else binding.tilPassword.error = null
 
@@ -121,5 +124,23 @@ class RegisterClientActivity : AppCompatActivity() {
         } else binding.tilConfirmPassword.error = null
 
         return isValid
+    }
+
+    /**
+     * Normalises a South African number to E.164 (+27...) so the OTP screen can
+     * dial it as typed. Accepts 0-prefixed, +27-prefixed and bare 27 numbers
+     * with spaces or dashes; anything else comes back unchanged and fails the
+     * pattern check in validateForm().
+     */
+    private fun normalizePhone(raw: String): String {
+        var value = raw.trim().replace(Regex("[\\s-]"), "")
+        if (value.startsWith("0")) value = "+27" + value.substring(1)
+        else if (value.startsWith("27")) value = "+" + value
+        return value
+    }
+
+    companion object {
+        // +27 followed by exactly 9 digits: the only form handed to Firebase Phone Auth.
+        private val PHONE_PATTERN = Regex("^\\+27\\d{9}$")
     }
 }
