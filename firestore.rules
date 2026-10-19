@@ -52,6 +52,16 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // SLOT LOCKS — one doc per salon+slot so concurrent bookings serialise
+    // through a Firestore transaction instead of double-booking. The doc only
+    // ever names the booking holding the slot; it is overwritten (never
+    // deleted) when a cancelled/expired slot is claimed again.
+    match /slotLocks/{slotId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
     // REVIEWS
     match /reviews/{reviewId} {
       allow read: if isSignedIn();

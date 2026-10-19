@@ -3,17 +3,22 @@ package com.hairgo.app.firebase;
 import android.text.TextUtils;
 
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.Transaction;
 import com.google.firebase.firestore.WriteBatch;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BookingManager {
     /**
@@ -27,6 +32,13 @@ public class BookingManager {
     public static final int SLOT_START_HOUR = 9;
     /** End of the bookable day, exclusive — the last slot is 17:30. */
     public static final int SLOT_END_HOUR = 18;
+
+    /** Collection of per-slot lock docs that serialise concurrent bookings. */
+    private static final String SLOT_LOCKS = "slotLocks";
+
+    /** Shown when another client claims the slot between the picker and confirm. */
+    private static final String SLOT_TAKEN_MESSAGE =
+            "That time was just booked by someone else. Please choose another slot.";
 
     private FirebaseFirestore db;
 
@@ -71,6 +83,55 @@ public class BookingManager {
             slots.add(String.format(Locale.getDefault(), "%02d:30", hour));
         }
         return slots;
+    }
+
+    /** "yyyyMMddHHmm" of a booking time — minute-accurate like the slot grid. */
+    private static String minuteKey(Date time) {
+        return new SimpleDateFormat("yyyyMMddHHmm", Locale.US).format(time);
+    }
+
+    /**
+     * Deterministic lock document id for one salon's slot. Locale.US so every
+     * device derives the same id for the same slot, whatever its own locale.
+     */
+    private static String slotLockKey(String salonId, Date time) {
+        return salonId + "_" + minuteKey(time);
+    }
+
+    private static Map<String, Object> lockData(String bookingId) {
+        Map<String, Object> lock = new HashMap<>();
+        lock.put("bookingID", bookingId);
+        return lock;
+    }
+
+    /**
+     * Transaction-side availability check for one slot.
+     *
+     * <p>The lock doc names the booking that last claimed the slot; that
+     * booking is then read live, so a cancelled/expired one no longer blocks
+     * and a rescheduled one (whose time moved away) no longer matches the
+     * minute. The Android SDK cannot query inside a transaction, which is why
+     * the lock document exists at all: two racing clients contend on the same
+     * lock doc, so only one can ever pass this check.
+     */
+    private boolean slotLockedByOther(Transaction tx, String lockKey, Date wanted,
+                                      String myBookingId) throws FirebaseFirestoreException {
+        DocumentSnapshot lock = tx.get(db.collection(SLOT_LOCKS).document(lockKey));
+        if (!lock.exists()) return false;
+
+        String holderId = lock.getString("bookingID");
+        if (holderId == null || holderId.isEmpty()) return false;
+        // A reschedule (or upsert) targeting its own slot is not a conflict.
+        if (holderId.equals(myBookingId)) return false;
+
+        DocumentSnapshot holder = tx.get(db.collection("bookings").document(holderId));
+        if (!holder.exists()) return false;
+        if (Boolean.TRUE.equals(holder.getBoolean("isDeleted"))) return false;
+        String status = holder.getString("status");
+        if ("cancelled".equals(status) || "expired".equals(status)) return false;
+
+        com.google.firebase.Timestamp heldAt = holder.getTimestamp("dateTime");
+        return heldAt != null && minuteKey(heldAt.toDate()).equals(minuteKey(wanted));
     }
 
     /**
@@ -164,9 +225,25 @@ public class BookingManager {
         booking.put("status", "pending");
         booking.put("isDeleted", false);
 
-        ref.set(booking)
+        // Claim the slot and write the booking in one transaction. A competing
+        // client contending for the same lock document makes this retry, see
+        // the holder, and fail with the friendly message instead of
+        // double-booking. All reads happen above; both writes below.
+        String lockKey = slotLockKey(salonId, dateTime);
+        AtomicBoolean slotTaken = new AtomicBoolean(false);
+
+        db.runTransaction(tx -> {
+            if (slotLockedByOther(tx, lockKey, dateTime, ref.getId())) {
+                slotTaken.set(true);
+                throw new IllegalStateException("Slot already taken");
+            }
+            tx.set(ref, booking);
+            tx.set(db.collection(SLOT_LOCKS).document(lockKey), lockData(ref.getId()));
+            return null;
+        })
                 .addOnSuccessListener(unused -> callback.onSuccess(ref.getId()))
-                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                .addOnFailureListener(e -> callback.onFailure(
+                        slotTaken.get() ? SLOT_TAKEN_MESSAGE : e.getMessage()));
     }
 
     /**
@@ -351,9 +428,35 @@ public class BookingManager {
         update.put("dateTime", dateTime);
         update.put("status", "pending");
 
-        db.collection("bookings").document(bookingId).update(update)
+        // Same claim-and-write transaction as createBooking, so a reschedule
+        // cannot race another client for the target slot. The old slot's lock
+        // self-heals: its holder's time no longer matches, so the slot reads
+        // as free on the next claim.
+        DocumentReference bookingRef = db.collection("bookings").document(bookingId);
+        AtomicBoolean slotTaken = new AtomicBoolean(false);
+
+        db.runTransaction(tx -> {
+            DocumentSnapshot current = tx.get(bookingRef);
+            if (!current.exists()) {
+                throw new IllegalStateException("Booking not found.");
+            }
+
+            String salonId = current.getString("salonID");
+            if (salonId != null) {
+                String lockKey = slotLockKey(salonId, dateTime);
+                if (slotLockedByOther(tx, lockKey, dateTime, bookingId)) {
+                    slotTaken.set(true);
+                    throw new IllegalStateException("Slot already taken");
+                }
+                tx.set(db.collection(SLOT_LOCKS).document(lockKey), lockData(bookingId));
+            }
+
+            tx.update(bookingRef, update);
+            return null;
+        })
                 .addOnSuccessListener(unused -> callback.onSuccess())
-                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                .addOnFailureListener(e -> callback.onFailure(
+                        slotTaken.get() ? SLOT_TAKEN_MESSAGE : e.getMessage()));
     }
 
     /** Convenience overload for a single service. */
