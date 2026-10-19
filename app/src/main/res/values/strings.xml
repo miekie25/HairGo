@@ -165,6 +165,9 @@
     <string name="report_a_problem">Report a Problem</string>
     <string name="navigate_icon">Navigate</string>
     <string name="logout">Logout</string>
+    <string name="logout_success">You have been logged out.</string>
+    <string name="notifications_cleared">Notifications cleared.</string>
+    <string name="btn_saving_profile">Saving.</string>
     <string name="submit_report">Submit Report</string>
     <string name="submit_review">Submit Review</string>
     <string name="leave_a_review_title">Leave a Review</string>

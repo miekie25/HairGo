@@ -13,7 +13,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -40,6 +42,8 @@ public class ProfileFragment extends Fragment {
     private EditText etProfileName;
     private EditText etProfileEmail;
     private EditText etProfilePhone;
+
+    private MaterialButton btnSaveProfile;
 
     private FirebaseAuth firebaseAuth;
     private FirebaseFirestore firestore;
@@ -70,7 +74,7 @@ public class ProfileFragment extends Fragment {
         etProfileEmail = view.findViewById(R.id.etProfileEmail);
         etProfilePhone = view.findViewById(R.id.etProfilePhone);
 
-        View btnSaveProfile = view.findViewById(R.id.btnSaveProfile);
+        btnSaveProfile = view.findViewById(R.id.btnSaveProfile);
         View btnLogout = view.findViewById(R.id.btnLogout);
 
         // Firebase
@@ -220,12 +224,18 @@ public class ProfileFragment extends Fragment {
          * so the field is shown read-only rather than pretending to save.
          */
 
+        // Disable the button while the write is in flight so a double tap
+        // cannot fire a second update.
+        setLoading(true);
+
         firestore.collection("users")
                 .document(uid)
                 .update(profileUpdates)
                 .addOnSuccessListener(unused -> {
 
                     if (!isAdded()) return;
+
+                    setLoading(false);
 
                     tvProfileName.setText(name);
                     tvProfileInitials.setText(getInitials(name));
@@ -236,6 +246,8 @@ public class ProfileFragment extends Fragment {
 
                     if (!isAdded()) return;
 
+                    setLoading(false);
+
                     Log.w(TAG, "Could not update profile: " + e.getMessage());
 
                     Snackbars.show(requireView(), "Could not update profile.");
@@ -243,24 +255,40 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
+     * Loading state for the save button: mirrors setLoading() on the login
+     * and forgot-password screens (disabled button plus a progress label).
+     */
+    private void setLoading(boolean loading) {
+        btnSaveProfile.setEnabled(!loading);
+        btnSaveProfile.setText(
+                loading ? R.string.btn_saving_profile : R.string.save_changes
+        );
+    }
+
+    /**
      * Logs the user out of Firebase Authentication.
      */
     private void logout() {
 
-        new AuthManager().signOut();
-
-        Intent intent = new Intent(
-                requireActivity(),
-                LoginActivity.class
-        );
-
+        // Build the navigation up front: the snackbar callback runs after the
+        // message has been seen, so it must not depend on this fragment still
+        // being attached (a rotation during the snackbar would detach it).
+        FragmentActivity activity = requireActivity();
+        Intent intent = new Intent(activity, LoginActivity.class);
         intent.setFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK |
                         Intent.FLAG_ACTIVITY_CLEAR_TASK
         );
 
-        startActivity(intent);
-        requireActivity().finish();
+        // showThen keeps the confirmation on screen, then signs out and
+        // navigates exactly as it did before.
+        Snackbars.showThen(requireView(), R.string.logout_success, () -> {
+
+            new AuthManager().signOut();
+
+            activity.startActivity(intent);
+            activity.finish();
+        });
     }
 
     /**

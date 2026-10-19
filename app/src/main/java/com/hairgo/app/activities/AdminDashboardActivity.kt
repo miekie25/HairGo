@@ -15,6 +15,7 @@ import com.hairgo.app.fragments.AdminSalonsFragment
 import com.hairgo.app.fragments.AdminUsersFragment
 import com.hairgo.app.fragments.OverviewFragment
 import com.hairgo.app.fragments.ReportsFragment
+import com.hairgo.app.utils.Snackbars
 
 class AdminDashboardActivity : AppCompatActivity() {
 
@@ -98,8 +99,15 @@ class AdminDashboardActivity : AppCompatActivity() {
     }
 
     private fun logout() {
-        authManager.signOut()
-        redirectToLogin()
+        // Confirmation snackbar first, then the same sign-out and redirect as
+        // before, so the user actually sees that the logout registered.
+        Snackbars.showThen(
+            findViewById(android.R.id.content),
+            getString(R.string.logout_success)
+        ) {
+            authManager.signOut()
+            redirectToLogin()
+        }
     }
 
     private fun redirectToLogin() {

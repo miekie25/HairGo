@@ -13,6 +13,7 @@ import com.hairgo.app.R;
 import com.hairgo.app.adapters.NotificationAdapter;
 import com.hairgo.app.models.AppNotification;
 import com.hairgo.app.utils.NotificationStore;
+import com.hairgo.app.utils.Snackbars;
 
 import java.util.List;
 
@@ -44,6 +45,10 @@ public class NotificationsActivity extends AppCompatActivity {
         tvClearAll.setOnClickListener(v -> {
             NotificationStore.clear(this);
             loadNotifications();
+            // Clearing is instant (on-device preferences), so only the
+            // confirmation is needed: tell the user the list is now empty.
+            Snackbars.show(findViewById(android.R.id.content),
+                    R.string.notifications_cleared);
         });
     }
 

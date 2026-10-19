@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 
 import com.hairgo.app.R;
 import com.hairgo.app.activities.LoginActivity;
@@ -22,6 +23,7 @@ import com.hairgo.app.firebase.AuthManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.OwnerSalon;
 import com.hairgo.app.utils.OwnerSession;
+import com.hairgo.app.utils.Snackbars;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,13 +63,19 @@ public class OwnerProfileFragment extends Fragment {
 
         Button btnLogout = view.findViewById(R.id.btnOwnerLogout);
         btnLogout.setOnClickListener(v -> {
-            new AuthManager().signOut();
-            OwnerSession.clear();
-
-            // Clear the back stack so Back cannot return to the dashboard after logging out.
-            Intent intent = new Intent(requireContext(), LoginActivity.class);
+            // Build the navigation up front so the snackbar callback below does
+            // not need this fragment to still be attached when it runs.
+            FragmentActivity activity = requireActivity();
+            Intent intent = new Intent(activity, LoginActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
+
+            // Confirmation first, then the exact sign-out flow as before
+            // (including clearing the back stack so Back cannot return here).
+            Snackbars.showThen(requireView(), R.string.logout_success, () -> {
+                new AuthManager().signOut();
+                OwnerSession.clear();
+                activity.startActivity(intent);
+            });
         });
     }
 
