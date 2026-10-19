@@ -20,7 +20,10 @@ import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.Salon;
 import com.hairgo.app.utils.Snackbars;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -139,12 +142,13 @@ public class SalonProfileActivity extends AppCompatActivity {
     }
 
     /**
-     * Shows the earliest coming day this salon has no booking on.
+     * Shows the earliest slot the salon can actually be booked for.
      *
-     * <p>The booking screen is what actually stops a past date being chosen
-     * (setMinDate on the picker plus a check before confirming). Surfacing the
-     * next free day here means the rule is visible before the user commits to
-     * booking, instead of them discovering it in a rejection message.
+     * <p>The value comes from the same rules as the booking screen: the shared
+     * 9:00–17:30 / 30-minute grid, the same "cancelled/expired do not hold a
+     * slot" filter, and the same minimum-notice window — so this line can never
+     * advertise a day while the picker refuses it, or hide a day the picker
+     * offers.
      *
      * <p>The row stays hidden if the lookup fails, for example when the
      * composite index on salonID + isDeleted + dateTime has not been created.
@@ -163,13 +167,16 @@ public class SalonProfileActivity extends AppCompatActivity {
                 new BookingManager.BookingListCallback() {
                     @Override
                     public void onSuccess(List<Map<String, Object>> bookings) {
-                        LocalDate next = findNextFreeDay(bookings);
-                        if (next == null) return;
-
+                        LocalDateTime next = findNextFreeSlot(bookings);
                         DateTimeFormatter formatter =
-                                DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault());
-                        tvNextAvailable.setText(getString(
-                                R.string.salon_next_available, next.format(formatter)));
+                                DateTimeFormatter.ofPattern("EEE d MMM, hh:mm a", Locale.getDefault());
+                        if (next == null) {
+                            tvNextAvailable.setText(getString(
+                                    R.string.salon_no_available_slots, AVAILABILITY_LOOKAHEAD_DAYS));
+                        } else {
+                            tvNextAvailable.setText(getString(
+                                    R.string.salon_next_available, next.format(formatter)));
+                        }
                         tvNextAvailable.setVisibility(View.VISIBLE);
                     }
 
@@ -184,28 +191,41 @@ public class SalonProfileActivity extends AppCompatActivity {
     }
 
     /**
-     * Walks forward from today and returns the first day with no booking on it,
-     * or null if the salon is fully booked for the whole lookahead window.
+     * Walks forward from today and returns the first slot that is not held by a
+     * booking and is at least BookingManager.MIN_NOTICE_MINUTES away — i.e. the
+     * first slot the booking screen would actually offer — or null if the
+     * lookahead window has nothing bookable left.
      */
-    private LocalDate findNextFreeDay(List<Map<String, Object>> bookings) {
-        Set<String> bookedDays = new HashSet<>();
+    private LocalDateTime findNextFreeSlot(List<Map<String, Object>> bookings) {
+        Set<String> heldSlots = new HashSet<>();
 
         if (bookings != null) {
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
             for (Map<String, Object> booking : bookings) {
                 if (booking == null) continue;
                 Object dateTime = booking.get("dateTime");
-                if (!(dateTime instanceof Timestamp)) continue;
+                Date date = null;
+                if (dateTime instanceof Timestamp) date = ((Timestamp) dateTime).toDate();
+                else if (dateTime instanceof Date) date = (Date) dateTime;
+                if (date == null) continue;
 
-                Date date = ((Timestamp) dateTime).toDate();
-                bookedDays.add(toDayKey(date));
+                heldSlots.add(toDayKey(date) + " " + timeFormat.format(date));
             }
         }
 
+        // Same cutoff as the booking screen: nothing before now + notice.
+        LocalDateTime cutoff =
+                LocalDateTime.now().plusMinutes(BookingManager.MIN_NOTICE_MINUTES);
+
         LocalDate today = LocalDate.now();
         for (int offset = 0; offset < AVAILABILITY_LOOKAHEAD_DAYS; offset++) {
-            LocalDate candidate = today.plusDays(offset);
-            if (!bookedDays.contains(candidate.toString())) {
-                return candidate;
+            LocalDate day = today.plusDays(offset);
+            for (String slot : BookingManager.generateTimeSlots()) {
+                String[] parts = slot.split(":");
+                LocalDateTime candidate = LocalDateTime.of(day,
+                        LocalTime.of(Integer.parseInt(parts[0]), Integer.parseInt(parts[1])));
+                if (candidate.isBefore(cutoff)) continue;
+                if (!heldSlots.contains(day + " " + slot)) return candidate;
             }
         }
         return null;

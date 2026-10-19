@@ -240,7 +240,15 @@ public class BookAppointmentActivity extends AppCompatActivity {
 
         }, today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH));
 
-        dialog.getDatePicker().setMinDate(today.getTimeInMillis());
+        // Block past dates but keep today selectable: pass midnight of today
+        // rather than "now", which some DatePicker versions read as a date
+        // that has not started yet.
+        Calendar minDate = (Calendar) today.clone();
+        minDate.set(Calendar.HOUR_OF_DAY, 0);
+        minDate.set(Calendar.MINUTE, 0);
+        minDate.set(Calendar.SECOND, 0);
+        minDate.set(Calendar.MILLISECOND, 0);
+        dialog.getDatePicker().setMinDate(minDate.getTimeInMillis());
         dialog.show();
     }
 
@@ -299,19 +307,38 @@ public class BookAppointmentActivity extends AppCompatActivity {
             }
         }
 
+        // Drop anything starting before now + the notice period. On today this
+        // removes both already-past slots and slots too close to book; on later
+        // dates the cutoff has no effect.
+        Calendar cutoff = Calendar.getInstance();
+        cutoff.add(Calendar.MINUTE, BookingManager.MIN_NOTICE_MINUTES);
+
+        boolean removedByNotice = false;
         List<String> availableSlots = new ArrayList<>();
-        for (String slot : generateTimeSlots(9, 18)) {
-            if (!bookedSlots.contains(slot)) {
-                availableSlots.add(slot);
+        for (String slot : BookingManager.generateTimeSlots()) {
+            if (bookedSlots.contains(slot)) continue;
+            if (slotBefore(slot, cutoff)) {
+                removedByNotice = true;
+                continue;
             }
+            availableSlots.add(slot);
         }
 
         if (availableSlots.isEmpty()) {
-            new AlertDialog.Builder(this)
-                    .setTitle(R.string.fully_booked_title)
-                    .setMessage(R.string.fully_booked_message)
-                    .setPositiveButton(R.string.ok, null)
-                    .show();
+            if (removedByNotice) {
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.no_times_notice_title)
+                        .setMessage(getString(R.string.no_times_notice_message,
+                                BookingManager.MIN_NOTICE_MINUTES))
+                        .setPositiveButton(R.string.ok, null)
+                        .show();
+            } else {
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.fully_booked_title)
+                        .setMessage(R.string.fully_booked_message)
+                        .setPositiveButton(R.string.ok, null)
+                        .show();
+            }
             return;
         }
 
@@ -345,19 +372,6 @@ public class BookAppointmentActivity extends AppCompatActivity {
     }
 
     /**
-     * Generates 30-minute intervals from startHour up to (but not including) endHour.
-     * Returns times in "HH:mm" 24-hour format.
-     */
-    private List<String> generateTimeSlots(int startHour, int endHour) {
-        List<String> slots = new ArrayList<>();
-        for (int hour = startHour; hour < endHour; hour++) {
-            slots.add(String.format(Locale.getDefault(), "%02d:00", hour));
-            slots.add(String.format(Locale.getDefault(), "%02d:30", hour));
-        }
-        return slots;
-    }
-
-    /**
      * Converts "HH:mm" to "hh:mm a" (e.g., "14:30" → "02:30 PM").
      */
     private String format24hTo12h(String time24h) {
@@ -370,6 +384,17 @@ public class BookAppointmentActivity extends AppCompatActivity {
         }
     }
 
+    /** Reports whether the given "HH:mm" slot on the selected date starts before the cutoff. */
+    private boolean slotBefore(String slot24h, Calendar cutoff) {
+        String[] parts = slot24h.split(":");
+        Calendar slotTime = (Calendar) selectedDateTime.clone();
+        slotTime.set(Calendar.HOUR_OF_DAY, Integer.parseInt(parts[0]));
+        slotTime.set(Calendar.MINUTE, Integer.parseInt(parts[1]));
+        slotTime.set(Calendar.SECOND, 0);
+        slotTime.set(Calendar.MILLISECOND, 0);
+        return slotTime.before(cutoff);
+    }
+
     private void confirmBooking(Salon salon) {
         if (selectedServices.isEmpty() || !dateChosen || !timeChosen) {
             showError(getString(R.string.error_incomplete_booking));
@@ -378,6 +403,15 @@ public class BookAppointmentActivity extends AppCompatActivity {
 
         if (selectedDateTime.before(Calendar.getInstance())) {
             showError(getString(R.string.error_past_datetime));
+            return;
+        }
+
+        // The picked slot may have become too close to now while this screen
+        // sat open — re-check the notice period before doing any write.
+        Calendar earliest = Calendar.getInstance();
+        earliest.add(Calendar.MINUTE, BookingManager.MIN_NOTICE_MINUTES);
+        if (selectedDateTime.before(earliest)) {
+            showError(getString(R.string.error_notice_period, BookingManager.MIN_NOTICE_MINUTES));
             return;
         }
 

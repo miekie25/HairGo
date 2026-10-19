@@ -12,9 +12,22 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class BookingManager {
+    /**
+     * How far ahead a booking (or reschedule) must start, in minutes.
+     * The single place to change the notice period: this class's write
+     * methods and the booking screen's pickers/confirm check all read it.
+     */
+    public static final int MIN_NOTICE_MINUTES = 60;
+
+    /** First bookable hour of the day (same grid the booking screen shows). */
+    public static final int SLOT_START_HOUR = 9;
+    /** End of the bookable day, exclusive — the last slot is 17:30. */
+    public static final int SLOT_END_HOUR = 18;
+
     private FirebaseFirestore db;
 
     public BookingManager() {
@@ -43,6 +56,21 @@ public class BookingManager {
     public interface BookingListCallback {
         void onSuccess(List<Map<String, Object>> bookings);
         void onFailure(String errorMessage);
+    }
+
+    /**
+     * Generates the 30-minute "HH:mm" slot labels for the bookable day, from
+     * SLOT_START_HOUR up to (but not including) SLOT_END_HOUR. Shared so the
+     * booking screen's picker and the "next available" message can never
+     * disagree about which slots exist.
+     */
+    public static List<String> generateTimeSlots() {
+        List<String> slots = new ArrayList<>();
+        for (int hour = SLOT_START_HOUR; hour < SLOT_END_HOUR; hour++) {
+            slots.add(String.format(Locale.getDefault(), "%02d:00", hour));
+            slots.add(String.format(Locale.getDefault(), "%02d:30", hour));
+        }
+        return slots;
     }
 
     /**
@@ -84,6 +112,15 @@ public class BookingManager {
 
     public void createBooking(String documentId, String clientId, String salonId, String salonName,
                               List<String> serviceNames, Date dateTime, BookingCreatedCallback callback) {
+        // Re-check the rule here, not only in the UI: nothing before now +
+        // the notice period may be written.
+        if (dateTime == null
+                || dateTime.getTime() < System.currentTimeMillis() + MIN_NOTICE_MINUTES * 60_000L) {
+            callback.onFailure("Bookings must be made at least " + MIN_NOTICE_MINUTES
+                    + " minutes in advance.");
+            return;
+        }
+
         DocumentReference ref = documentId == null
                 ? db.collection("bookings").document()
                 : db.collection("bookings").document(documentId);
@@ -298,6 +335,14 @@ public class BookingManager {
      */
     public void updateBookingDetails(String bookingId, List<String> serviceNames, Date dateTime,
                                      BookingCallback callback) {
+        // Reschedules obey the same notice rule as new bookings.
+        if (dateTime == null
+                || dateTime.getTime() < System.currentTimeMillis() + MIN_NOTICE_MINUTES * 60_000L) {
+            callback.onFailure("Bookings must be made at least " + MIN_NOTICE_MINUTES
+                    + " minutes in advance.");
+            return;
+        }
+
         List<String> names = serviceNames == null ? new ArrayList<>() : serviceNames;
 
         Map<String, Object> update = new HashMap<>();
