@@ -170,6 +170,14 @@
     <string name="navigate_icon">Navigate</string>
     <string name="logout">Logout</string>
     <string name="logout_success">You have been logged out.</string>
+    <string name="delete_account">Delete account</string>
+    <string name="delete_account_title">Delete account?</string>
+    <string name="delete_account_message">This will cancel all your upcoming bookings, mark your profile as deleted (kept for our records), sign you out and permanently remove your login. You will not be able to sign in with this account again.</string>
+    <string name="btn_delete_account">Delete account</string>
+    <string name="deleting_account">Deleting account…</string>
+    <string name="account_deleted">Your account has been deleted.</string>
+    <string name="account_deactivated">Your account has been deactivated. You have been signed out.</string>
+    <string name="delete_account_error">Could not delete your account. Please try again.</string>
     <string name="notifications_cleared">Notifications cleared.</string>
     <string name="btn_saving_profile">Saving.</string>
     <string name="submit_report">Submit Report</string>

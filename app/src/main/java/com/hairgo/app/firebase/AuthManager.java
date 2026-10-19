@@ -2,7 +2,10 @@ package com.hairgo.app.firebase;
 
 import androidx.annotation.NonNull;
 
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -98,6 +101,15 @@ public class AuthManager {
 
                     if (!documentSnapshot.exists()) {
                         callback.onFailure("User profile was not found.");
+                        return;
+                    }
+
+                    // A soft-deleted account must never be re-admitted, even if
+                    // its Firebase session is still on the device (e.g. after an
+                    // app restart routed through SplashActivity).
+                    Boolean isDeleted = documentSnapshot.getBoolean("isDeleted");
+                    if (Boolean.TRUE.equals(isDeleted)) {
+                        callback.onFailure("This account has been deactivated.");
                         return;
                     }
 
@@ -225,5 +237,91 @@ public class AuthManager {
                 .addOnFailureListener(e ->
                         callback.onFailure(e.getMessage())
                 );
+    }
+
+    // Callback for an operation that has no value to return.
+    public interface OperationCallback {
+        void onSuccess();
+        void onFailure(String errorMessage);
+    }
+
+    /**
+     * Re-checks the user's password by re-authenticating the signed-in account.
+     * Firebase requires a recent login before the account can be deleted, so this
+     * runs first in the delete flow.
+     */
+    public void reauthenticate(String password, OperationCallback callback) {
+
+        FirebaseUser firebaseUser = getCurrentUser();
+
+        if (firebaseUser == null) {
+            callback.onFailure("Not signed in.");
+            return;
+        }
+
+        String email = firebaseUser.getEmail();
+
+        if (email == null || email.trim().isEmpty()) {
+            callback.onFailure("This account cannot be verified with a password.");
+            return;
+        }
+
+        AuthCredential credential =
+                EmailAuthProvider.getCredential(email, password);
+
+        firebaseUser.reauthenticate(credential)
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(e -> {
+                    if (e instanceof FirebaseAuthInvalidCredentialsException) {
+                        callback.onFailure("Incorrect password.");
+                    } else {
+                        callback.onFailure(e.getMessage());
+                    }
+                });
+    }
+
+    /**
+     * Soft-deletes the signed-in user's profile: the document stays in Firestore
+     * (for auditing) but is flagged isDeleted, which blocks all future logins.
+     * Must run while the session is still live, because the Firestore rules
+     * authorise the write with the user's own token.
+     */
+    public void softDeleteCurrentUserProfile(OperationCallback callback) {
+
+        FirebaseUser firebaseUser = getCurrentUser();
+
+        if (firebaseUser == null) {
+            callback.onFailure("Not signed in.");
+            return;
+        }
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("isDeleted", true);
+        updates.put("deletedAt", FieldValue.serverTimestamp());
+
+        db.collection(Constants.COLLECTION_USERS)
+                .document(firebaseUser.getUid())
+                .update(updates)
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
+     * Hard-deletes the Firebase Auth account. Firestore keeps the audited trail
+     * (the soft-deleted profile and any cancelled bookings), so this only removes
+     * the login credential itself.
+     */
+    public void deleteAuthAccount(OperationCallback callback) {
+
+        FirebaseUser firebaseUser = getCurrentUser();
+
+        if (firebaseUser == null) {
+            callback.onFailure("Not signed in.");
+            return;
+        }
+
+        firebaseUser.delete()
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 }

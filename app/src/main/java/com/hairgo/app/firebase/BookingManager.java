@@ -70,6 +70,12 @@ public class BookingManager {
         void onFailure(String errorMessage);
     }
 
+    /** Used by the account-deletion flow, so the caller learns which reminders to cancel. */
+    public interface CancelledBookingsCallback {
+        void onSuccess(List<String> cancelledBookingIds);
+        void onFailure(String errorMessage);
+    }
+
     /**
      * Generates the 30-minute "HH:mm" slot labels for the bookable day, from
      * SLOT_START_HOUR up to (but not including) SLOT_END_HOUR. Shared so the
@@ -500,6 +506,70 @@ public class BookingManager {
                 .addOnFailureListener(e -> {
                     if (callback != null) callback.onFailure(e.getMessage());
                 });
+    }
+
+    /**
+     * Cancels every upcoming booking a client still has, used when the client
+     * deletes their account.
+     *
+     * <p>Only future pending or confirmed bookings are touched: anything already
+     * cancelled, expired or completed is left as it is. Each one is written with
+     * the same status + isDeleted pair as {@link #cancelBooking}, in a single
+     * WriteBatch so the whole set lands together. The ids of the bookings that
+     * were cancelled are returned so the caller can cancel their reminders.
+     *
+     * <p>Uses the same single-field-equality query as {@link #getBookingsForClient},
+     * so no composite index is needed.
+     */
+    public void cancelUpcomingBookingsForClient(String clientId, CancelledBookingsCallback callback) {
+
+        if (callback == null) return;
+
+        if (clientId == null || clientId.isEmpty()) {
+            callback.onSuccess(new ArrayList<>());
+            return;
+        }
+
+        db.collection("bookings")
+                .whereEqualTo("clientID", clientId)
+                .whereEqualTo("isDeleted", false)
+                .get()
+                .addOnSuccessListener(query -> {
+                    long now = System.currentTimeMillis();
+                    List<String> cancelledIds = new ArrayList<>();
+                    WriteBatch batch = db.batch();
+
+                    for (QueryDocumentSnapshot doc : query) {
+                        String status = doc.getString("status");
+                        boolean upcoming = !"cancelled".equals(status)
+                                && !"expired".equals(status)
+                                && !"completed".equals(status);
+
+                        com.google.firebase.Timestamp dateTime = doc.getTimestamp("dateTime");
+                        if (dateTime == null || dateTime.toDate().getTime() < now) {
+                            upcoming = false;
+                        }
+
+                        if (!upcoming) continue;
+
+                        Map<String, Object> update = new HashMap<>();
+                        update.put("status", "cancelled");
+                        update.put("isDeleted", true);
+
+                        batch.update(doc.getReference(), update);
+                        cancelledIds.add(doc.getId());
+                    }
+
+                    if (cancelledIds.isEmpty()) {
+                        callback.onSuccess(cancelledIds);
+                        return;
+                    }
+
+                    batch.commit()
+                            .addOnSuccessListener(unused -> callback.onSuccess(cancelledIds))
+                            .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
     public void softDeleteBooking(String bookingId, BookingCallback callback) {

@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
@@ -24,11 +25,14 @@ import com.hairgo.app.R;
 import com.hairgo.app.activities.MyReportsActivity;
 import com.hairgo.app.activities.WelcomeActivity;
 import com.hairgo.app.firebase.AuthManager;
+import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.fragments.ReportProblemBottomSheet;
+import com.hairgo.app.utils.ReminderScheduler;
 import com.hairgo.app.utils.Snackbars;
 import com.hairgo.app.utils.ThemeManager;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ProfileFragment extends Fragment {
@@ -44,6 +48,9 @@ public class ProfileFragment extends Fragment {
     private EditText etProfilePhone;
 
     private MaterialButton btnSaveProfile;
+
+    private View rowDeleteAccount;
+    private TextView tvDeleteAccountLabel;
 
     private FirebaseAuth firebaseAuth;
     private FirebaseFirestore firestore;
@@ -100,6 +107,14 @@ public class ProfileFragment extends Fragment {
         if (btnMyReports != null) {
             btnMyReports.setOnClickListener(v ->
                     startActivity(new Intent(requireContext(), MyReportsActivity.class)));
+        }
+
+        // Delete account row. Destructive, so it only opens the dialog here;
+        // all the actual work happens in runDeleteAccountFlow().
+        rowDeleteAccount = view.findViewById(R.id.rowDeleteAccount);
+        tvDeleteAccountLabel = view.findViewById(R.id.tvDeleteAccountLabel);
+        if (rowDeleteAccount != null) {
+            rowDeleteAccount.setOnClickListener(v -> showDeleteAccountDialog());
         }
 
         // Dark mode toggle. Set the initial position before attaching the
@@ -316,6 +331,178 @@ public class ProfileFragment extends Fragment {
             activity.startActivity(intent);
             activity.finish();
         });
+    }
+
+    /**
+     * Asks for the account password first, so an unlocked phone cannot delete
+     * the account with a single tap.
+     */
+    private void showDeleteAccountDialog() {
+
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_delete_account, null);
+        EditText etPassword = dialogView.findViewById(R.id.etDeletePassword);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.delete_account_title)
+                .setView(dialogView)
+                .setPositiveButton(R.string.btn_delete_account, null)
+                .setNegativeButton(R.string.cancel, null)
+                .create();
+
+        // Listener set after show() so an empty password keeps the dialog open.
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String password = etPassword.getText().toString();
+            if (password.isEmpty()) {
+                etPassword.setError(getString(R.string.hint_password_required));
+                return;
+            }
+            dialog.dismiss();
+            runDeleteAccountFlow(password);
+        }));
+        dialog.show();
+    }
+
+    /**
+     * The ordered delete flow. Each step only runs once the previous one has
+     * finished, and any failure stops the flow here on the profile screen.
+     *
+     * <p>The order matters: Firebase needs a fresh login before it will delete
+     * the account, and the Firestore rules need the live session to write the
+     * isDeleted flag, so both of those must happen before the Auth account goes.
+     */
+    private void runDeleteAccountFlow(String password) {
+
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        if (currentUser == null) return;
+
+        setDeleteLoading(true);
+
+        AuthManager authManager = new AuthManager();
+
+        // 1. Re-check the password (also satisfies Firebase's "recent login").
+        authManager.reauthenticate(password, new AuthManager.OperationCallback() {
+            @Override
+            public void onSuccess() {
+                cancelUpcomingBookings(authManager, currentUser.getUid());
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                deleteFailed(errorMessage);
+            }
+        });
+    }
+
+    // 2. Cancel every upcoming booking, and the reminders for them.
+    private void cancelUpcomingBookings(AuthManager authManager, String uid) {
+
+        new BookingManager().cancelUpcomingBookingsForClient(uid,
+                new BookingManager.CancelledBookingsCallback() {
+                    @Override
+                    public void onSuccess(List<String> cancelledBookingIds) {
+                        if (!isAdded()) return;
+
+                        // A deleted account must not keep receiving pings.
+                        for (String bookingId : cancelledBookingIds) {
+                            ReminderScheduler.cancel(requireContext(), bookingId);
+                        }
+
+                        softDeleteProfile(authManager);
+                    }
+
+                    @Override
+                    public void onFailure(String errorMessage) {
+                        deleteFailed(errorMessage);
+                    }
+                });
+    }
+
+    // 3. Soft-delete the profile: the document stays in Firestore for auditing.
+    private void softDeleteProfile(AuthManager authManager) {
+
+        authManager.softDeleteCurrentUserProfile(new AuthManager.OperationCallback() {
+            @Override
+            public void onSuccess() {
+                deleteAuthAccount(authManager);
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                deleteFailed(errorMessage);
+            }
+        });
+    }
+
+    // 4. Remove the Firebase Auth login itself.
+    private void deleteAuthAccount(AuthManager authManager) {
+
+        authManager.deleteAuthAccount(new AuthManager.OperationCallback() {
+            @Override
+            public void onSuccess() {
+                finishDeletion(R.string.account_deleted);
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                // The profile is already flagged deleted, so the account is
+                // unusable either way: sign out rather than leave a session that
+                // only the deleted flag is blocking.
+                Log.w(TAG, "Could not delete Auth account: " + errorMessage);
+                finishDeletion(R.string.account_deactivated);
+            }
+        });
+    }
+
+    /**
+     * Common failure exit: give the row its label back, report what happened,
+     * and stay on this screen so the user can retry.
+     */
+    private void deleteFailed(String errorMessage) {
+        if (!isAdded()) return;
+
+        setDeleteLoading(false);
+
+        if (errorMessage == null || errorMessage.isEmpty()) {
+            errorMessage = getString(R.string.delete_account_error);
+        }
+        Log.w(TAG, "Could not delete account: " + errorMessage);
+        Snackbars.show(requireView(), errorMessage);
+    }
+
+    // 5. Success: sign out and wipe the stack, exactly like logout() does.
+    private void finishDeletion(int messageRes) {
+
+        if (!isAdded()) return;
+
+        FragmentActivity activity = requireActivity();
+        Intent intent = new Intent(activity, WelcomeActivity.class);
+        intent.setFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK |
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK
+        );
+
+        Snackbars.showThen(requireView(), messageRes, () -> {
+
+            new AuthManager().signOut();
+
+            activity.startActivity(intent);
+            activity.finish();
+        });
+    }
+
+    /**
+     * Loading state for the delete row: mirrors setLoading() for the save
+     * button (row disabled plus a progress label) so a double tap cannot
+     * start a second flow.
+     */
+    private void setDeleteLoading(boolean loading) {
+        if (rowDeleteAccount != null) rowDeleteAccount.setEnabled(!loading);
+        if (tvDeleteAccountLabel != null) {
+            tvDeleteAccountLabel.setText(
+                    loading ? R.string.deleting_account : R.string.delete_account
+            );
+        }
     }
 
     /**
