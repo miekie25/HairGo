@@ -123,7 +123,7 @@
     <string name="please_select_date_first">Please select a date first</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
-    <string name="booking_created_success">Booking confirmed</string>
+    <string name="booking_created_success">Booking request sent</string>
     <string name="couldnt_load_times_title">Couldn\'t load available times</string>
 
     <string name="review_rating_required">Please select a star rating</string>

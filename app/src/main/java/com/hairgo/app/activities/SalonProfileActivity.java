@@ -45,13 +45,15 @@ public class SalonProfileActivity extends AppCompatActivity {
     private TextView tvNextAvailable;
     private ProgressBar progress;
     private View contentGroup;
+    private String salonId;
+    private boolean salonLoaded;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_salon_profile);
 
-        String salonId = getIntent().getStringExtra("salonId");
+        salonId = getIntent().getStringExtra("salonId");
 
         ImageButton backBtn = findViewById(R.id.header).findViewById(R.id.btnBack);
         backBtn.setOnClickListener(v -> onBackPressed());
@@ -75,6 +77,7 @@ public class SalonProfileActivity extends AppCompatActivity {
                     showMissingSalon();
                     return;
                 }
+                salonLoaded = true;
                 bindSalon(salon);
                 loadNextAvailableDate(salonId);
             }
@@ -84,6 +87,16 @@ public class SalonProfileActivity extends AppCompatActivity {
                 showMissingSalon();
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Returning from booking or cancellation: refresh the "Next available"
+        // line. Skipped on first open because onCreate already loads it.
+        if (salonLoaded) {
+            loadNextAvailableDate(salonId);
+        }
     }
 
     /**
