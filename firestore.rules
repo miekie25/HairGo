@@ -2,92 +2,144 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ---------------------------------------------------------------
+    // HELPER FUNCTIONS (small checks reused in the rules below)
+    // ---------------------------------------------------------------
+
+    // True if the person making the request is logged in.
     function isSignedIn() {
       return request.auth != null;
     }
 
+    // True if the logged-in person is the exact user with this id.
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // Looks up the logged-in person's role (client, owner, admin)
+    // from their document in the users collection.
     function getUserRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
+    // True if the logged-in person has the role "admin".
     function isAdmin() {
       return isSignedIn() && getUserRole() == 'admin';
     }
 
+    // ---------------------------------------------------------------
     // USERS
+    // ---------------------------------------------------------------
     match /users/{userId} {
+      // Any logged-in user can read user profiles.
       allow read: if isSignedIn();
+      // A user can only create their own profile.
       allow create: if isOwner(userId);
+      // A user can update their own profile, or an admin can update any.
       allow update: if isOwner(userId) || isAdmin();
+      // Nobody can permanently delete a user (the app uses soft delete).
       allow delete: if false;
     }
 
+    // ---------------------------------------------------------------
     // SALONS
+    // ---------------------------------------------------------------
     match /salons/{salonId} {
+      // Any logged-in user can view salons.
       allow read: if isSignedIn();
+      // Any logged-in user can create a salon.
       allow create: if isSignedIn();
-      // Owner or admin may change anything. Any signed-in user may update ONLY
-      // avgRating, which the review flow recalculates when a review is added.
+      // The salon's owner or an admin can change anything.
+      // Everyone else can change ONLY avgRating, which is recalculated
+      // when a client leaves a review.
       allow update: if isSignedIn() && (
         resource.data.ownerID == request.auth.uid ||
         isAdmin() ||
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avgRating'])
       );
+      // Nobody can permanently delete a salon.
       allow delete: if false;
     }
 
+    // ---------------------------------------------------------------
     // BOOKINGS
+    // ---------------------------------------------------------------
     match /bookings/{bookingId} {
+      // Any logged-in user can read bookings.
       allow read: if isSignedIn();
+      // A client can only create a booking in their own name.
       allow create: if isSignedIn() && request.resource.data.clientID == request.auth.uid;
+      // A booking can be updated by the client who made it, an admin,
+      // or the owner of the salon the booking is for.
       allow update: if isSignedIn() && (
         resource.data.clientID == request.auth.uid ||
         isAdmin() ||
         get(/databases/$(database)/documents/salons/$(resource.data.salonID)).data.ownerID == request.auth.uid
       );
+      // Nobody can permanently delete a booking (cancelling is a soft delete).
       allow delete: if false;
     }
 
-    // SLOT LOCKS — one doc per salon+slot so concurrent bookings serialise
-    // through a Firestore transaction instead of double-booking. The doc only
-    // ever names the booking holding the slot; it is overwritten (never
-    // deleted) when a cancelled/expired slot is claimed again.
+    // ---------------------------------------------------------------
+    // SLOT LOCKS
+    // One small record per salon and time slot. It names the booking
+    // that is holding that slot, so two people cannot book the same
+    // slot at the same moment (the booking runs as a transaction).
+    // A lock is never deleted, only overwritten when a cancelled or
+    // expired slot is booked again.
+    // ---------------------------------------------------------------
     match /slotLocks/{slotId} {
+      // Any logged-in user can read locks (needed to see taken slots).
       allow read: if isSignedIn();
+      // Any logged-in user can create or overwrite a lock when booking.
       allow create, update: if isSignedIn();
+      // Locks can never be deleted.
       allow delete: if false;
     }
 
+    // ---------------------------------------------------------------
     // REVIEWS
+    // ---------------------------------------------------------------
     match /reviews/{reviewId} {
+      // Any logged-in user can read reviews.
       allow read: if isSignedIn();
+      // A client can only write a review in their own name.
       allow create: if isSignedIn() && request.resource.data.clientID == request.auth.uid;
+      // Only the client who wrote the review, or an admin, can edit it.
       allow update: if isSignedIn() && (resource.data.clientID == request.auth.uid || isAdmin());
+      // Nobody can permanently delete a review.
       allow delete: if false;
     }
 
+    // ---------------------------------------------------------------
     // MESSAGES
+    // ---------------------------------------------------------------
     match /messages/{messageId} {
+      // Only the sender, the recipient, or an admin can read a message.
       allow read: if isSignedIn() && (
         resource.data.senderId == request.auth.uid ||
         resource.data.recipientUid == request.auth.uid ||
         isAdmin()
       );
+      // A user can only send a message in their own name.
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+      // Only an admin can edit or delete messages.
       allow update, delete: if isAdmin();
     }
 
+    // ---------------------------------------------------------------
     // REPORTS
+    // ---------------------------------------------------------------
     match /reports/{reportId} {
+      // Any logged-in user can read reports.
       allow read: if isSignedIn();
+      // Any logged-in user can submit a report.
       allow create: if isSignedIn();
 
-      // Admin can do anything. The owner can edit their own report only
-      // while it is still pending, and only these content fields.
+      // An admin can change anything on a report.
+      // The person who wrote the report can edit it only while its
+      // status is still "pending", and only these fields: category,
+      // severity, description, userEmail, screenshots, isEdited, updatedAt.
       allow update: if isAdmin() || (
         isOwner(resource.data.userID)
         && resource.data.status == 'pending'
@@ -97,6 +149,7 @@ service cloud.firestore {
            ])
       );
 
+      // Nobody can permanently delete a report.
       allow delete: if false;
     }
   }
