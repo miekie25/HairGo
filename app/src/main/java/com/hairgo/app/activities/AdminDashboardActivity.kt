@@ -2,6 +2,7 @@ package com.hairgo.app.activities
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -11,6 +12,7 @@ import androidx.fragment.app.FragmentTransaction
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.hairgo.app.R
 import com.hairgo.app.firebase.AuthManager
+import com.hairgo.app.firebase.ReportManager
 import com.hairgo.app.fragments.AdminSalonsFragment
 import com.hairgo.app.fragments.AdminUsersFragment
 import com.hairgo.app.fragments.OverviewFragment
@@ -21,6 +23,7 @@ class AdminDashboardActivity : AppCompatActivity() {
 
     private lateinit var bottomNav: BottomNavigationView
     private val authManager = AuthManager()
+    private val reportManager = ReportManager()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,11 +92,35 @@ class AdminDashboardActivity : AppCompatActivity() {
                     STATE_SELECTED_TAB, R.id.nav_admin_overview
                 ) ?: R.id.nav_admin_overview
                 bottomNav.selectedItemId = targetTab
+
+                backfillReportTypesOnce()
             }
 
             override fun onFailure(errorMessage: String?) {
                 authManager.signOut()
                 redirectToWelcome()
+            }
+        })
+    }
+
+    /**
+     * One-off migration: reports filed before salon reports existed have no
+     * type field, so the admin type filters would hide them. Only an admin may
+     * write that field, so it runs here, once per install.
+     */
+    private fun backfillReportTypesOnce() {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_TYPE_BACKFILL_DONE, false)) return
+
+        reportManager.backfillMissingReportTypes(object : ReportManager.BackfillCallback {
+            override fun onComplete(updated: Int) {
+                prefs.edit().putBoolean(KEY_TYPE_BACKFILL_DONE, true).apply()
+                Log.d(TAG_BACKFILL, "Backfilled type on $updated report(s)")
+            }
+
+            override fun onFailure(errorMessage: String?) {
+                // Leave the flag unset so the next admin login retries.
+                Log.w(TAG_BACKFILL, "Report type backfill failed: $errorMessage")
             }
         })
     }
@@ -144,5 +171,8 @@ class AdminDashboardActivity : AppCompatActivity() {
     companion object {
         private const val STATE_SELECTED_TAB = "selected_tab_id"
         private const val TAG_PREFIX = "fragment_"
+        private const val PREFS_NAME = "hairgo_prefs"
+        private const val KEY_TYPE_BACKFILL_DONE = "reports_type_backfilled"
+        private const val TAG_BACKFILL = "ReportBackfill"
     }
 }
