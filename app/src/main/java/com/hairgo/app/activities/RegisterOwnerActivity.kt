@@ -11,12 +11,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.hairgo.app.R
 import com.hairgo.app.databinding.ActivityRegisterOwnerBinding
+import com.hairgo.app.firebase.AuthManager
 import com.hairgo.app.utils.PhoneFormatter
 import java.util.Locale
 
 class RegisterOwnerActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityRegisterOwnerBinding
+    private val authManager = AuthManager()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,7 +30,7 @@ class RegisterOwnerActivity : AppCompatActivity() {
 
         binding.btnNext.setOnClickListener {
             if (validateForm()) {
-                navigateToOtpScreen()
+                checkEmailThenContinue()
             }
         }
 
@@ -126,6 +128,31 @@ class RegisterOwnerActivity : AppCompatActivity() {
         }
 
         return isValid
+    }
+
+    /**
+     * Format checks passed. Ask Firebase whether the email already belongs to
+     * an account so an obvious duplicate is caught here, before OTP and terms.
+     * Best-effort only: enumeration protection can hide taken emails, in which
+     * case the final createUser error stays as the safety net.
+     */
+    private fun checkEmailThenContinue() {
+        val email = binding.etEmail.text.toString().trim()
+        binding.btnNext.isEnabled = false
+
+        authManager.isEmailRegistered(email) { registered ->
+            if (isFinishing || isDestroyed) return@isEmailRegistered
+            binding.btnNext.isEnabled = true
+
+            if (registered) {
+                binding.tilEmail.error =
+                    "This email is already registered. Log in instead."
+                return@isEmailRegistered
+            }
+
+            binding.tilEmail.error = null
+            navigateToOtpScreen()
+        }
     }
 
     private fun navigateToOtpScreen() {

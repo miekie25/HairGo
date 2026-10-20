@@ -81,6 +81,33 @@ public class AuthManager {
         void onFailure(String errorMessage);
     }
 
+    // Callback for the early "is this email already taken?" check on the
+    // register screens.
+    public interface EmailCheckCallback {
+        void onResult(boolean registered);
+    }
+
+    /**
+     * Best-effort check for an existing account with this email, so the register
+     * screens can warn before OTP and terms. Firebase's email-enumeration
+     * protection can make this report "not registered" even for taken emails,
+     * so callers must keep the createUser "email already in use" error as the
+     * safety net either way.
+     */
+    public void isEmailRegistered(String email, EmailCheckCallback callback) {
+        if (email == null || email.trim().isEmpty()) {
+            callback.onResult(false);
+            return;
+        }
+        mAuth.fetchSignInMethodsForEmail(email.trim())
+                .addOnCompleteListener(task -> {
+                    boolean registered = task.isSuccessful()
+                            && task.getResult() != null
+                            && !task.getResult().getSignInMethods().isEmpty();
+                    callback.onResult(registered);
+                });
+    }
+
     /**
      * Reads the current user's profile from Firestore. Used by screens that need
      * the user's name or role after the session is already established.

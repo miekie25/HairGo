@@ -11,12 +11,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.hairgo.app.R
 import com.hairgo.app.databinding.ActivityRegisterClientBinding
+import com.hairgo.app.firebase.AuthManager
 import com.hairgo.app.utils.PhoneFormatter
 import java.util.Locale
 
 class RegisterClientActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityRegisterClientBinding
+    private val authManager = AuthManager()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,14 +30,7 @@ class RegisterClientActivity : AppCompatActivity() {
 
         binding.btnRegister.setOnClickListener {
             if (validateForm()) {
-                val intent = Intent(this, OtpVerificationActivity::class.java).apply {
-                    putExtra("role", "client")
-                    putExtra("fullName", binding.etFullName.text.toString().trim())
-                    putExtra("email", binding.etEmail.text.toString().trim())
-                    putExtra("phone", normalizePhone(binding.etPhone.text.toString()))
-                    putExtra("password", binding.etPassword.text.toString())
-                }
-                startActivity(intent)
+                checkEmailThenContinue()
             }
         }
 
@@ -126,6 +121,42 @@ class RegisterClientActivity : AppCompatActivity() {
         } else binding.tilConfirmPassword.error = null
 
         return isValid
+    }
+
+    /**
+     * Format checks passed. Ask Firebase whether the email already belongs to
+     * an account so an obvious duplicate is caught here, before OTP and terms.
+     * Best-effort only: enumeration protection can hide taken emails, in which
+     * case the final createUser error stays as the safety net.
+     */
+    private fun checkEmailThenContinue() {
+        val email = binding.etEmail.text.toString().trim()
+        binding.btnRegister.isEnabled = false
+
+        authManager.isEmailRegistered(email) { registered ->
+            if (isFinishing || isDestroyed) return@isEmailRegistered
+            binding.btnRegister.isEnabled = true
+
+            if (registered) {
+                binding.tilEmail.error =
+                    "This email is already registered. Log in instead."
+                return@isEmailRegistered
+            }
+
+            binding.tilEmail.error = null
+            goToOtpScreen()
+        }
+    }
+
+    private fun goToOtpScreen() {
+        val intent = Intent(this, OtpVerificationActivity::class.java).apply {
+            putExtra("role", "client")
+            putExtra("fullName", binding.etFullName.text.toString().trim())
+            putExtra("email", binding.etEmail.text.toString().trim())
+            putExtra("phone", normalizePhone(binding.etPhone.text.toString()))
+            putExtra("password", binding.etPassword.text.toString())
+        }
+        startActivity(intent)
     }
 
     /**
