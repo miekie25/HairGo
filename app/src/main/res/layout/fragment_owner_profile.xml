@@ -279,6 +279,83 @@
                         android:contentDescription="@string/navigate_icon"
                         app:tint="@color/grey_medium" />
                 </LinearLayout>
+
+                <!-- Operating hours -->
+                <LinearLayout
+                    android:id="@+id/btnEditHours"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_clock"
+                        android:contentDescription="Operating hours"
+                        app:tint="@color/teal" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="16dp"
+                        android:text="Operating hours"
+                        android:textColor="@color/grey_dark"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        android:contentDescription="@string/navigate_icon"
+                        app:tint="@color/grey_medium" />
+                </LinearLayout>
+
+                <!-- Salon photo -->
+                <LinearLayout
+                    android:id="@+id/btnEditPhoto"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="gone">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/ivSalonPhotoThumb"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/bg_thumb_placeholder"
+                        android:src="@drawable/ic_salon_placeholder_teal"
+                        android:contentDescription="@string/salon_photo_desc"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.HairGo_Thumb" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="16dp"
+                        android:text="Salon photo"
+                        android:textColor="@color/grey_dark"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        android:contentDescription="@string/navigate_icon"
+                        app:tint="@color/grey_medium" />
+                </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

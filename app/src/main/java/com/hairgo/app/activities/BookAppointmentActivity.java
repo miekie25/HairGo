@@ -20,6 +20,7 @@ import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.Salon;
 import com.hairgo.app.utils.Notifications;
 import com.hairgo.app.utils.ReminderScheduler;
+import com.hairgo.app.utils.SalonHours;
 import com.hairgo.app.utils.Snackbars;
 
 import java.text.SimpleDateFormat;
@@ -40,6 +41,9 @@ public class BookAppointmentActivity extends AppCompatActivity {
     private final Calendar selectedDateTime = Calendar.getInstance();
     private boolean dateChosen = false;
     private boolean timeChosen = false;
+
+    /** The salon's own opening hours; defaults to the classic 09:00–18:00 grid until loaded. */
+    private SalonHours salonHours = SalonHours.defaults();
 
     /** Non-null when editing/rescheduling an existing booking rather than creating one. */
     private String editingBookingId;
@@ -97,6 +101,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
                     showMissingSalon();
                     return;
                 }
+                salonHours = SalonHours.fromDoc(salonData);
                 bindSalon(salon);
             }
 
@@ -224,6 +229,20 @@ public class BookAppointmentActivity extends AppCompatActivity {
         Calendar today = Calendar.getInstance();
 
         DatePickerDialog dialog = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
+            // Native date pickers cannot grey out days, so reject a closed day here
+            // and leave any previously chosen date untouched.
+            Calendar picked = Calendar.getInstance();
+            picked.set(year, month, dayOfMonth);
+            if (!salonHours.isOpenOn(picked.get(Calendar.DAY_OF_WEEK))) {
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.closed_day_title)
+                        .setMessage(getString(R.string.closed_day_message,
+                                SalonHours.dayName(picked.get(Calendar.DAY_OF_WEEK))))
+                        .setPositiveButton(R.string.ok, null)
+                        .show();
+                return;
+            }
+
             selectedDateTime.set(Calendar.YEAR, year);
             selectedDateTime.set(Calendar.MONTH, month);
             selectedDateTime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
@@ -315,7 +334,10 @@ public class BookAppointmentActivity extends AppCompatActivity {
 
         boolean removedByNotice = false;
         List<String> availableSlots = new ArrayList<>();
-        for (String slot : BookingManager.generateTimeSlots()) {
+        // The salon's grid for the selected weekday; empty when it is closed that day.
+        List<String> daySlots =
+                salonHours.slotsFor(selectedDateTime.get(Calendar.DAY_OF_WEEK));
+        for (String slot : daySlots) {
             if (bookedSlots.contains(slot)) continue;
             if (slotBefore(slot, cutoff)) {
                 removedByNotice = true;
@@ -412,6 +434,18 @@ public class BookAppointmentActivity extends AppCompatActivity {
         earliest.add(Calendar.MINUTE, BookingManager.MIN_NOTICE_MINUTES);
         if (selectedDateTime.before(earliest)) {
             showError(getString(R.string.error_notice_period, BookingManager.MIN_NOTICE_MINUTES));
+            return;
+        }
+
+        // The salon's hours may have changed since this screen loaded, or a
+        // pre-filled reschedule slot may now fall outside them.
+        int dayOfWeek = selectedDateTime.get(Calendar.DAY_OF_WEEK);
+        int startMinutes = selectedDateTime.get(Calendar.HOUR_OF_DAY) * 60
+                + selectedDateTime.get(Calendar.MINUTE);
+        if (!salonHours.isOpenOn(dayOfWeek)
+                || startMinutes < salonHours.openMinutes(dayOfWeek)
+                || startMinutes + 30 > salonHours.closeMinutes(dayOfWeek)) {
+            showError(getString(R.string.error_outside_hours));
             return;
         }
 

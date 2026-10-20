@@ -23,6 +23,7 @@ import com.hairgo.app.adapters.SalonAdapter;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.Salon;
 import com.hairgo.app.utils.FuzzySearch;
+import com.hairgo.app.utils.SalonPhotos;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -154,6 +155,18 @@ public class HomeFragment extends Fragment {
         allSalons.clear();
         allSalons.addAll(salons);
         applyFilter(currentQuery());
+        loadPhotos();
+    }
+
+    /**
+     * Photos live in their own collection so the salon list query stays light.
+     * A failed read leaves every card on the placeholder icon.
+     */
+    private void loadPhotos() {
+        SalonPhotos.fetchAll(photos -> {
+            if (!isAdded() || adapter == null) return;
+            adapter.setPhotos(photos);
+        });
     }
 
     private String currentQuery() {

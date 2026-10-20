@@ -47,6 +47,8 @@ public class OwnerDashboardActivity extends AppCompatActivity {
     private String ownerId;
     private int currentTabId = R.id.nav_owner_home;
     private boolean promptedForSalon = false;
+    /** One-shot filter for the next Bookings tab opening (set by the home stat cards). */
+    private int pendingBookingsFilter = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -192,6 +194,12 @@ public class OwnerDashboardActivity extends AppCompatActivity {
         Fragment fragment;
         if (tabId == R.id.nav_owner_bookings) {
             fragment = new OwnerBookingsFragment();
+            if (pendingBookingsFilter != -1) {
+                Bundle args = new Bundle();
+                args.putInt(OwnerBookingsFragment.ARG_FILTER, pendingBookingsFilter);
+                fragment.setArguments(args);
+                pendingBookingsFilter = -1;
+            }
         } else if (tabId == R.id.nav_owner_messages) {
             fragment = MessagesFragment.newInstance(true);
         } else if (tabId == R.id.nav_owner_profile) {
@@ -204,6 +212,11 @@ public class OwnerDashboardActivity extends AppCompatActivity {
                 .beginTransaction()
                 .replace(R.id.ownerFragmentContainer, fragment)
                 .commitAllowingStateLoss();
+    }
+
+    /** Pre-selects a filter for the next time the Bookings tab opens. */
+    public void setPendingBookingsFilter(int filter) {
+        pendingBookingsFilter = filter;
     }
 
     private void updateSalonPicker() {

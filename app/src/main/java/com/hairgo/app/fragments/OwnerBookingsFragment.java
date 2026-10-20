@@ -36,10 +36,15 @@ import java.util.Set;
 
 public class OwnerBookingsFragment extends Fragment {
 
-    private static final int FILTER_ALL = 0;
-    private static final int FILTER_PENDING = 1;
-    private static final int FILTER_UPCOMING = 2;
-    private static final int FILTER_PAST = 3;
+    /** Lets callers (the home stat cards) pre-select a filter when opening this tab. */
+    public static final String ARG_FILTER = "initialFilter";
+
+    public static final int FILTER_ALL = 0;
+    public static final int FILTER_PENDING = 1;
+    public static final int FILTER_UPCOMING = 2;
+    public static final int FILTER_PAST = 3;
+    public static final int FILTER_TODAY = 4;
+    public static final int FILTER_COMPLETED = 5;
 
     /** Everything loaded for the selected salon. */
     private final List<OwnerBooking> allBookings = new ArrayList<>();
@@ -102,13 +107,48 @@ public class OwnerBookingsFragment extends Fragment {
 
         chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.isEmpty()) return;
-            int id = checkedIds.get(0);
-            if (id == R.id.chipPending) currentFilter = FILTER_PENDING;
-            else if (id == R.id.chipUpcoming) currentFilter = FILTER_UPCOMING;
-            else if (id == R.id.chipPast) currentFilter = FILTER_PAST;
-            else currentFilter = FILTER_ALL;
+            currentFilter = filterForChip(checkedIds.get(0));
             applyFilter();
         });
+
+        // A filter passed in by the home stat cards pre-selects its chip.
+        Bundle args = getArguments();
+        if (args != null) {
+            currentFilter = args.getInt(ARG_FILTER, FILTER_ALL);
+            checkFilterChip(chipGroup);
+        }
+    }
+
+    private int filterForChip(int chipId) {
+        if (chipId == R.id.chipPending) return FILTER_PENDING;
+        if (chipId == R.id.chipUpcoming) return FILTER_UPCOMING;
+        if (chipId == R.id.chipPast) return FILTER_PAST;
+        if (chipId == R.id.chipToday) return FILTER_TODAY;
+        if (chipId == R.id.chipCompleted) return FILTER_COMPLETED;
+        return FILTER_ALL;
+    }
+
+    private void checkFilterChip(ChipGroup group) {
+        switch (currentFilter) {
+            case FILTER_TODAY:
+                group.check(R.id.chipToday);
+                break;
+            case FILTER_PENDING:
+                group.check(R.id.chipPending);
+                break;
+            case FILTER_UPCOMING:
+                group.check(R.id.chipUpcoming);
+                break;
+            case FILTER_COMPLETED:
+                group.check(R.id.chipCompleted);
+                break;
+            case FILTER_PAST:
+                group.check(R.id.chipPast);
+                break;
+            case FILTER_ALL:
+            default:
+                group.check(R.id.chipAll);
+        }
     }
 
     @Override
@@ -258,6 +298,13 @@ public class OwnerBookingsFragment extends Fragment {
                 return booking.isActiveUpcoming();
             case FILTER_PAST:
                 return !booking.isActiveUpcoming();
+            case FILTER_TODAY:
+                // Same "live" rule the home stats use: cancelled and expired never count.
+                return booking.isToday()
+                        && !"cancelled".equals(booking.getStatus())
+                        && !"expired".equals(booking.getStatus());
+            case FILTER_COMPLETED:
+                return "completed".equals(booking.getStatus());
             case FILTER_ALL:
             default:
                 return true;
@@ -275,6 +322,10 @@ public class OwnerBookingsFragment extends Fragment {
                 return "No upcoming bookings";
             case FILTER_PAST:
                 return "No past bookings";
+            case FILTER_TODAY:
+                return "No bookings today";
+            case FILTER_COMPLETED:
+                return "No completed bookings";
             case FILTER_ALL:
             default:
                 return "No bookings yet";

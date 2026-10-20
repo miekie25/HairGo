@@ -77,16 +77,24 @@ public class BookingManager {
     }
 
     /**
-     * Generates the 30-minute "HH:mm" slot labels for the bookable day, from
-     * SLOT_START_HOUR up to (but not including) SLOT_END_HOUR. Shared so the
-     * booking screen's picker and the "next available" message can never
-     * disagree about which slots exist.
+     * Generates the default 30-minute "HH:mm" slot labels for the bookable
+     * day (09:00–18:00). Shared so the booking screen's picker and the
+     * "next available" message can never disagree about which slots exist.
      */
     public static List<String> generateTimeSlots() {
+        return generateTimeSlots(SLOT_START_HOUR * 60, SLOT_END_HOUR * 60);
+    }
+
+    /**
+     * The same grid for a salon's custom opening hours: 30-minute slots from
+     * openMinutes, each fully inside the window (a slot starts only when its
+     * end, start + 30, still fits before closeMinutes).
+     */
+    public static List<String> generateTimeSlots(int openMinutes, int closeMinutes) {
         List<String> slots = new ArrayList<>();
-        for (int hour = SLOT_START_HOUR; hour < SLOT_END_HOUR; hour++) {
-            slots.add(String.format(Locale.getDefault(), "%02d:00", hour));
-            slots.add(String.format(Locale.getDefault(), "%02d:30", hour));
+        for (int minutes = openMinutes; minutes + 30 <= closeMinutes; minutes += 30) {
+            slots.add(String.format(Locale.getDefault(), "%02d:%02d",
+                    minutes / 60, minutes % 60));
         }
         return slots;
     }

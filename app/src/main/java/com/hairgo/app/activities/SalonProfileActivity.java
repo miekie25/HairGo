@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -19,6 +20,8 @@ import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.fragments.ReportProblemBottomSheet;
 import com.hairgo.app.models.Salon;
+import com.hairgo.app.utils.SalonHours;
+import com.hairgo.app.utils.SalonPhotos;
 import com.hairgo.app.utils.Snackbars;
 
 import java.text.SimpleDateFormat;
@@ -47,6 +50,9 @@ public class SalonProfileActivity extends AppCompatActivity {
     private View contentGroup;
     private String salonId;
     private boolean salonLoaded;
+
+    /** This salon's own opening hours; defaults to 09:00–18:00 until the document loads. */
+    private SalonHours salonHours = SalonHours.defaults();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,7 +84,9 @@ public class SalonProfileActivity extends AppCompatActivity {
                     return;
                 }
                 salonLoaded = true;
+                salonHours = SalonHours.fromDoc(salonData);
                 bindSalon(salon);
+                loadSalonPhoto();
                 loadNextAvailableDate(salonId);
             }
 
@@ -162,13 +170,28 @@ public class SalonProfileActivity extends AppCompatActivity {
     }
 
     /**
+     * Swaps the default scissors icon for the salon's uploaded photo when it
+     * has one. The padding and teal tint only make sense for the vector
+     * placeholder, so they are cleared once a real photo is shown.
+     */
+    private void loadSalonPhoto() {
+        SalonPhotos.fetchPhoto(salonId, bitmap -> {
+            if (bitmap == null || isFinishing() || isDestroyed()) return;
+            ImageView icon = findViewById(R.id.ivSalonIcon);
+            icon.setPadding(0, 0, 0, 0);
+            icon.setImageTintList(null);
+            icon.setImageBitmap(bitmap);
+        });
+    }
+
+    /**
      * Shows the earliest slot the salon can actually be booked for.
      *
-     * <p>The value comes from the same rules as the booking screen: the shared
-     * 9:00–17:30 / 30-minute grid, the same "cancelled/expired do not hold a
-     * slot" filter, and the same minimum-notice window — so this line can never
-     * advertise a day while the picker refuses it, or hide a day the picker
-     * offers.
+     * <p>The value comes from the same rules as the booking screen: the
+     * salon's own per-day opening hours and 30-minute grid, the same
+     * "cancelled/expired do not hold a slot" filter, and the same
+     * minimum-notice window — so this line can never advertise a day while the
+     * picker refuses it, or hide a day the picker offers.
      *
      * <p>The row stays hidden if the lookup fails, for example when the
      * composite index on salonID + isDeleted + dateTime has not been created.
@@ -240,7 +263,10 @@ public class SalonProfileActivity extends AppCompatActivity {
         LocalDate today = LocalDate.now();
         for (int offset = 0; offset < AVAILABILITY_LOOKAHEAD_DAYS; offset++) {
             LocalDate day = today.plusDays(offset);
-            for (String slot : BookingManager.generateTimeSlots()) {
+            // java.time counts Monday as 1; SalonHours uses Calendar numbering
+            // where Sunday is 1. Closed days simply yield no slots.
+            int calendarDay = day.getDayOfWeek().getValue() % 7 + 1;
+            for (String slot : salonHours.slotsFor(calendarDay)) {
                 String[] parts = slot.split(":");
                 LocalDateTime candidate = LocalDateTime.of(day,
                         LocalTime.of(Integer.parseInt(parts[0]), Integer.parseInt(parts[1])));

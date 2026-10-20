@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.hairgo.app.R;
+import com.hairgo.app.activities.OwnerDashboardActivity;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.models.OwnerBooking;
 import com.hairgo.app.utils.OwnerSession;
@@ -104,5 +105,21 @@ public class OwnerHomeFragment extends Fragment {
             BottomNavigationView nav = requireActivity().findViewById(R.id.ownerBottomNav);
             nav.setSelectedItemId(R.id.nav_owner_bookings);
         });
+
+        // Each stat card opens the Bookings tab pre-filtered to its slice.
+        view.findViewById(R.id.cardTodayBookings).setOnClickListener(v ->
+                openBookingsWithFilter(OwnerBookingsFragment.FILTER_TODAY));
+        view.findViewById(R.id.cardPending).setOnClickListener(v ->
+                openBookingsWithFilter(OwnerBookingsFragment.FILTER_PENDING));
+        view.findViewById(R.id.cardConfirmed).setOnClickListener(v ->
+                openBookingsWithFilter(OwnerBookingsFragment.FILTER_UPCOMING));
+        view.findViewById(R.id.cardCompleted).setOnClickListener(v ->
+                openBookingsWithFilter(OwnerBookingsFragment.FILTER_COMPLETED));
+    }
+
+    private void openBookingsWithFilter(int filter) {
+        ((OwnerDashboardActivity) requireActivity()).setPendingBookingsFilter(filter);
+        BottomNavigationView nav = requireActivity().findViewById(R.id.ownerBottomNav);
+        nav.setSelectedItemId(R.id.nav_owner_bookings);
     }
 }

@@ -35,7 +35,7 @@
             android:visibility="invisible"
             app:constraint_referenced_ids="ivSalonIcon,tvSalonName,llLocation,llRating,divider,tvServicesLabel,rvServices,btnBook,btnReportSalon"/>
 
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/ivSalonIcon"
             android:layout_width="88dp"
             android:layout_height="88dp"
@@ -43,6 +43,8 @@
             android:padding="22dp"
             android:background="@drawable/bg_circle_teal_light"
             android:src="@drawable/ic_salon_placeholder"
+            android:contentDescription="@string/salon_photo_desc"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.HairGo_Circle"
             app:tint="@color/teal"
             app:layout_constraintTop_toBottomOf="@id/header"
             app:layout_constraintStart_toStartOf="parent"

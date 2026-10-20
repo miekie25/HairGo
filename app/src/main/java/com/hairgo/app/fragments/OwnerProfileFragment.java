@@ -1,7 +1,9 @@
 package com.hairgo.app.fragments;
 
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -14,6 +16,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -24,6 +29,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -37,10 +43,13 @@ import com.hairgo.app.firebase.AuthManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.OwnerSalon;
 import com.hairgo.app.utils.OwnerSession;
+import com.hairgo.app.utils.SalonHours;
+import com.hairgo.app.utils.SalonPhotos;
 import com.hairgo.app.utils.Snackbars;
 import com.hairgo.app.utils.ThemeManager;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,8 +73,27 @@ public class OwnerProfileFragment extends Fragment {
     private View dividerAfterServices;
     private final List<String> currentServices = new ArrayList<>();
 
+    private View btnEditHours;
+    private SalonHours currentHours = SalonHours.defaults();
+
+    private View btnEditPhoto;
+    private ShapeableImageView ivSalonPhotoThumb;
+    private boolean hasPhoto;
+
+    private ActivityResultLauncher<PickVisualMediaRequest> photoPicker;
+
     private FirebaseAuth firebaseAuth;
     private FirebaseFirestore firestore;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        photoPicker = registerForActivityResult(
+                new ActivityResultContracts.PickVisualMedia(), uri -> {
+                    if (uri == null || !isAdded()) return;
+                    savePhoto(uri);
+                });
+    }
 
     @Nullable
     @Override
@@ -97,6 +125,13 @@ public class OwnerProfileFragment extends Fragment {
         btnEditServices = view.findViewById(R.id.btnEditServices);
         dividerAfterServices = view.findViewById(R.id.dividerAfterServices);
         btnEditServices.setOnClickListener(v -> showEditServicesDialog());
+
+        btnEditHours = view.findViewById(R.id.btnEditHours);
+        btnEditHours.setOnClickListener(v -> showHoursDialog());
+
+        btnEditPhoto = view.findViewById(R.id.btnEditPhoto);
+        ivSalonPhotoThumb = view.findViewById(R.id.ivSalonPhotoThumb);
+        btnEditPhoto.setOnClickListener(v -> onPhotoRowClicked());
 
         firebaseAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
@@ -367,7 +402,9 @@ public class OwnerProfileFragment extends Fragment {
                         if (item != null) currentServices.add(item.toString());
                     }
                 }
+                currentHours = SalonHours.fromDoc(salon);
                 showServices();
+                loadPhoto();
             }
 
             @Override
@@ -380,6 +417,8 @@ public class OwnerProfileFragment extends Fragment {
     private void showServices() {
         tvServices.setVisibility(View.VISIBLE);
         btnEditServices.setVisibility(View.VISIBLE);
+        btnEditHours.setVisibility(View.VISIBLE);
+        btnEditPhoto.setVisibility(View.VISIBLE);
         if (dividerAfterServices != null) dividerAfterServices.setVisibility(View.VISIBLE);
         tvServices.setText(currentServices.isEmpty()
                 ? "Services: none listed yet"
@@ -481,6 +520,212 @@ public class OwnerProfileFragment extends Fragment {
             public void onFailure(String errorMessage) {
                 if (!isAdded()) return;
                 Toast.makeText(getContext(), "Could not update services", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    /** Opens the per-day operating-hours editor for the selected salon. */
+    private void showHoursDialog() {
+        String salonId = OwnerSession.getSelectedSalonId();
+        if (salonId == null) return;
+
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_operating_hours, null);
+        TextView tvHoursError = dialogView.findViewById(R.id.tvHoursError);
+
+        // Edit a copy: cancelling the dialog must leave currentHours untouched.
+        SalonHours draft = currentHours.copy();
+
+        final int[] dayOfWeekFor = {Calendar.MONDAY, Calendar.TUESDAY, Calendar.WEDNESDAY,
+                Calendar.THURSDAY, Calendar.FRIDAY, Calendar.SATURDAY, Calendar.SUNDAY};
+        final int[] openIds = {R.id.tvMonOpen, R.id.tvTueOpen, R.id.tvWedOpen, R.id.tvThuOpen,
+                R.id.tvFriOpen, R.id.tvSatOpen, R.id.tvSunOpen};
+        final int[] closeIds = {R.id.tvMonClose, R.id.tvTueClose, R.id.tvWedClose, R.id.tvThuClose,
+                R.id.tvFriClose, R.id.tvSatClose, R.id.tvSunClose};
+        final int[] switchIds = {R.id.switchMon, R.id.switchTue, R.id.switchWed, R.id.switchThu,
+                R.id.switchFri, R.id.switchSat, R.id.switchSun};
+
+        for (int i = 0; i < dayOfWeekFor.length; i++) {
+            final int dayOfWeek = dayOfWeekFor[i];
+            TextView tvOpen = dialogView.findViewById(openIds[i]);
+            TextView tvClose = dialogView.findViewById(closeIds[i]);
+            MaterialSwitch sw = dialogView.findViewById(switchIds[i]);
+
+            tvOpen.setText(SalonHours.formatTime(draft.openMinutes(dayOfWeek)));
+            tvClose.setText(SalonHours.formatTime(draft.closeMinutes(dayOfWeek)));
+            sw.setChecked(!draft.isClosed(dayOfWeek));
+            applyHoursRowState(tvOpen, tvClose, sw.isChecked());
+
+            tvOpen.setOnClickListener(v -> {
+                if (sw.isChecked()) pickTime(dayOfWeek, true, draft, tvOpen, tvClose);
+            });
+            tvClose.setOnClickListener(v -> {
+                if (sw.isChecked()) pickTime(dayOfWeek, false, draft, tvOpen, tvClose);
+            });
+            sw.setOnCheckedChangeListener((button, isChecked) -> {
+                draft.setClosed(dayOfWeek, !isChecked);
+                applyHoursRowState(tvOpen, tvClose, isChecked);
+            });
+        }
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Operating hours")
+                .setView(dialogView)
+                .setPositiveButton("Save", null)
+                .setNegativeButton("Cancel", null)
+                .create();
+
+        // Listener set after show() so a validation error keeps the dialog open.
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                .setOnClickListener(v -> {
+                    tvHoursError.setVisibility(View.GONE);
+                    for (int dayOfWeek : dayOfWeekFor) {
+                        if (draft.isClosed(dayOfWeek)) continue;
+                        if (draft.closeMinutes(dayOfWeek) - draft.openMinutes(dayOfWeek)
+                                < SalonHours.MIN_OPEN_MINUTES) {
+                            tvHoursError.setText("Closing time must be at least one hour after "
+                                    + "opening on " + SalonHours.dayName(dayOfWeek));
+                            tvHoursError.setVisibility(View.VISIBLE);
+                            return;
+                        }
+                    }
+                    dialog.dismiss();
+                    saveHours(salonId, draft);
+                }));
+        dialog.show();
+    }
+
+    /** Native 24-hour time picker for one end of one day's window. */
+    private void pickTime(int dayOfWeek, boolean isOpenTime, SalonHours draft,
+                          TextView tvOpen, TextView tvClose) {
+        int current = isOpenTime
+                ? draft.openMinutes(dayOfWeek) : draft.closeMinutes(dayOfWeek);
+        new TimePickerDialog(requireContext(), (view, hourOfDay, minute) -> {
+            int minutes = hourOfDay * 60 + minute;
+            if (isOpenTime) draft.setTime(dayOfWeek, minutes, draft.closeMinutes(dayOfWeek));
+            else draft.setTime(dayOfWeek, draft.openMinutes(dayOfWeek), minutes);
+            tvOpen.setText(SalonHours.formatTime(draft.openMinutes(dayOfWeek)));
+            tvClose.setText(SalonHours.formatTime(draft.closeMinutes(dayOfWeek)));
+        }, current / 60, current % 60, true).show();
+    }
+
+    private void applyHoursRowState(TextView tvOpen, TextView tvClose, boolean isOpenDay) {
+        tvOpen.setAlpha(isOpenDay ? 1f : 0.35f);
+        tvClose.setAlpha(isOpenDay ? 1f : 0.35f);
+    }
+
+    private void saveHours(String salonId, SalonHours hours) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("hours", hours.toDocMap());
+
+        new SalonManager().updateSalon(salonId, updates, new SalonManager.SalonCallback() {
+            @Override
+            public void onSuccess() {
+                if (!isAdded()) return;
+                currentHours = hours;
+                Toast.makeText(getContext(), "Operating hours saved", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (!isAdded()) return;
+                Toast.makeText(getContext(), "Could not save operating hours",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // --- salon photo ---------------------------------------------------------
+
+    /** Fills the row's thumbnail with the uploaded photo, when one exists. */
+    private void loadPhoto() {
+        String salonId = OwnerSession.getSelectedSalonId();
+        if (salonId == null) return;
+
+        SalonPhotos.fetchPhoto(salonId, bitmap -> {
+            if (!isAdded() || ivSalonPhotoThumb == null) return;
+            hasPhoto = bitmap != null;
+            if (bitmap != null) {
+                ivSalonPhotoThumb.setImageBitmap(bitmap);
+            } else {
+                ivSalonPhotoThumb.setImageResource(R.drawable.ic_salon_placeholder_teal);
+            }
+        });
+    }
+
+    private void onPhotoRowClicked() {
+        if (hasPhoto) {
+            showPhotoOptionsDialog();
+        } else {
+            launchPhotoPicker();
+        }
+    }
+
+    private void launchPhotoPicker() {
+        photoPicker.launch(new PickVisualMediaRequest.Builder()
+                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                .build());
+    }
+
+    private void showPhotoOptionsDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Salon photo")
+                .setItems(new String[]{"Change photo", "Remove photo"}, (dialog, which) -> {
+                    if (which == 0) launchPhotoPicker();
+                    else removePhoto();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void savePhoto(Uri uri) {
+        String salonId = OwnerSession.getSelectedSalonId();
+        if (salonId == null) return;
+
+        btnEditPhoto.setEnabled(false);
+        SalonPhotos.encodeAndSave(requireContext(), uri, salonId,
+                new SalonPhotos.ResultCallback() {
+                    @Override
+                    public void onSuccess() {
+                        if (!isAdded()) return;
+                        btnEditPhoto.setEnabled(true);
+                        hasPhoto = true;
+                        loadPhoto();
+                        Toast.makeText(getContext(), "Photo updated",
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFailure(String message) {
+                        if (!isAdded()) return;
+                        btnEditPhoto.setEnabled(true);
+                        Toast.makeText(getContext(), "Could not save photo",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void removePhoto() {
+        String salonId = OwnerSession.getSelectedSalonId();
+        if (salonId == null) return;
+
+        btnEditPhoto.setEnabled(false);
+        SalonPhotos.delete(salonId, new SalonPhotos.ResultCallback() {
+            @Override
+            public void onSuccess() {
+                if (!isAdded()) return;
+                btnEditPhoto.setEnabled(true);
+                hasPhoto = false;
+                ivSalonPhotoThumb.setImageResource(R.drawable.ic_salon_placeholder_teal);
+                Toast.makeText(getContext(), "Photo removed", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(String message) {
+                if (!isAdded()) return;
+                btnEditPhoto.setEnabled(true);
+                Toast.makeText(getContext(), "Could not remove photo",
+                        Toast.LENGTH_SHORT).show();
             }
         });
     }
