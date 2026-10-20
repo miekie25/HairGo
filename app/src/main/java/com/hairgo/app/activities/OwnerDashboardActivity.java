@@ -1,18 +1,25 @@
 package com.hairgo.app.activities;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.content.Intent;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.hairgo.app.R;
@@ -240,11 +247,26 @@ public class OwnerDashboardActivity extends AppCompatActivity {
 
     private void showAddSalonDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_salon, null);
-        EditText etName = dialogView.findViewById(R.id.etSalonName);
-        EditText etLocation = dialogView.findViewById(R.id.etSalonLocation);
-        EditText etServices = dialogView.findViewById(R.id.etSalonServices);
+        TextInputLayout tilName = dialogView.findViewById(R.id.tilSalonName);
+        TextInputLayout tilLocation = dialogView.findViewById(R.id.tilSalonLocation);
+        TextInputLayout tilService = dialogView.findViewById(R.id.tilSalonService);
+        TextInputEditText etName = dialogView.findViewById(R.id.etSalonName);
+        TextInputEditText etLocation = dialogView.findViewById(R.id.etSalonLocation);
+        TextInputEditText etService = dialogView.findViewById(R.id.etSalonService);
+        ChipGroup chipGroup = dialogView.findViewById(R.id.chipGroupServices);
 
-        AlertDialog dialog = new AlertDialog.Builder(this)
+        etService.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                addServiceChip(chipGroup, etService.getText().toString());
+                etService.setText("");
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) imm.hideSoftInputFromWindow(etService.getWindowToken(), 0);
+                return true;
+            }
+            return false;
+        });
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle("Add a salon")
                 .setView(dialogView)
                 .setPositiveButton("Add", null)
@@ -256,22 +278,30 @@ public class OwnerDashboardActivity extends AppCompatActivity {
             String name = etName.getText().toString().trim();
             String location = etLocation.getText().toString().trim();
 
+            // Whatever is still sitting in the services field counts too.
+            addServiceChip(chipGroup, etService.getText().toString());
+
             List<String> services = new ArrayList<>();
-            for (String part : etServices.getText().toString().split(",")) {
-                String service = part.trim();
-                if (!service.isEmpty()) services.add(service);
+            for (int i = 0; i < chipGroup.getChildCount(); i++) {
+                if (chipGroup.getChildAt(i) instanceof Chip) {
+                    services.add(((Chip) chipGroup.getChildAt(i)).getText().toString());
+                }
             }
 
+            tilName.setError(null);
+            tilLocation.setError(null);
+            tilService.setError(null);
+
             if (name.isEmpty()) {
-                etName.setError("Salon name is required");
+                tilName.setError("Salon name is required");
                 return;
             }
             if (location.isEmpty()) {
-                etLocation.setError("Location is required");
+                tilLocation.setError("Location is required");
                 return;
             }
             if (services.isEmpty()) {
-                etServices.setError("Add at least one service, separated by commas");
+                tilService.setError("Add at least one service");
                 return;
             }
 
@@ -279,6 +309,26 @@ public class OwnerDashboardActivity extends AppCompatActivity {
             createSalon(name, location, services);
         }));
         dialog.show();
+    }
+
+    private void addServiceChip(ChipGroup chipGroup, String raw) {
+        String service = raw.trim();
+        if (service.isEmpty()) return;
+
+        for (int i = 0; i < chipGroup.getChildCount(); i++) {
+            if (chipGroup.getChildAt(i) instanceof Chip
+                    && ((Chip) chipGroup.getChildAt(i)).getText().toString()
+                            .equalsIgnoreCase(service)) {
+                return;
+            }
+        }
+
+        Chip chip = new Chip(this);
+        chip.setText(service);
+        chip.setCloseIconResource(R.drawable.ic_dismiss);
+        chip.setCloseIconVisible(true);
+        chip.setOnCloseIconClickListener(v -> chipGroup.removeView(chip));
+        chipGroup.addView(chip);
     }
 
     private void createSalon(String name, String location, List<String> services) {

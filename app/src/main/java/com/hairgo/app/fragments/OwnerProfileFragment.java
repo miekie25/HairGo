@@ -1,13 +1,15 @@
 package com.hairgo.app.fragments;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,6 +19,11 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.hairgo.app.R;
 import com.hairgo.app.activities.WelcomeActivity;
 import com.hairgo.app.firebase.AuthManager;
@@ -122,10 +129,27 @@ public class OwnerProfileFragment extends Fragment {
 
         View dialogView = LayoutInflater.from(requireContext())
                 .inflate(R.layout.dialog_edit_services, null);
-        EditText etServices = dialogView.findViewById(R.id.etEditServices);
-        etServices.setText(TextUtils.join(", ", currentServices));
+        TextInputLayout tilService = dialogView.findViewById(R.id.tilEditServices);
+        TextInputEditText etService = dialogView.findViewById(R.id.etEditServices);
+        ChipGroup chipGroup = dialogView.findViewById(R.id.chipGroupServices);
 
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+        for (String service : currentServices) {
+            addServiceChip(chipGroup, service);
+        }
+
+        etService.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                addServiceChip(chipGroup, etService.getText().toString());
+                etService.setText("");
+                InputMethodManager imm = (InputMethodManager) requireContext()
+                        .getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) imm.hideSoftInputFromWindow(etService.getWindowToken(), 0);
+                return true;
+            }
+            return false;
+        });
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Edit services")
                 .setView(dialogView)
                 .setPositiveButton("Save", null)
@@ -134,14 +158,18 @@ public class OwnerProfileFragment extends Fragment {
 
         // Listener set after show() so a validation error keeps the dialog open.
         dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            // Whatever is still sitting in the services field counts too.
+            addServiceChip(chipGroup, etService.getText().toString());
+
             List<String> services = new ArrayList<>();
-            for (String part : etServices.getText().toString().split(",")) {
-                String service = part.trim();
-                if (!service.isEmpty()) services.add(service);
+            for (int i = 0; i < chipGroup.getChildCount(); i++) {
+                if (chipGroup.getChildAt(i) instanceof Chip) {
+                    services.add(((Chip) chipGroup.getChildAt(i)).getText().toString());
+                }
             }
 
             if (services.isEmpty()) {
-                etServices.setError("Add at least one service, separated by commas");
+                tilService.setError("Add at least one service");
                 return;
             }
 
@@ -149,6 +177,26 @@ public class OwnerProfileFragment extends Fragment {
             saveServices(salonId, services);
         }));
         dialog.show();
+    }
+
+    private void addServiceChip(ChipGroup chipGroup, String raw) {
+        String service = raw.trim();
+        if (service.isEmpty()) return;
+
+        for (int i = 0; i < chipGroup.getChildCount(); i++) {
+            if (chipGroup.getChildAt(i) instanceof Chip
+                    && ((Chip) chipGroup.getChildAt(i)).getText().toString()
+                            .equalsIgnoreCase(service)) {
+                return;
+            }
+        }
+
+        Chip chip = new Chip(requireContext());
+        chip.setText(service);
+        chip.setCloseIconResource(R.drawable.ic_dismiss);
+        chip.setCloseIconVisible(true);
+        chip.setOnCloseIconClickListener(v -> chipGroup.removeView(chip));
+        chipGroup.addView(chip);
     }
 
     private void saveServices(String salonId, List<String> services) {
