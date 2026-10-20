@@ -17,6 +17,7 @@ import com.hairgo.app.R;
 import com.hairgo.app.firebase.AuthManager;
 import com.hairgo.app.fragments.BookingsFragment;
 import com.hairgo.app.fragments.HomeFragment;
+import com.hairgo.app.fragments.MessagesFragment;
 import com.hairgo.app.fragments.NotificationDotHost;
 import com.hairgo.app.fragments.ProfileFragment;
 import com.hairgo.app.utils.NotificationStore;
@@ -71,6 +72,8 @@ public class ClientDashboardActivity extends AppCompatActivity implements Notifi
                 showTab(id, new HomeFragment());
             } else if (id == R.id.nav_bookings) {
                 showTab(id, new BookingsFragment());
+            } else if (id == R.id.nav_messages) {
+                showTab(id, MessagesFragment.newInstance(false));
             } else if (id == R.id.nav_profile) {
                 showTab(id, new ProfileFragment());
             } else {

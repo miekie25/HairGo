@@ -285,4 +285,17 @@
     <string name="no_notifications_found">No notifications yet</string>
     <string name="clear_all">Clear all</string>
 
+    <!-- Messaging (client-to-salon booking chat) -->
+    <string name="nav_messages">Messages</string>
+    <string name="title_messages">Messages</string>
+    <string name="messages_subtitle">Chat about your bookings</string>
+    <string name="messages_empty">No conversations yet. Open a booking and tap Message to start chatting.</string>
+    <string name="btn_message_salon">Message salon</string>
+    <string name="btn_message_client">Message client</string>
+    <string name="chat_empty">No messages yet, say hello</string>
+    <string name="chat_hint">Type a message</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_message_too_long">Message is too long (max 1000 characters).</string>
+    <string name="chat_unavailable">This conversation is not available.</string>
+
 </resources>

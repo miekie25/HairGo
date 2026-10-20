@@ -69,6 +69,17 @@
             android:orientation="horizontal">
 
             <Button
+                android:id="@+id/btnMessage"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:text="@string/btn_message_client"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/teal_primary"
+                android:textSize="13sp" />
+
+            <Button
                 android:id="@+id/btnDecline"
                 android:layout_width="0dp"
                 android:layout_height="40dp"
@@ -90,6 +101,16 @@
                 android:backgroundTint="@color/teal"
                 android:textSize="13sp" />
         </LinearLayout>
+
+        <Button
+            android:id="@+id/btnMessageStandalone"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/btn_message_client"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/teal_primary"
+            android:textSize="13sp" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

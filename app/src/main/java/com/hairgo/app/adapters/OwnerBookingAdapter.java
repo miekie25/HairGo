@@ -26,6 +26,7 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
         void onConfirm(OwnerBooking booking);
         void onDecline(OwnerBooking booking);
         void onComplete(OwnerBooking booking);
+        void onMessage(OwnerBooking booking);
     }
 
     private final List<OwnerBooking> bookings;
@@ -98,10 +99,20 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
         boolean isPending = "pending".equals(status);
         boolean canComplete = "confirmed".equals(status) && booking.isPast();
 
+        // The message action is always available: both sides may still need to
+        // talk about a booking after it is confirmed, completed or cancelled.
+        holder.btnMessageStandalone.setVisibility(isPending || canComplete ? View.GONE : View.VISIBLE);
+
         holder.actionsRow.setVisibility(isPending || canComplete ? View.VISIBLE : View.GONE);
         holder.btnDecline.setVisibility(isPending ? View.VISIBLE : View.GONE);
         holder.btnConfirm.setText(canComplete ? "Mark completed" : "Confirm");
 
+        holder.btnMessage.setOnClickListener(v -> {
+            if (listener != null) listener.onMessage(booking);
+        });
+        holder.btnMessageStandalone.setOnClickListener(v -> {
+            if (listener != null) listener.onMessage(booking);
+        });
         holder.btnDecline.setOnClickListener(v -> {
             if (listener != null) listener.onDecline(booking);
         });
@@ -125,7 +136,7 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvClientName, tvService, tvDateTime, tvStatusBadge;
         LinearLayout actionsRow;
-        Button btnConfirm, btnDecline;
+        Button btnConfirm, btnDecline, btnMessage, btnMessageStandalone;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -136,6 +147,8 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
             actionsRow = itemView.findViewById(R.id.layoutBookingActions);
             btnConfirm = itemView.findViewById(R.id.btnConfirm);
             btnDecline = itemView.findViewById(R.id.btnDecline);
+            btnMessage = itemView.findViewById(R.id.btnMessage);
+            btnMessageStandalone = itemView.findViewById(R.id.btnMessageStandalone);
         }
     }
 }

@@ -128,6 +128,70 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------
+    // CONVERSATIONS (client-to-salon booking chat)
+    // One document per booking (id = booking id) holding the preview,
+    // plus a messages subcollection holding the actual chat.
+    // ---------------------------------------------------------------
+    match /conversations/{conversationId} {
+      // Only the two participants of the booking may read the conversation.
+      allow read: if isSignedIn() && request.auth.uid in resource.data.participants;
+
+      // The conversation must belong to a real booking, and both the
+      // clientId and ownerId must match that booking and its salon. This
+      // stops anyone inventing a conversation between two other people.
+      allow create: if isSignedIn()
+        && request.resource.data.bookingId == conversationId
+        && request.resource.data.clientId ==
+             get(/databases/$(database)/documents/bookings/$(conversationId)).data.clientID
+        && request.resource.data.salonId ==
+             get(/databases/$(database)/documents/bookings/$(conversationId)).data.salonID
+        && request.resource.data.ownerId ==
+             get(/databases/$(database)/documents/salons/$(request.resource.data.salonId)).data.ownerID
+        && request.auth.uid in request.resource.data.participants
+        && request.resource.data.participants == [
+             get(/databases/$(database)/documents/bookings/$(conversationId)).data.clientID,
+             get(/databases/$(database)/documents/salons/$(request.resource.data.salonId)).data.ownerID
+           ];
+
+      // A participant may only refresh the preview and unread flags when a
+      // new message is sent - nothing else can be changed.
+      allow update: if isSignedIn()
+        && request.auth.uid in resource.data.participants
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+             'lastMessage', 'lastMessageAt', 'lastMessageBy',
+             'unreadClient', 'unreadOwner'
+           ]);
+
+      // Conversations are never deleted by the app.
+      allow delete: if false;
+
+      // The chat itself: participants only, and a message can only be sent
+      // in the sender's own name, with a non-empty body of at most 1000 chars.
+      //
+      // These checks use getAfter() rather than get(). The very first message
+      // is written in the SAME batch as the conversation document, and a plain
+      // get() would read the state BEFORE that batch commits - so the
+      // conversation would look missing and the first message would be denied.
+      // getAfter() reads the conversation as it will be once the batch is
+      // applied, so the first message and every later one both pass.
+      match /messages/{messageId} {
+        allow read: if isSignedIn()
+          && request.auth.uid in
+             getAfter(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+
+        allow create: if isSignedIn()
+          && request.auth.uid in
+             getAfter(/databases/$(database)/documents/conversations/$(conversationId)).data.participants
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 1000;
+
+        allow update, delete: if false;
+      }
+    }
+
+    // ---------------------------------------------------------------
     // REPORTS
     // ---------------------------------------------------------------
     match /reports/{reportId} {

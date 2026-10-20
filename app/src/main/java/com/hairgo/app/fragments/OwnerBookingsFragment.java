@@ -1,5 +1,6 @@
 package com.hairgo.app.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +19,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.hairgo.app.R;
+import com.hairgo.app.activities.ChatActivity;
 import com.hairgo.app.adapters.OwnerBookingAdapter;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.OwnerManager;
@@ -86,6 +88,11 @@ public class OwnerBookingsFragment extends Fragment {
             @Override
             public void onComplete(OwnerBooking booking) {
                 updateStatus(booking, "completed");
+            }
+
+            @Override
+            public void onMessage(OwnerBooking booking) {
+                openChat(booking.getBookingId());
             }
         });
 
@@ -290,6 +297,13 @@ public class OwnerBookingsFragment extends Fragment {
                         Toast.makeText(getContext(), "Could not update booking", Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    /** Opens the chat with this booking's client. */
+    private void openChat(String bookingId) {
+        Intent intent = new Intent(getContext(), ChatActivity.class);
+        intent.putExtra("bookingId", bookingId);
+        startActivity(intent);
     }
 
     private void confirmDecline(OwnerBooking booking) {

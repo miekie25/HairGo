@@ -21,6 +21,7 @@ import com.hairgo.app.firebase.OwnerManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.fragments.OwnerBookingsFragment;
 import com.hairgo.app.fragments.OwnerHomeFragment;
+import com.hairgo.app.fragments.MessagesFragment;
 import com.hairgo.app.fragments.OwnerProfileFragment;
 import com.hairgo.app.models.OwnerSalon;
 import com.hairgo.app.utils.OwnerSession;
@@ -184,6 +185,8 @@ public class OwnerDashboardActivity extends AppCompatActivity {
         Fragment fragment;
         if (tabId == R.id.nav_owner_bookings) {
             fragment = new OwnerBookingsFragment();
+        } else if (tabId == R.id.nav_owner_messages) {
+            fragment = MessagesFragment.newInstance(true);
         } else if (tabId == R.id.nav_owner_profile) {
             fragment = new OwnerProfileFragment();
         } else {

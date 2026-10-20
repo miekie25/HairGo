@@ -39,6 +39,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
     private TextView tvStatusBadge;
     private TextView tvExpiredNote;
     private TextView tvSalonLocation;
+    private androidx.appcompat.widget.AppCompatButton btnMessageSalon;
     private androidx.appcompat.widget.AppCompatButton btnCancelBooking;
     private androidx.appcompat.widget.AppCompatButton btnEditBooking;
     private androidx.appcompat.widget.AppCompatButton btnLeaveReview;
@@ -160,6 +161,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
         tvExpiredNote = findViewById(R.id.tvExpiredNote);
         tvSalonLocation = findViewById(R.id.tvSalonLocation);
         btnCancelBooking = findViewById(R.id.btnCancelBooking);
+        btnMessageSalon = findViewById(R.id.btnMessageSalon);
         btnEditBooking = findViewById(R.id.btnEditBooking);
         btnLeaveReview = findViewById(R.id.btnLeaveReview);
         btnReportSalon = findViewById(R.id.btnReportSalon);
@@ -168,6 +170,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
         btnLeaveReview.setOnClickListener(v -> showLeaveReview());
         btnEditBooking.setOnClickListener(v -> onEditClicked(booking));
         btnReportSalon.setOnClickListener(v -> showReportSalon(booking));
+        btnMessageSalon.setOnClickListener(v -> openChat());
 
         tvSalonName.setText(booking.getSalonName());
         tvServiceName.setText(booking.getServiceLabel());
@@ -385,6 +388,13 @@ public class BookingDetailsActivity extends AppCompatActivity {
                         getString(R.string.booking_cancel_failed, errorMessage));
             }
         });
+    }
+
+    /** Opens the chat with the salon for this booking. */
+    private void openChat() {
+        Intent intent = new Intent(this, ChatActivity.class);
+        intent.putExtra("bookingId", bookingId);
+        startActivity(intent);
     }
 
     private void showMissingBooking() {
