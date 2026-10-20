@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.hairgo.app.R
 import com.hairgo.app.databinding.ActivityRegisterOwnerBinding
+import com.hairgo.app.utils.PhoneFormatter
 import java.util.Locale
 
 class RegisterOwnerActivity : AppCompatActivity() {
@@ -23,6 +24,7 @@ class RegisterOwnerActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupLanguageDropdown()
+        PhoneFormatter.attach(binding.etPhone)
 
         binding.btnNext.setOnClickListener {
             if (validateForm()) {
@@ -98,7 +100,7 @@ class RegisterOwnerActivity : AppCompatActivity() {
 
         val phone = normalizePhone(binding.etPhone.text.toString())
         if (!PHONE_PATTERN.matches(phone)) {
-            binding.tilPhone.error = "Enter a valid SA number, e.g. 0821234567 or +27821234567"
+            binding.tilPhone.error = "Enter a valid SA number, e.g. +27 82 123 4567"
             isValid = false
         } else {
             binding.tilPhone.error = null
@@ -139,14 +141,15 @@ class RegisterOwnerActivity : AppCompatActivity() {
 
     /**
      * Normalises a South African number to E.164 (+27...) so the OTP screen can
-     * dial it as typed. Accepts 0-prefixed, +27-prefixed and bare 27 numbers
-     * with spaces or dashes; anything else comes back unchanged and fails the
-     * pattern check in validateForm().
+     * dial it as typed. Accepts 0-prefixed, +27-prefixed and bare 9-digit
+     * numbers with spaces or dashes; anything else comes back unchanged and
+     * fails the pattern check in validateForm().
      */
     private fun normalizePhone(raw: String): String {
         var value = raw.trim().replace(Regex("[\\s-]"), "")
         if (value.startsWith("0")) value = "+27" + value.substring(1)
-        else if (value.startsWith("27")) value = "+" + value
+        else if (value.startsWith("27") && value.length >= 11) value = "+" + value
+        else if (value.length == 9) value = "+27" + value
         return value
     }
 

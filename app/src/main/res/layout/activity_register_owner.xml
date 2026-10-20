@@ -165,7 +165,7 @@
                     android:id="@+id/etPhone"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="0124569824"
+                    android:hint="82 123 4567"
                     android:inputType="phone"
                     android:textColorHint="@color/grey_medium" />
             </com.google.android.material.textfield.TextInputLayout>
