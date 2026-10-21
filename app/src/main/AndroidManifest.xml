@@ -139,6 +139,8 @@
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_bell" />
 
+        <activity android:name=".activities.PhotoViewerActivity" android:exported="false" />
+
     </application>
 
 </manifest>
