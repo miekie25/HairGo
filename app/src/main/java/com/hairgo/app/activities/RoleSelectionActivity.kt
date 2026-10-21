@@ -15,6 +15,13 @@ class RoleSelectionActivity : AppCompatActivity() {
         binding = ActivityRoleSelectionBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        binding.btnBack.setOnClickListener {
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+            finish()
+        }
+
         binding.cardClient.setOnClickListener {
             startActivity(Intent(this, RegisterClientActivity::class.java))
         }

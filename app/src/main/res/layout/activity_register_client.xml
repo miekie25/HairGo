@@ -20,24 +20,39 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingHorizontal="28dp"
-            android:paddingTop="24dp"
+            android:paddingTop="16dp"
             android:paddingBottom="48dp">
 
-            <!-- Title -->
+            <!-- Back Button to Role Selection -->
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginBottom="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Back"
+                android:src="@drawable/ic_back"
+                app:tint="@color/heading" />
+
+            <!-- Title (Centered) -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="6dp"
+                android:gravity="center"
                 android:text="Create your account"
                 android:textColor="@color/heading"
                 android:textSize="22sp"
                 android:textStyle="bold" />
 
-            <!-- Subtitle -->
+            <!-- Subtitle (Centered) -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="32dp"
+                android:gravity="center"
                 android:text="Book your next appointment in minutes"
                 android:textColor="@color/grey_medium"
                 android:textSize="14sp" />
@@ -219,7 +234,7 @@
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="8dp"
                 app:boxCornerRadiusBottomEnd="16dp"
                 app:boxCornerRadiusBottomStart="16dp"
                 app:boxCornerRadiusTopEnd="16dp"
@@ -232,8 +247,65 @@
                     android:id="@+id/etPassword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textPassword" />
+                    android:hint="Create a strong password"
+                    android:inputType="textPassword"
+                    android:textColorHint="@color/grey_medium" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Live Password Requirement Checklist -->
+            <LinearLayout
+                android:id="@+id/layoutPasswordRequirements"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:orientation="vertical"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp">
+
+                <TextView
+                    android:id="@+id/tvReqLength"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="2dp"
+                    android:text="• 8 to 25 characters long"
+                    android:textColor="@color/grey_medium"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvReqUppercase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="2dp"
+                    android:text="• At least 1 uppercase letter (A–Z)"
+                    android:textColor="@color/grey_medium"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvReqLowercase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="2dp"
+                    android:text="• At least 1 lowercase letter (a–z)"
+                    android:textColor="@color/grey_medium"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvReqNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="2dp"
+                    android:text="• At least 1 number (0–9)"
+                    android:textColor="@color/grey_medium"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvReqSpecial"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="• At least 1 special character (e.g. @, #, $, %, !)"
+                    android:textColor="@color/grey_medium"
+                    android:textSize="12sp" />
+            </LinearLayout>
 
             <!-- Confirm Password -->
             <TextView

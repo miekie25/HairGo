@@ -2,11 +2,14 @@ package com.hairgo.app.activities
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
 import android.text.Spannable
 import android.text.SpannableString
+import android.text.TextWatcher
 import android.text.style.ForegroundColorSpan
 import android.util.Patterns
 import android.widget.ArrayAdapter
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.hairgo.app.R
@@ -25,8 +28,26 @@ class RegisterOwnerActivity : AppCompatActivity() {
         binding = ActivityRegisterOwnerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Back button -> return to Role Selection screen
+        binding.btnBack.setOnClickListener {
+            val intent = Intent(this, RoleSelectionActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+            finish()
+        }
+
         setupLanguageDropdown()
         PhoneFormatter.attach(binding.etPhone)
+
+        // Real-time live password validation requirement checklist
+        binding.etPassword.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val pwd = s?.toString() ?: ""
+                validatePasswordRequirements(pwd)
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
 
         binding.btnNext.setOnClickListener {
             if (validateForm()) {
@@ -41,6 +62,55 @@ class RegisterOwnerActivity : AppCompatActivity() {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
         }
+    }
+
+    private fun validatePasswordRequirements(password: String) {
+        val greenColor = ContextCompat.getColor(this, android.R.color.holo_green_dark)
+        val defaultColor = ContextCompat.getColor(this, R.color.grey_medium)
+
+        // 1. Length: 8 to 25 characters
+        val isLengthValid = password.length in 8..25
+        updateRequirementUi(binding.tvReqLength, "8 to 25 characters long", isLengthValid, greenColor, defaultColor)
+
+        // 2. Uppercase letter (A–Z)
+        val isUpperValid = password.any { it.isUpperCase() }
+        updateRequirementUi(binding.tvReqUppercase, "At least 1 uppercase letter (A–Z)", isUpperValid, greenColor, defaultColor)
+
+        // 3. Lowercase letter (a–z)
+        val isLowerValid = password.any { it.isLowerCase() }
+        updateRequirementUi(binding.tvReqLowercase, "At least 1 lowercase letter (a–z)", isLowerValid, greenColor, defaultColor)
+
+        // 4. Number (0–9)
+        val isDigitValid = password.any { it.isDigit() }
+        updateRequirementUi(binding.tvReqNumber, "At least 1 number (0–9)", isDigitValid, greenColor, defaultColor)
+
+        // 5. Special character
+        val isSpecialValid = password.any { "!@#$%^&*()_+-=[]{}|;:',.<>?/".contains(it) }
+        updateRequirementUi(binding.tvReqSpecial, "At least 1 special character (e.g. @, #, $, %, !)", isSpecialValid, greenColor, defaultColor)
+    }
+
+    private fun updateRequirementUi(
+        textView: TextView,
+        label: String,
+        isValid: Boolean,
+        activeColor: Int,
+        defaultColor: Int
+    ) {
+        if (isValid) {
+            textView.text = "✓ $label"
+            textView.setTextColor(activeColor)
+        } else {
+            textView.text = "• $label"
+            textView.setTextColor(defaultColor)
+        }
+    }
+
+    private fun isPasswordValid(password: String): Boolean {
+        return password.length in 8..25 &&
+                password.any { it.isUpperCase() } &&
+                password.any { it.isLowerCase() } &&
+                password.any { it.isDigit() } &&
+                password.any { "!@#$%^&*()_+-=[]{}|;:',.<>?/".contains(it) }
     }
 
     private fun highlightLoginText() {
@@ -109,11 +179,8 @@ class RegisterOwnerActivity : AppCompatActivity() {
         }
 
         val password = binding.etPassword.text.toString()
-        if (password.length < 8) {
-            binding.tilPassword.error = "Password must be at least 8 characters"
-            isValid = false
-        } else if (!password.any { it.isLetter() } || !password.any { it.isDigit() }) {
-            binding.tilPassword.error = "Password must include at least one letter and one number"
+        if (!isPasswordValid(password)) {
+            binding.tilPassword.error = "Password must fulfill all requirements below"
             isValid = false
         } else {
             binding.tilPassword.error = null
@@ -133,8 +200,6 @@ class RegisterOwnerActivity : AppCompatActivity() {
     /**
      * Format checks passed. Ask Firebase whether the email already belongs to
      * an account so an obvious duplicate is caught here, before OTP and terms.
-     * Best-effort only: enumeration protection can hide taken emails, in which
-     * case the final createUser error stays as the safety net.
      */
     private fun checkEmailThenContinue() {
         val email = binding.etEmail.text.toString().trim()
@@ -167,10 +232,7 @@ class RegisterOwnerActivity : AppCompatActivity() {
     }
 
     /**
-     * Normalises a South African number to E.164 (+27...) so the OTP screen can
-     * dial it as typed. Accepts 0-prefixed, +27-prefixed and bare 9-digit
-     * numbers with spaces or dashes; anything else comes back unchanged and
-     * fails the pattern check in validateForm().
+     * Normalises a South African number to E.164 (+27...) so the OTP screen can dial it.
      */
     private fun normalizePhone(raw: String): String {
         var value = raw.trim().replace(Regex("[\\s-]"), "")
@@ -181,7 +243,6 @@ class RegisterOwnerActivity : AppCompatActivity() {
     }
 
     companion object {
-        // +27 followed by exactly 9 digits: the only form handed to Firebase Phone Auth.
         private val PHONE_PATTERN = Regex("^\\+27\\d{9}$")
     }
 }

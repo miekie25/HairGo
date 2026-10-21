@@ -22,6 +22,17 @@
             android:paddingTop="16dp"
             android:paddingBottom="32dp">
 
+            <!-- Back Button to Login / Auth Choice -->
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginBottom="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Back"
+                android:src="@drawable/ic_back"
+                app:tint="@color/heading" />
+
             <!-- Welcome title -->
             <TextView
                 android:id="@+id/tvWelcome"
