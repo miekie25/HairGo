@@ -99,6 +99,10 @@
             android:name=".activities.OwnerDashboardActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".activities.OwnerBookingDetailsActivity"
+            android:exported="false" />
+
         <!-- Admin -->
         <activity
             android:name=".activities.AdminDashboardActivity"

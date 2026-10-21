@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -34,6 +36,7 @@ import java.util.Map;
 public class BookAppointmentActivity extends AppCompatActivity {
 
     private TextView tvSelectedServices, tvSelectedDate, tvSelectedTime, tvError;
+    private EditText etNotes;
 
     private final List<String> availableServices = new ArrayList<>();
     private final List<String> selectedServices = new ArrayList<>();
@@ -84,6 +87,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
         tvSelectedDate = findViewById(R.id.tvSelectedDate);
         tvSelectedTime = findViewById(R.id.tvSelectedTime);
         tvError = findViewById(R.id.tvError);
+        etNotes = findViewById(R.id.etNotes);
 
         LinearLayout rowService = findViewById(R.id.rowService);
         LinearLayout rowDate = findViewById(R.id.rowDate);
@@ -151,6 +155,10 @@ public class BookAppointmentActivity extends AppCompatActivity {
 
         if (isEditing()) {
             prefillFromBooking();
+            // A reschedule keeps the original note (the update path does not
+            // touch it), so the field is hidden rather than shown and ignored.
+            findViewById(R.id.tvNotesLabel).setVisibility(View.GONE);
+            etNotes.setVisibility(View.GONE);
         }
         updateServiceSummary();
 
@@ -471,6 +479,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
                 salon.getName(),
                 new ArrayList<>(selectedServices),
                 selectedDateTime.getTime(),
+                etNotes.getText().toString(),
                 new BookingManager.BookingCreatedCallback() {
                     @Override
                     public void onSuccess(String bookingId) {

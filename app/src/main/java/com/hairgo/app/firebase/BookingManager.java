@@ -163,13 +163,20 @@ public class BookingManager {
      */
     public void createBooking(String clientId, String salonId, String salonName,
                               List<String> serviceNames, Date dateTime, BookingCreatedCallback callback) {
-        createBooking(null, clientId, salonId, salonName, serviceNames, dateTime, callback);
+        createBooking(null, clientId, salonId, salonName, serviceNames, dateTime, "", callback);
     }
 
     /** Convenience overload for a single service. */
     public void createBooking(String clientId, String salonId, String salonName,
                               String serviceName, Date dateTime, BookingCreatedCallback callback) {
-        createBooking(null, clientId, salonId, salonName, singleton(serviceName), dateTime, callback);
+        createBooking(null, clientId, salonId, salonName, singleton(serviceName), dateTime, "", callback);
+    }
+
+    /** Creates a booking carrying the client's optional free-text note. */
+    public void createBooking(String clientId, String salonId, String salonName,
+                              List<String> serviceNames, Date dateTime, String notes,
+                              BookingCreatedCallback callback) {
+        createBooking(null, clientId, salonId, salonName, serviceNames, dateTime, notes, callback);
     }
 
     /**
@@ -182,11 +189,17 @@ public class BookingManager {
      */
     public void createBooking(String documentId, String clientId, String salonId, String salonName,
                               String serviceName, Date dateTime, BookingCreatedCallback callback) {
-        createBooking(documentId, clientId, salonId, salonName, singleton(serviceName), dateTime, callback);
+        createBooking(documentId, clientId, salonId, salonName, singleton(serviceName), dateTime, "", callback);
     }
 
     public void createBooking(String documentId, String clientId, String salonId, String salonName,
                               List<String> serviceNames, Date dateTime, BookingCreatedCallback callback) {
+        createBooking(documentId, clientId, salonId, salonName, serviceNames, dateTime, "", callback);
+    }
+
+    public void createBooking(String documentId, String clientId, String salonId, String salonName,
+                              List<String> serviceNames, Date dateTime, String notes,
+                              BookingCreatedCallback callback) {
         // Re-check the rule here, not only in the UI: nothing before now +
         // the notice period may be written.
         if (dateTime == null
@@ -201,13 +214,14 @@ public class BookingManager {
                 : db.collection("bookings").document(documentId);
 
         List<String> names = serviceNames == null ? new ArrayList<>() : serviceNames;
+        String note = notes == null ? "" : notes.trim();
 
         // Look up the client's own name first so the salon owner can see who booked.
         // A client may read their own users document. If the lookup fails for any
         // reason (offline, a seeded client with no profile), the booking is still
         // created, just without a name.
         if (clientId == null || clientId.isEmpty()) {
-            writeBooking(ref, clientId, "", salonId, salonName, names, dateTime, callback);
+            writeBooking(ref, clientId, "", salonId, salonName, names, dateTime, note, callback);
             return;
         }
 
@@ -217,16 +231,16 @@ public class BookingManager {
                     String last = doc.getString("surname");
                     String clientName = ((first == null ? "" : first) + " "
                             + (last == null ? "" : last)).trim();
-                    writeBooking(ref, clientId, clientName, salonId, salonName, names, dateTime, callback);
+                    writeBooking(ref, clientId, clientName, salonId, salonName, names, dateTime, note, callback);
                 })
                 .addOnFailureListener(e ->
-                        writeBooking(ref, clientId, "", salonId, salonName, names, dateTime, callback));
+                        writeBooking(ref, clientId, "", salonId, salonName, names, dateTime, note, callback));
     }
 
     /** Writes the booking document once the client's name (possibly empty) is known. */
     private void writeBooking(DocumentReference ref, String clientId, String clientName,
                               String salonId, String salonName, List<String> names,
-                              Date dateTime, BookingCreatedCallback callback) {
+                              Date dateTime, String notes, BookingCreatedCallback callback) {
         Map<String, Object> booking = new HashMap<>();
         booking.put("bookingID", ref.getId());
         booking.put("clientID", clientId);
@@ -238,6 +252,7 @@ public class BookingManager {
         booking.put("dateTime", dateTime);
         booking.put("status", "pending");
         booking.put("isDeleted", false);
+        booking.put("notes", notes == null ? "" : notes);
 
         // Claim the slot and write the booking in one transaction. A competing
         // client contending for the same lock document makes this retry, see
@@ -268,6 +283,18 @@ public class BookingManager {
      * cancelled booking can still be opened from recents and cancelled again.
      */
     public void getBookingById(String bookingId, BookingDataCallback callback) {
+        getBookingById(bookingId, false, callback);
+    }
+
+    /**
+     * Reads one booking by id, optionally including soft-deleted ones.
+     *
+     * <p>The owner's live booking list deliberately keeps client-cancelled
+     * bookings visible (a cancellation is status "cancelled" plus isDeleted
+     * true). Without includeDeleted, tapping one of those would 404 on the
+     * detail screen, so the owner side passes true.
+     */
+    public void getBookingById(String bookingId, boolean includeDeleted, BookingDataCallback callback) {
         db.collection("bookings").document(bookingId).get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()) {
@@ -276,7 +303,7 @@ public class BookingManager {
                     }
                     Map<String, Object> booking = doc.getData();
                     Boolean deleted = booking == null ? null : (Boolean) booking.get("isDeleted");
-                    if (Boolean.TRUE.equals(deleted)) {
+                    if (!includeDeleted && Boolean.TRUE.equals(deleted)) {
                         callback.onFailure("Booking not found.");
                         return;
                     }

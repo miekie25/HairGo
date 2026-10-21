@@ -15,6 +15,7 @@ public class OwnerBooking {
     private final Date dateTime;
     private boolean cancelledByClient;
     private String status; // "pending", "confirmed", "completed" (cancelled bookings are soft-deleted)
+    private String notes; // optional free-text the client wrote when booking
 
     public OwnerBooking(String bookingId, String clientId, String clientName,
                         String serviceName, Date dateTime, String status) {
@@ -46,6 +47,9 @@ public class OwnerBooking {
                 clientName == null ? "" : clientName,
                 service == null ? "" : service,
                 date, status);
+
+        String notes = asString(raw.get("notes"));
+        booking.notes = notes == null ? "" : notes;
 
         // The client's own Cancel sets isDeleted true; the owner's Decline leaves it false.
         // That is how the two kinds of cancellation are told apart.
@@ -85,4 +89,5 @@ public class OwnerBooking {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public boolean isCancelledByClient() { return cancelledByClient; }
+    public String getNotes() { return notes == null ? "" : notes; }
 }

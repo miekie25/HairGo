@@ -14,6 +14,7 @@ public class Booking {
     private Date dateTime;
     private String status; // pending, confirmed, completed, cancelled, expired
     private int salonImageRes; // local drawable, 0 means use the placeholder
+    private String notes; // optional free-text the client wrote when booking
 
     public Booking() {
         this.serviceNames = new ArrayList<>();
@@ -62,4 +63,6 @@ public class Booking {
     public Date getDateTime() { return dateTime; }
     public String getStatus() { return status; }
     public int getSalonImageRes() { return salonImageRes; }
+    public String getNotes() { return notes == null ? "" : notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 }

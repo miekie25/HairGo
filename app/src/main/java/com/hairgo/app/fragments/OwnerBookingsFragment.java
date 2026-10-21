@@ -20,6 +20,7 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.hairgo.app.R;
 import com.hairgo.app.activities.ChatActivity;
+import com.hairgo.app.activities.OwnerBookingDetailsActivity;
 import com.hairgo.app.adapters.OwnerBookingAdapter;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.OwnerManager;
@@ -98,6 +99,11 @@ public class OwnerBookingsFragment extends Fragment {
             @Override
             public void onMessage(OwnerBooking booking) {
                 openChat(booking.getBookingId());
+            }
+
+            @Override
+            public void onOpen(OwnerBooking booking) {
+                openBookingDetails(booking.getBookingId());
             }
         });
 
@@ -353,6 +359,14 @@ public class OwnerBookingsFragment extends Fragment {
     /** Opens the chat with this booking's client. */
     private void openChat(String bookingId) {
         Intent intent = new Intent(getContext(), ChatActivity.class);
+        intent.putExtra("bookingId", bookingId);
+        startActivity(intent);
+    }
+
+    /** Opens the full detail view for one booking. The list is live, so any
+     *  status change made there shows up here without a manual refresh. */
+    private void openBookingDetails(String bookingId) {
+        Intent intent = new Intent(getContext(), OwnerBookingDetailsActivity.class);
         intent.putExtra("bookingId", bookingId);
         startActivity(intent);
     }

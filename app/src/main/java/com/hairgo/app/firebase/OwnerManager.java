@@ -91,6 +91,21 @@ public class OwnerManager {
     }
 
     /**
+     * Reads a client's phone number from their profile, so the owner can call
+     * them about a booking. Returns "" when the profile has no number. Any
+     * signed-in user may read a user profile (see firestore.rules), so this is
+     * allowed for the salon owner.
+     */
+    public void getClientPhone(String uid, OwnerCallback<String> callback) {
+        db.collection("users").document(uid).get()
+                .addOnSuccessListener(doc -> {
+                    String phone = doc.getString("phoneNumber");
+                    callback.onSuccess(phone == null ? "" : phone.trim());
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
      * Live feed of one salon's bookings: fires now and again on every change, so a new request
      * or a client's cancellation appears without refreshing. Remove the returned registration
      * when the screen stops (onPause) to avoid background reads.

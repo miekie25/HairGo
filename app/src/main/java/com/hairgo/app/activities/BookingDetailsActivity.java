@@ -138,7 +138,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
             dateTime = ((Timestamp) dateValue).toDate();
         }
 
-        return new Booking(
+        Booking booking = new Booking(
                 bookingId,
                 salonId == null ? null : salonId.toString(),
                 salonName == null ? "" : salonName.toString(),
@@ -146,6 +146,10 @@ public class BookingDetailsActivity extends AppCompatActivity {
                 dateTime,
                 status.toString(),
                 0);
+
+        Object notes = raw.get("notes");
+        booking.setNotes(notes == null ? "" : notes.toString());
+        return booking;
     }
 
     private void bindBooking(Booking booking) {
@@ -186,6 +190,8 @@ public class BookingDetailsActivity extends AppCompatActivity {
         } else {
             tvDateTime.setText("");
         }
+
+        bindNotes(booking.getNotes());
 
         updateStatusBadge(currentStatus);
         updateCancelButtonVisibility(currentStatus);
@@ -228,6 +234,22 @@ public class BookingDetailsActivity extends AppCompatActivity {
         tvSalonLocation.setText(location);
         tvSalonLocation.setOnClickListener(v -> MapsHelper.openLocation(this, location));
         tvSalonLocation.setVisibility(View.VISIBLE);
+    }
+
+    /** Shows the client's own note on the booking, hiding the row when empty. */
+    private void bindNotes(String notes) {
+        TextView tvNotesLabel = findViewById(R.id.tvNotesLabel);
+        TextView tvNotes = findViewById(R.id.tvNotes);
+
+        if (notes == null || notes.trim().isEmpty()) {
+            tvNotesLabel.setVisibility(View.GONE);
+            tvNotes.setVisibility(View.GONE);
+            return;
+        }
+
+        tvNotes.setText(notes.trim());
+        tvNotesLabel.setVisibility(View.VISIBLE);
+        tvNotes.setVisibility(View.VISIBLE);
     }
 
     private String asString(Object value) {

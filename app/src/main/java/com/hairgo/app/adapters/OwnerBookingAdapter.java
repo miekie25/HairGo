@@ -27,6 +27,8 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
         void onDecline(OwnerBooking booking);
         void onComplete(OwnerBooking booking);
         void onMessage(OwnerBooking booking);
+        /** The card was tapped somewhere other than a button: open the detail view. */
+        void onOpen(OwnerBooking booking);
     }
 
     private final List<OwnerBooking> bookings;
@@ -95,9 +97,11 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
                     .setColor(ContextCompat.getColor(holder.itemView.getContext(), colorRes));
         }
 
-        // Pending: Decline / Confirm.  Confirmed and already past: Mark completed.  Otherwise no actions.
+        // Pending: Decline / Confirm.  Confirmed: Mark completed, whenever the
+        // owner decides the work is done - the clock never completes it for them.
+        // Otherwise no actions.
         boolean isPending = "pending".equals(status);
-        boolean canComplete = "confirmed".equals(status) && booking.isPast();
+        boolean canComplete = "confirmed".equals(status);
 
         // The message action is always available: both sides may still need to
         // talk about a booking after it is confirmed, completed or cancelled.
@@ -120,6 +124,13 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
             if (listener == null) return;
             if (canComplete) listener.onComplete(booking);
             else listener.onConfirm(booking);
+        });
+
+        // Tapping anywhere else on the card opens the detail view. The buttons
+        // above are clickable, so they consume their own touches and never
+        // reach this listener.
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onOpen(booking);
         });
     }
 

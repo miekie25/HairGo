@@ -301,4 +301,18 @@
     <string name="chat_message_too_long">Message is too long (max 1000 characters).</string>
     <string name="chat_unavailable">This conversation is not available.</string>
 
+    <!-- Owner booking detail screen -->
+    <string name="title_owner_booking_details">Booking Details</string>
+    <string name="label_client">Client</string>
+    <string name="label_phone">Phone</string>
+    <string name="label_notes">Notes</string>
+    <string name="hint_booking_notes">Note for the salon (optional)</string>
+    <string name="btn_mark_completed">Mark completed</string>
+    <string name="btn_confirm">Confirm</string>
+    <string name="btn_decline">Decline</string>
+    <string name="phone_unavailable">No phone number on file</string>
+    <string name="booking_marked_completed">Booking marked as completed</string>
+    <string name="booking_confirmed">Booking confirmed</string>
+    <string name="booking_update_failed">Could not update the booking: %1$s</string>
+
 </resources>
