@@ -115,6 +115,9 @@
         <activity
             android:name=".activities.SendMessageActivity"
             android:exported="false" />
+        <activity
+            android:name=".activities.UserDetailActivity"
+            android:exported="false" />
 
         <!-- Client-to-salon booking chat -->
         <activity

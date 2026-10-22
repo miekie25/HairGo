@@ -121,10 +121,10 @@
                         android:textAllCaps="false"
                         android:textSize="12.5sp"
                         app:icon="@drawable/ic_message"
-                        app:iconTint="@color/teal_primary"
+                        app:iconTint="@color/navy_primary"
                         app:cornerRadius="10dp"
-                        app:strokeColor="@color/teal_primary"
-                        android:textColor="@color/teal_primary"/>
+                        app:strokeColor="@color/navy_primary"
+                        android:textColor="@color/navy_primary"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -184,10 +184,10 @@
                         android:textAllCaps="false"
                         android:textSize="12.5sp"
                         app:icon="@drawable/ic_message"
-                        app:iconTint="@color/teal_primary"
+                        app:iconTint="@color/navy_primary"
                         app:cornerRadius="10dp"
-                        app:strokeColor="@color/teal_primary"
-                        android:textColor="@color/teal_primary"/>
+                        app:strokeColor="@color/navy_primary"
+                        android:textColor="@color/navy_primary"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -295,9 +295,9 @@
                     android:text="Suspend Account"
                     android:textAllCaps="false"
                     app:icon="@drawable/ic_suspend"
-                    app:iconTint="@color/warning"
-                    app:strokeColor="@color/warning"
-                    android:textColor="@color/warning"
+                    app:iconTint="@color/error_dark"
+                    app:strokeColor="@color/error_dark"
+                    android:textColor="@color/error_dark"
                     app:cornerRadius="12dp"
                     android:layout_marginBottom="10dp"/>
 
@@ -309,9 +309,9 @@
                     android:text="Remove Account"
                     android:textAllCaps="false"
                     app:icon="@drawable/ic_delete"
-                    app:iconTint="@color/error"
-                    app:strokeColor="@color/error"
-                    android:textColor="@color/error"
+                    app:iconTint="@color/success_dark"
+                    app:strokeColor="@color/success_dark"
+                    android:textColor="@color/success_dark"
                     app:cornerRadius="12dp"
                     android:layout_marginBottom="10dp"/>
 
@@ -338,7 +338,7 @@
                     android:textAllCaps="false"
                     app:icon="@drawable/ic_dismiss"
                     app:iconTint="@color/text_primary"
-                    app:strokeColor="@color/input_border"
+                    app:strokeColor="@color/grey_dark"
                     android:textColor="@color/text_primary"
                     app:cornerRadius="12dp"/>
 

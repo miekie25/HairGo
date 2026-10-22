@@ -1,24 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-
     <item
-        android:id="@+id/nav_admin_overview"
-        android:icon="@drawable/ic_nav_overview"
-        android:title="@string/nav_overview" />
-
+        android:id="@+id/nav_overview"
+        android:icon="@drawable/ic_nav_home"
+        android:title="Home" />
     <item
-        android:id="@+id/nav_admin_users"
+        android:id="@+id/nav_users"
         android:icon="@drawable/ic_nav_users"
-        android:title="@string/nav_users" />
-
+        android:title="Users" />
     <item
-        android:id="@+id/nav_admin_salons"
-        android:icon="@drawable/ic_nav_salons"
-        android:title="@string/nav_salons" />
-
+        android:id="@+id/nav_bookings"
+        android:icon="@drawable/ic_nav_bookings"
+        android:title="Bookings" />
     <item
-        android:id="@+id/nav_admin_reports"
+        android:id="@+id/nav_reports"
         android:icon="@drawable/ic_nav_reports"
-        android:title="@string/nav_reports" />
-
+        android:title="Reports" />
 </menu>

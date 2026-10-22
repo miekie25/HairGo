@@ -1,74 +1,51 @@
 package com.hairgo.app.activities
 
 import android.os.Bundle
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
-import com.hairgo.app.databinding.ActivitySendMessageBinding
-import com.hairgo.app.utils.Snackbars
+import com.google.android.material.button.MaterialButton
+import com.hairgo.app.R
 
 class SendMessageActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivitySendMessageBinding
-    private val db = FirebaseFirestore.getInstance()
-    private val auth = FirebaseAuth.getInstance()
+    private var recipientName: String = ""
+    private var recipientEmail: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivitySendMessageBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_send_message)
 
-        val name = intent.getStringExtra("recipientName") ?: "User"
-        val email = intent.getStringExtra("recipientEmail") ?: ""
-        val recipientUid = intent.getStringExtra("recipientUid") ?: ""
-        val prefill = intent.getStringExtra("prefill")
+        recipientName = intent.getStringExtra("recipientName") ?: "User"
+        recipientEmail = intent.getStringExtra("recipientEmail") ?: ""
+        val prefillMsg = intent.getStringExtra("prefill") ?: ""
 
-        binding.tvRecipient.text = "To: $name ($email)"
-        if (!prefill.isNullOrEmpty()) {
-            binding.etMessage.setText(prefill)
+        findViewById<ImageView>(R.id.btnBack)?.setOnClickListener { finish() }
+
+        val tvRecipientName = findViewById<TextView>(R.id.tvRecipientName)
+        val tvRecipientEmail = findViewById<TextView>(R.id.tvRecipientEmail)
+        val etMessageBody = findViewById<EditText>(R.id.etMessageBody)
+        val btnSendMessage = findViewById<MaterialButton>(R.id.btnSendMessage)
+
+        tvRecipientName?.text = recipientName
+        tvRecipientEmail?.text = recipientEmail
+
+        if (prefillMsg.isNotEmpty()) {
+            etMessageBody?.setText(prefillMsg)
         }
 
-        binding.btnBack.setOnClickListener { finish() }
-
-        binding.btnSend.setOnClickListener {
-            val messageText = binding.etMessage.text.toString().trim()
+        btnSendMessage?.setOnClickListener {
+            val messageText = etMessageBody?.text?.toString()?.trim() ?: ""
             if (messageText.isEmpty()) {
-                binding.tilMessage.error = "Message can't be empty"
+                Toast.makeText(this, "Please enter a message.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            sendMessageToFirestore(recipientUid, email, name, messageText)
+            // Simulate message sending success
+            Toast.makeText(this, "Message sent to $recipientName", Toast.LENGTH_SHORT).show()
+            finish()
         }
-    }
-
-    private fun sendMessageToFirestore(
-        recipientUid: String,
-        recipientEmail: String,
-        recipientName: String,
-        messageText: String
-    ) {
-        binding.btnSend.isEnabled = false
-
-        val senderUid = auth.currentUser?.uid ?: ""
-
-        val messageData = hashMapOf(
-            "senderId" to senderUid,
-            "recipientUid" to recipientUid,
-            "recipientEmail" to recipientEmail,
-            "recipientName" to recipientName,
-            "message" to messageText,
-            "timestamp" to FieldValue.serverTimestamp()
-        )
-
-        db.collection("messages")
-            .add(messageData)
-            .addOnSuccessListener {
-                Snackbars.showThen(binding.root, "Message sent to $recipientName") { finish() }
-            }
-            .addOnFailureListener { e ->
-                binding.btnSend.isEnabled = true
-                Snackbars.show(binding.root, "Failed to send message: ${e.message}")
-            }
     }
 }

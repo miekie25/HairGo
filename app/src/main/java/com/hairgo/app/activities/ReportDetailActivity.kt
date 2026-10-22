@@ -31,7 +31,7 @@ class ReportDetailActivity : AppCompatActivity() {
         binding = ActivityReportDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        reportId = intent.getStringExtra("reportId")
+        reportId = intent.getStringExtra("reportId") ?: intent.getStringExtra("EXTRA_REPORT_ID")
         if (reportId.isNullOrEmpty()) {
             Toast.makeText(this, "Report not found", Toast.LENGTH_SHORT).show()
             finish()
@@ -56,6 +56,19 @@ class ReportDetailActivity : AppCompatActivity() {
     }
 
     private fun fetchReportFromFirestore(docId: String) {
+        if (docId == "sample_report_id") {
+            reportedUserName = "Glam Studio"
+            reportedUserEmail = "contact@glamstudio.com"
+            reportedUserRole = "Owner"
+            reporterName = "Sipho M."
+            reporterEmail = "sipho@gmail.com"
+            currentStatus = "Pending"
+            binding.tvReason.text = "Safety Concern"
+            binding.tvDescription.text = "Gate access code was not provided."
+            bindReportUI()
+            return
+        }
+
         db.collection("reports").document(docId)
             .get()
             .addOnSuccessListener { snapshot ->
@@ -74,11 +87,9 @@ class ReportDetailActivity : AppCompatActivity() {
                     binding.tvReason.text = snapshot.getString("reason") ?: "No reason provided"
                     binding.tvDescription.text = snapshot.getString("description") ?: "No description provided"
 
-                    // Handle optional evidence image URL if present
                     val evidenceUrl = snapshot.getString("evidenceImageUrl")
                     if (!evidenceUrl.isNullOrEmpty()) {
                         binding.layoutEvidence.visibility = View.VISIBLE
-                        // Load image with Glide/Picasso if image loading library is available
                     } else {
                         binding.layoutEvidence.visibility = View.GONE
                     }
@@ -135,14 +146,19 @@ class ReportDetailActivity : AppCompatActivity() {
             .setMessage("Are you sure you want to take this action against $reportedUserName?")
             .setPositiveButton("Confirm") { _, _ ->
                 val id = reportId ?: return@setPositiveButton
-                val note = "Account $verb after reviewing this report."
+                if (id == "sample_report_id") {
+                    Toast.makeText(this, "Action simulated for sample report", Toast.LENGTH_SHORT).show()
+                    currentStatus = "Reviewed"
+                    bindReportUI()
+                    return@setPositiveButton
+                }
 
+                val note = "Account $verb after reviewing this report."
                 val reportUpdates = mapOf<String, Any>(
                     "status" to "Reviewed",
                     "resolutionNote" to note
                 )
 
-                // Update report status in Firestore
                 db.collection("reports").document(id)
                     .update(reportUpdates)
                     .addOnSuccessListener {
@@ -150,7 +166,6 @@ class ReportDetailActivity : AppCompatActivity() {
                         resolutionNote = note
                         bindReportUI()
 
-                        // If action requires disabling account, update user record in Firestore
                         if (disableAccount && !reportedUserId.isNullOrEmpty()) {
                             db.collection("users").document(reportedUserId!!)
                                 .update("isActive", false)
@@ -175,6 +190,13 @@ class ReportDetailActivity : AppCompatActivity() {
             .setPositiveButton("Dismiss") { _, _ ->
                 val id = reportId ?: return@setPositiveButton
                 val reason = input.text.toString().ifBlank { "No reason provided." }
+
+                if (id == "sample_report_id") {
+                    Toast.makeText(this, "Report dismissed", Toast.LENGTH_SHORT).show()
+                    currentStatus = "Dismissed"
+                    bindReportUI()
+                    return@setPositiveButton
+                }
 
                 val reportUpdates = mapOf<String, Any>(
                     "status" to "Dismissed",

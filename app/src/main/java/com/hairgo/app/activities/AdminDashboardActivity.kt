@@ -3,7 +3,6 @@ package com.hairgo.app.activities
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -13,15 +12,15 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.hairgo.app.R
 import com.hairgo.app.firebase.AuthManager
 import com.hairgo.app.firebase.ReportManager
-import com.hairgo.app.fragments.AdminSalonsFragment
+import com.hairgo.app.fragments.AdminBookingsFragment
 import com.hairgo.app.fragments.AdminUsersFragment
 import com.hairgo.app.fragments.OverviewFragment
 import com.hairgo.app.fragments.ReportsFragment
-import com.hairgo.app.utils.Snackbars
 
 class AdminDashboardActivity : AppCompatActivity() {
 
     private lateinit var bottomNav: BottomNavigationView
+    private var tvAdminName: TextView? = null
     private val authManager = AuthManager()
     private val reportManager = ReportManager()
 
@@ -29,26 +28,24 @@ class AdminDashboardActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin_dashboard)
 
-        val tvAdminName = findViewById<TextView>(R.id.tvAdminName)
+        tvAdminName = findViewById(R.id.tvAdminName)
         bottomNav = findViewById(R.id.bottomNav)
-
-        findViewById<View>(R.id.btnAdminLogout).setOnClickListener { logout() }
 
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.nav_admin_overview -> {
+                R.id.nav_overview -> {
                     showTab(item.itemId, OverviewFragment())
                     true
                 }
-                R.id.nav_admin_users -> {
+                R.id.nav_users -> {
                     showTab(item.itemId, AdminUsersFragment())
                     true
                 }
-                R.id.nav_admin_salons -> {
-                    showTab(item.itemId, AdminSalonsFragment())
+                R.id.nav_bookings -> {
+                    showTab(item.itemId, AdminBookingsFragment())
                     true
                 }
-                R.id.nav_admin_reports -> {
+                R.id.nav_reports -> {
                     showTab(item.itemId, ReportsFragment())
                     true
                 }
@@ -56,8 +53,7 @@ class AdminDashboardActivity : AppCompatActivity() {
             }
         }
 
-        // Only load the dashboard once we have confirmed this is an admin.
-        verifyAdminAccess(tvAdminName, savedInstanceState)
+        verifyAdminAccess(savedInstanceState)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -65,11 +61,11 @@ class AdminDashboardActivity : AppCompatActivity() {
         outState.putInt(STATE_SELECTED_TAB, bottomNav.selectedItemId)
     }
 
-    /**
-     * Confirms a session exists and belongs to an admin before showing any data.
-     * A non-admin (or signed-out) user is sent straight back to login.
-     */
-    private fun verifyAdminAccess(tvAdminName: TextView, savedInstanceState: Bundle?) {
+    fun selectTab(itemId: Int) {
+        bottomNav.selectedItemId = itemId
+    }
+
+    private fun verifyAdminAccess(savedInstanceState: Bundle?) {
         if (!authManager.isLoggedIn) {
             redirectToWelcome()
             return
@@ -83,16 +79,15 @@ class AdminDashboardActivity : AppCompatActivity() {
                     return
                 }
 
-                tvAdminName.text = if (name.isNullOrEmpty()) "Admin" else name
+                val displayName = if (name.isNullOrEmpty()) "Admin" else name
+                tvAdminName?.text = "Welcome $displayName 👋"
 
-                // After a rotation or theme change the system restores the
-                // fragments for us, so we only sync the bottom nav to the tab
-                // that was showing.
+                // Default landing tab is Overview (Home)
                 val targetTab = savedInstanceState?.getInt(
-                    STATE_SELECTED_TAB, R.id.nav_admin_overview
-                ) ?: R.id.nav_admin_overview
-                bottomNav.selectedItemId = targetTab
+                    STATE_SELECTED_TAB, R.id.nav_overview
+                ) ?: R.id.nav_overview
 
+                bottomNav.selectedItemId = targetTab
                 backfillReportTypesOnce()
             }
 
@@ -103,55 +98,11 @@ class AdminDashboardActivity : AppCompatActivity() {
         })
     }
 
-    /**
-     * One-off migration: reports filed before salon reports existed have no
-     * type field, so the admin type filters would hide them. Only an admin may
-     * write that field, so it runs here, once per install.
-     */
-    private fun backfillReportTypesOnce() {
-        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-        if (prefs.getBoolean(KEY_TYPE_BACKFILL_DONE, false)) return
-
-        reportManager.backfillMissingReportTypes(object : ReportManager.BackfillCallback {
-            override fun onComplete(updated: Int) {
-                prefs.edit().putBoolean(KEY_TYPE_BACKFILL_DONE, true).apply()
-                Log.d(TAG_BACKFILL, "Backfilled type on $updated report(s)")
-            }
-
-            override fun onFailure(errorMessage: String?) {
-                // Leave the flag unset so the next admin login retries.
-                Log.w(TAG_BACKFILL, "Report type backfill failed: $errorMessage")
-            }
-        })
-    }
-
-    private fun logout() {
-        // Confirmation snackbar first, then the same sign-out and redirect as
-        // before, so the user actually sees that the logout registered.
-        Snackbars.showThen(
-            findViewById(android.R.id.content),
-            getString(R.string.logout_success)
-        ) {
-            authManager.signOut()
-            redirectToWelcome()
-        }
-    }
-
-    private fun redirectToWelcome() {
-        // Wiped stack: after a sign-out the user starts over at Welcome.
-        val intent = Intent(this, WelcomeActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
-    }
-
     private fun showTab(itemId: Int, fragment: Fragment) {
         val tag = TAG_PREFIX + resources.getResourceEntryName(itemId)
         val manager: FragmentManager = supportFragmentManager
         val transaction: FragmentTransaction = manager.beginTransaction()
 
-        // Add the fragment the first time its tab is opened, then only toggle
-        // visibility afterwards so scroll position and loaded data survive.
         val existing = manager.findFragmentByTag(tag)
         if (existing == null) {
             transaction.add(R.id.fragmentContainer, fragment, tag)
@@ -166,6 +117,38 @@ class AdminDashboardActivity : AppCompatActivity() {
         }
 
         transaction.commit()
+    }
+
+    private fun backfillReportTypesOnce() {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_TYPE_BACKFILL_DONE, false)) return
+
+        reportManager.backfillMissingReportTypes(object : ReportManager.BackfillCallback {
+            override fun onComplete(updated: Int) {
+                prefs.edit().putBoolean(KEY_TYPE_BACKFILL_DONE, true).apply()
+                Log.d(TAG_BACKFILL, "Backfilled type on $updated report(s)")
+            }
+
+            override fun onFailure(errorMessage: String?) {
+                Log.w(TAG_BACKFILL, "Report type backfill failed: $errorMessage")
+                fun selectTab(itemId: Int) {
+                    bottomNav.selectedItemId = itemId
+                    when (itemId) {
+                        R.id.nav_overview -> showTab(itemId, OverviewFragment())
+                        R.id.nav_users -> showTab(itemId, AdminUsersFragment())
+                        R.id.nav_bookings -> showTab(itemId, AdminBookingsFragment())
+                        R.id.nav_reports -> showTab(itemId, ReportsFragment())
+                    }
+                }
+            }
+        })
+    }
+
+    private fun redirectToWelcome() {
+        val intent = Intent(this, WelcomeActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
     }
 
     companion object {
