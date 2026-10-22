@@ -10,8 +10,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,21 +44,27 @@ import com.hairgo.app.activities.WelcomeActivity;
 import com.hairgo.app.firebase.AuthManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.OwnerSalon;
+import com.hairgo.app.models.ServiceDetail;
 import com.hairgo.app.utils.OwnerSession;
 import com.hairgo.app.utils.SalonHours;
 import com.hairgo.app.utils.SalonPhotos;
 import com.hairgo.app.utils.Snackbars;
 import com.hairgo.app.utils.ThemeManager;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class OwnerProfileFragment extends Fragment {
 
     private static final String TAG = "OwnerProfileFragment";
+
+    // The durations an owner can choose from, in minutes.
+    private static final int[] DURATION_MINUTES = {15, 30, 45, 60, 90, 120, 150, 180};
 
     private TextView tvProfileInitials;
     private TextView tvProfileName;
@@ -71,7 +79,10 @@ public class OwnerProfileFragment extends Fragment {
     private TextView tvServices;
     private View btnEditServices;
     private View dividerAfterServices;
+    // Service names, used for the row that lists them on this screen.
     private final List<String> currentServices = new ArrayList<>();
+    // Services with price and duration, used by the edit services dialog.
+    private final List<ServiceDetail> currentServiceDetails = new ArrayList<>();
 
     private View btnEditHours;
     private SalonHours currentHours = SalonHours.defaults();
@@ -84,10 +95,12 @@ public class OwnerProfileFragment extends Fragment {
 
     private FirebaseAuth firebaseAuth;
     private FirebaseFirestore firestore;
+    private SalonManager salonManager;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        salonManager = new SalonManager();
         photoPicker = registerForActivityResult(
                 new ActivityResultContracts.PickVisualMedia(), uri -> {
                     if (uri == null || !isAdded()) return;
@@ -371,16 +384,16 @@ public class OwnerProfileFragment extends Fragment {
         if (nameParts.length == 1) {
             return nameParts[0]
                     .substring(0, 1)
-                    .toUpperCase();
+                    .toUpperCase(Locale.ROOT);
         }
 
         String firstInitial = nameParts[0]
                 .substring(0, 1)
-                .toUpperCase();
+                .toUpperCase(Locale.ROOT);
 
         String lastInitial = nameParts[nameParts.length - 1]
                 .substring(0, 1)
-                .toUpperCase();
+                .toUpperCase(Locale.ROOT);
 
         return firstInitial + lastInitial;
     }
@@ -390,7 +403,7 @@ public class OwnerProfileFragment extends Fragment {
         String salonId = OwnerSession.getSelectedSalonId();
         if (salonId == null) return; // no salon yet: the services row stays hidden
 
-        new SalonManager().getSalonById(salonId, new SalonManager.SalonDataCallback() {
+        salonManager.getSalonById(salonId, new SalonManager.SalonDataCallback() {
             @Override
             public void onSuccess(Map<String, Object> salon) {
                 if (!isAdded()) return;
@@ -402,6 +415,10 @@ public class OwnerProfileFragment extends Fragment {
                         if (item != null) currentServices.add(item.toString());
                     }
                 }
+
+                currentServiceDetails.clear();
+                currentServiceDetails.addAll(SalonManager.getServiceDetails(salon));
+
                 currentHours = SalonHours.fromDoc(salon);
                 showServices();
                 loadPhoto();
@@ -431,95 +448,102 @@ public class OwnerProfileFragment extends Fragment {
 
         View dialogView = LayoutInflater.from(requireContext())
                 .inflate(R.layout.dialog_edit_services, null);
-        TextInputLayout tilService = dialogView.findViewById(R.id.tilEditServices);
-        TextInputEditText etService = dialogView.findViewById(R.id.etEditServices);
-        ChipGroup chipGroup = dialogView.findViewById(R.id.chipGroupServices);
 
-        for (String service : currentServices) {
-            addServiceChip(chipGroup, service);
-        }
-
-        etService.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                addServiceChip(chipGroup, etService.getText().toString());
-                etService.setText("");
-                InputMethodManager imm = (InputMethodManager) requireContext()
-                        .getSystemService(Context.INPUT_METHOD_SERVICE);
-                if (imm != null) imm.hideSoftInputFromWindow(etService.getWindowToken(), 0);
-                return true;
-            }
-            return false;
-        });
+        ServiceEditor editor = new ServiceEditor(dialogView);
+        editor.setServices(currentServiceDetails);
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Edit services")
+                .setTitle(R.string.title_edit_services)
                 .setView(dialogView)
-                .setPositiveButton("Save", null)
-                .setNegativeButton("Cancel", null)
+                .setPositiveButton(R.string.btn_save, null)
+                .setNegativeButton(R.string.cancel, null)
                 .create();
 
+        // The services are reloaded below. Keep Save off until they are in,
+        // so an empty list cannot overwrite the saved services by mistake.
+        final boolean[] servicesLoaded = {false};
+
         // Listener set after show() so a validation error keeps the dialog open.
-        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            // Whatever is still sitting in the services field counts too.
-            addServiceChip(chipGroup, etService.getText().toString());
-
-            List<String> services = new ArrayList<>();
-            for (int i = 0; i < chipGroup.getChildCount(); i++) {
-                if (chipGroup.getChildAt(i) instanceof Chip) {
-                    services.add(((Chip) chipGroup.getChildAt(i)).getText().toString());
+        dialog.setOnShowListener(d -> {
+            Button saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            saveButton.setEnabled(servicesLoaded[0]);
+            saveButton.setOnClickListener(v -> {
+                // Anything still sitting in the service fields counts too.
+                if (!editor.commitPendingService()) {
+                    return;
                 }
-            }
 
-            if (services.isEmpty()) {
-                tilService.setError("Add at least one service");
-                return;
-            }
+                List<ServiceDetail> services = editor.getServices();
+                if (services.isEmpty()) {
+                    editor.showListError();
+                    return;
+                }
 
-            dialog.dismiss();
-            saveServices(salonId, services);
-        }));
+                saveButton.setEnabled(false);
+                saveButton.setText(R.string.saving_services);
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(false);
+                editor.setAddEnabled(false);
+                saveServices(salonId, services, dialog, editor);
+            });
+        });
         dialog.show();
-    }
 
-    private void addServiceChip(ChipGroup chipGroup, String raw) {
-        String service = raw.trim();
-        if (service.isEmpty()) return;
-
-        for (int i = 0; i < chipGroup.getChildCount(); i++) {
-            if (chipGroup.getChildAt(i) instanceof Chip
-                    && ((Chip) chipGroup.getChildAt(i)).getText().toString()
-                            .equalsIgnoreCase(service)) {
-                return;
-            }
-        }
-
-        Chip chip = new Chip(requireContext());
-        chip.setText(service);
-        chip.setCloseIconResource(R.drawable.ic_dismiss);
-        chip.setCloseIconVisible(true);
-        chip.setOnCloseIconClickListener(v -> chipGroup.removeView(chip));
-        chipGroup.addView(chip);
-    }
-
-    private void saveServices(String salonId, List<String> services) {
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("services", services);
-
-        // Existing bookings keep the service names they were made with.
-        new SalonManager().updateSalon(salonId, updates, new SalonManager.SalonCallback() {
+        salonManager.getSalonById(salonId, new SalonManager.SalonDataCallback() {
             @Override
-            public void onSuccess() {
+            public void onSuccess(Map<String, Object> salon) {
                 if (!isAdded()) return;
-                currentServices.clear();
-                currentServices.addAll(services);
-                showServices();
-                Toast.makeText(getContext(), "Services updated", Toast.LENGTH_SHORT).show();
+                editor.setServices(SalonManager.getServiceDetails(salon));
+                servicesLoaded[0] = true;
+                if (dialog.isShowing()) {
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                }
             }
 
             @Override
             public void onFailure(String errorMessage) {
                 if (!isAdded()) return;
-                Toast.makeText(getContext(), "Could not update services", Toast.LENGTH_SHORT).show();
+                // Keep the services that were loaded with the profile earlier.
+                servicesLoaded[0] = true;
+                if (dialog.isShowing()) {
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                }
+            }
+        });
+    }
+
+    private void saveServices(String salonId, List<ServiceDetail> services,
+                              AlertDialog dialog, ServiceEditor editor) {
+        salonManager.updateServices(salonId, services, new SalonManager.SalonCallback() {
+            @Override
+            public void onSuccess() {
+                if (!isAdded()) return;
+
+                currentServiceDetails.clear();
+                currentServiceDetails.addAll(services);
+                currentServices.clear();
+                for (ServiceDetail detail : services) {
+                    currentServices.add(detail.getName());
+                }
+                showServices();
+
+                if (dialog.isShowing()) {
+                    dialog.dismiss();
+                }
+                Toast.makeText(getContext(), R.string.services_saved, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (!isAdded()) return;
+
+                if (dialog.isShowing()) {
+                    Button saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                    saveButton.setEnabled(true);
+                    saveButton.setText(R.string.btn_save);
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(true);
+                }
+                editor.setAddEnabled(true);
+                Toast.makeText(getContext(), R.string.services_save_failed, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -618,7 +642,7 @@ public class OwnerProfileFragment extends Fragment {
         Map<String, Object> updates = new HashMap<>();
         updates.put("hours", hours.toDocMap());
 
-        new SalonManager().updateSalon(salonId, updates, new SalonManager.SalonCallback() {
+        salonManager.updateSalon(salonId, updates, new SalonManager.SalonCallback() {
             @Override
             public void onSuccess() {
                 if (!isAdded()) return;
@@ -728,5 +752,304 @@ public class OwnerProfileFragment extends Fragment {
                         Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    /**
+     * Reads the number the owner typed as a price. Only digits with an
+     * optional decimal point are allowed, and the number may not be below 0.
+     * Returns null when the text is not a valid price.
+     */
+    private Double parsePrice(String text) {
+        String cleaned = text.trim().replace(",", ".");
+        if (!cleaned.matches("\\d+(\\.\\d+)?")) {
+            return null;
+        }
+        try {
+            double value = Double.parseDouble(cleaned);
+            if (!Double.isFinite(value) || value < 0) {
+                return null;
+            }
+            return value;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** Shows a price without a trailing ".0": 150.0 becomes "150", 150.5 stays "150.5". */
+    private String formatPrice(Double price) {
+        if (price == null) {
+            return "";
+        }
+        if (price == 0d) {
+            return "0";
+        }
+        return BigDecimal.valueOf(price).stripTrailingZeros().toPlainString();
+    }
+
+    /** Turns a duration choice like "45 min" into 45. Returns -1 when it is not allowed. */
+    private int parseDuration(String text) {
+        String cleaned = text.trim().toLowerCase(Locale.ROOT).replace("min", "").trim();
+        try {
+            int minutes = Integer.parseInt(cleaned);
+            for (int allowed : DURATION_MINUTES) {
+                if (allowed == minutes) {
+                    return minutes;
+                }
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        return -1;
+    }
+
+    /** Makes a name easy to compare: no extra spaces and all small letters. */
+    private String normalizeKey(String name) {
+        return name.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+    }
+
+    /** Finds the dropdown text for a duration, or shows it plainly when it is not offered. */
+    private String durationOptionText(int minutes) {
+        String[] options = getResources().getStringArray(R.array.service_duration_options);
+        for (String option : options) {
+            if (parseDuration(option) == minutes) {
+                return option;
+            }
+        }
+        return minutes + " min";
+    }
+
+    /** Reads a field as text, never null. */
+    private String text(TextView view) {
+        CharSequence value = view.getText();
+        return value == null ? "" : value.toString().trim();
+    }
+
+    private void hideKeyboard(View view) {
+        Context context = getContext();
+        if (context == null) return;
+        InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+
+    /**
+     * Runs the service editor inside the edit-services dialog. It holds the
+     * three fields, the chips and the list of services shown for this salon.
+     */
+    private class ServiceEditor {
+
+        private final TextInputLayout tilName;
+        private final TextInputLayout tilPrice;
+        private final TextInputLayout tilDuration;
+        private final TextInputEditText etName;
+        private final TextInputEditText etPrice;
+        private final AutoCompleteTextView durationDropdown;
+        private final MaterialButton addButton;
+        private final TextView hintView;
+        private final ChipGroup chipGroup;
+        private final TextView listErrorView;
+
+        private final List<ServiceDetail> services = new ArrayList<>();
+        // The position of the service being changed, or -1 when adding a new one.
+        private int editingIndex = -1;
+
+        ServiceEditor(View dialogView) {
+            tilName = dialogView.findViewById(R.id.tilEditServiceName);
+            tilPrice = dialogView.findViewById(R.id.tilEditServicePrice);
+            tilDuration = dialogView.findViewById(R.id.tilEditServiceDuration);
+            etName = dialogView.findViewById(R.id.etEditServiceName);
+            etPrice = dialogView.findViewById(R.id.etEditServicePrice);
+            durationDropdown = dialogView.findViewById(R.id.actvEditServiceDuration);
+            addButton = dialogView.findViewById(R.id.btnEditAddService);
+            hintView = dialogView.findViewById(R.id.tvEditServiceEditorHint);
+            chipGroup = dialogView.findViewById(R.id.chipGroupServices);
+            listErrorView = dialogView.findViewById(R.id.tvServiceListError);
+
+            String[] options = getResources().getStringArray(R.array.service_duration_options);
+            durationDropdown.setAdapter(new ArrayAdapter<>(requireContext(),
+                    android.R.layout.simple_dropdown_item_1line, options));
+            // The owner picks a duration from the list instead of typing one.
+            durationDropdown.setKeyListener(null);
+
+            addButton.setOnClickListener(v -> commitService());
+        }
+
+        /** Replaces the shown services, for example after they are loaded per salon. */
+        void setServices(List<ServiceDetail> list) {
+            services.clear();
+            if (list != null) {
+                services.addAll(list);
+            }
+            stopEditing();
+            refreshChips();
+        }
+
+        /** The services in the editor, in the same order as the chips. */
+        List<ServiceDetail> getServices() {
+            return new ArrayList<>(services);
+        }
+
+        /** Shows the error that belongs to the whole list, not to one field. */
+        void showListError() {
+            listErrorView.setText(R.string.error_no_services);
+            listErrorView.setVisibility(View.VISIBLE);
+        }
+
+        /** Used to lock the add button while the save is running. */
+        void setAddEnabled(boolean enabled) {
+            addButton.setEnabled(enabled);
+        }
+
+        /**
+         * Called when the dialog is saved. If the owner typed a service but did
+         * not tap the add button, add it now so the work is not lost.
+         * Returns false only when that service has an error.
+         */
+        boolean commitPendingService() {
+            listErrorView.setVisibility(View.GONE);
+            if (isEditorEmpty()) {
+                // Nothing is being typed, so any half-done edit is simply dropped.
+                stopEditing();
+                return true;
+            }
+            return commitService();
+        }
+
+        private boolean isEditorEmpty() {
+            return text(etName).isEmpty()
+                    && text(etPrice).isEmpty()
+                    && text(durationDropdown).isEmpty();
+        }
+
+        /** Checks the fields and adds the service, or saves the one being edited. */
+        private boolean commitService() {
+            tilName.setError(null);
+            tilPrice.setError(null);
+            tilDuration.setError(null);
+            listErrorView.setVisibility(View.GONE);
+
+            String name = text(etName);
+            if (name.isEmpty()) {
+                tilName.setError(getString(R.string.error_service_name_required));
+                return false;
+            }
+
+            // The same name may not be used twice, even with different capitals
+            // or extra spaces. The service being edited does not count.
+            String key = normalizeKey(name);
+            for (int i = 0; i < services.size(); i++) {
+                if (i != editingIndex && normalizeKey(services.get(i).getName()).equals(key)) {
+                    tilName.setError(getString(R.string.error_service_duplicate,
+                            services.get(i).getName()));
+                    return false;
+                }
+            }
+
+            // A new service must have a price. An old service may keep no price.
+            boolean isNew = editingIndex < 0;
+            String priceText = text(etPrice);
+            Double price = null;
+            if (priceText.isEmpty()) {
+                if (isNew) {
+                    tilPrice.setError(getString(R.string.error_service_price_required));
+                    return false;
+                }
+            } else {
+                price = parsePrice(priceText);
+                if (price == null) {
+                    tilPrice.setError(getString(R.string.error_service_price_invalid));
+                    return false;
+                }
+            }
+
+            String durationText = text(durationDropdown);
+            if (durationText.isEmpty()) {
+                tilDuration.setError(getString(R.string.error_service_duration_required));
+                return false;
+            }
+            int duration = parseDuration(durationText);
+            if (duration < 1) {
+                tilDuration.setError(getString(R.string.error_service_duration_invalid));
+                return false;
+            }
+
+            ServiceDetail service = new ServiceDetail(name, price, duration);
+            if (isNew) {
+                services.add(service);
+            } else {
+                services.set(editingIndex, service);
+            }
+
+            stopEditing();
+            refreshChips();
+            hideKeyboard(etName);
+            return true;
+        }
+
+        /** Draws one chip per service. A chip can be tapped to edit it or closed to remove it. */
+        private void refreshChips() {
+            chipGroup.removeAllViews();
+            for (int i = 0; i < services.size(); i++) {
+                final int index = i;
+                ServiceDetail service = services.get(i);
+
+                Chip chip = new Chip(requireContext());
+                chip.setText(chipText(service));
+                chip.setCloseIconResource(R.drawable.ic_dismiss);
+                chip.setCloseIconVisible(true);
+                chip.setOnClickListener(v -> startEditing(index));
+                chip.setOnCloseIconClickListener(v -> removeService(index));
+                chipGroup.addView(chip);
+            }
+        }
+
+        /** Builds the chip text, for example "Haircut - R150 - 45min". */
+        private String chipText(ServiceDetail service) {
+            String price = service.hasPrice()
+                    ? getString(R.string.service_price_rand, formatPrice(service.getPrice()))
+                    : getString(R.string.service_price_not_set);
+            String duration = getString(R.string.service_duration_minutes,
+                    service.getDurationMinutes());
+            return getString(R.string.service_chip_text, service.getName(), price, duration);
+        }
+
+        private void removeService(int index) {
+            services.remove(index);
+            if (editingIndex == index) {
+                stopEditing();
+            } else if (editingIndex > index) {
+                editingIndex = editingIndex - 1;
+            }
+            refreshChips();
+        }
+
+        /** Puts an existing service into the fields so its price or duration can change. */
+        private void startEditing(int index) {
+            editingIndex = index;
+            ServiceDetail service = services.get(index);
+
+            tilName.setError(null);
+            tilPrice.setError(null);
+            tilDuration.setError(null);
+
+            etName.setText(service.getName());
+            etPrice.setText(service.hasPrice() ? formatPrice(service.getPrice()) : "");
+            durationDropdown.setText(durationOptionText(service.getDurationMinutes()), false);
+            addButton.setText(R.string.btn_update_service);
+            hintView.setText(getString(R.string.helper_editing_service, service.getName()));
+        }
+
+        /** Goes back to adding a new service, with empty fields. */
+        private void stopEditing() {
+            editingIndex = -1;
+            etName.setText("");
+            etPrice.setText("");
+            durationDropdown.setText("", false);
+            tilName.setError(null);
+            tilPrice.setError(null);
+            tilDuration.setError(null);
+            addButton.setText(R.string.btn_add_service);
+            hintView.setText(R.string.helper_service_editor);
+        }
     }
 }
