@@ -33,7 +33,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="invisible"
-            app:constraint_referenced_ids="ivSalonIcon,tvSalonName,llLocation,llRating,divider,tvServicesLabel,rvServices,btnBook,btnReportSalon"/>
+            app:constraint_referenced_ids="ivSalonIcon,tvSalonName,llLocation,llRating,divider,tvServicesLabel,rvServices,llReviewsSection,btnBook,btnReportSalon"/>
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/ivSalonIcon"
@@ -98,6 +98,12 @@
             android:layout_marginTop="6dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:contentDescription="@string/see_all_reviews"
             app:layout_constraintTop_toBottomOf="@id/llLocation"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -116,6 +122,14 @@
                 android:textColor="@color/grey_dark"
                 android:textSize="14sp"
                 android:textStyle="bold"/>
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginStart="2dp"
+                android:src="@drawable/ic_chevron_right"
+                app:tint="@color/grey_medium"
+                android:importantForAccessibility="no"/>
 
         </LinearLayout>
 
@@ -171,6 +185,67 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
+        <LinearLayout
+            android:id="@+id/llReviewsSection"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginHorizontal="24dp"
+            android:orientation="vertical"
+            app:layout_constraintTop_toBottomOf="@id/rvServices"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/title_reviews"
+                android:textColor="@color/heading"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <ProgressBar
+                android:id="@+id/previewReviewsProgress"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginTop="12dp"
+                android:indeterminateTint="@color/teal"/>
+
+            <TextView
+                android:id="@+id/tvPreviewEmpty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/no_reviews_yet"
+                android:textColor="@color/grey_medium"
+                android:textSize="14sp"
+                android:visibility="gone"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvReviewPreview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:nestedScrollingEnabled="false"
+                android:visibility="gone"/>
+
+            <TextView
+                android:id="@+id/tvSeeAllReviews"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"
+                android:paddingVertical="8dp"
+                android:text="@string/see_all_reviews"
+                android:textColor="@color/teal_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="gone"/>
+
+        </LinearLayout>
+
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnBook"
             android:layout_width="0dp"
@@ -181,7 +256,7 @@
             android:text="@string/btn_book_now"
             android:background="@drawable/bg_button_teal"
             style="@style/ButtonPrimary"
-            app:layout_constraintTop_toBottomOf="@id/rvServices"
+            app:layout_constraintTop_toBottomOf="@id/llReviewsSection"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 

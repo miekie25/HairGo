@@ -15,12 +15,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.Timestamp;
 import com.hairgo.app.R;
+import com.hairgo.app.adapters.ReviewAdapter;
 import com.hairgo.app.adapters.ServiceAdapter;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.fragments.ReportProblemBottomSheet;
 import com.hairgo.app.models.Salon;
 import com.hairgo.app.models.ServiceDetail;
+import com.hairgo.app.utils.ReviewLoader;
 import com.hairgo.app.utils.SalonHours;
 import com.hairgo.app.utils.SalonPhotos;
 import com.hairgo.app.utils.Snackbars;
@@ -51,6 +53,7 @@ public class SalonProfileActivity extends AppCompatActivity {
     private View contentGroup;
     private String salonId;
     private boolean salonLoaded;
+    private ReviewAdapter reviewPreviewAdapter;
 
     /** This salon's own opening hours; defaults to 09:00–18:00 until the document loads. */
     private SalonHours salonHours = SalonHours.defaults();
@@ -160,6 +163,8 @@ public class SalonProfileActivity extends AppCompatActivity {
         rvServices.setLayoutManager(new LinearLayoutManager(this));
         rvServices.setAdapter(new ServiceAdapter(serviceDetails));
 
+        setupReviewPreview(salon.getSalonId());
+
         findViewById(R.id.btnBook).setOnClickListener(v -> {
             Intent intent = new Intent(this, BookAppointmentActivity.class);
             intent.putExtra("salonId", salon.getSalonId());
@@ -171,6 +176,69 @@ public class SalonProfileActivity extends AppCompatActivity {
                 ReportProblemBottomSheet
                         .newInstanceForSalon(salon.getSalonId(), salon.getName(), null)
                         .show(getSupportFragmentManager(), "report_problem"));
+    }
+
+    private void setupReviewPreview(String salonId) {
+        RecyclerView rvReviewPreview = findViewById(R.id.rvReviewPreview);
+        rvReviewPreview.setLayoutManager(new LinearLayoutManager(this));
+        reviewPreviewAdapter = new ReviewAdapter(true);
+        rvReviewPreview.setAdapter(reviewPreviewAdapter);
+
+        findViewById(R.id.llRating).setOnClickListener(v -> openReviews());
+        findViewById(R.id.tvSeeAllReviews).setOnClickListener(v -> openReviews());
+
+        loadReviewPreview(salonId);
+    }
+
+    private void openReviews() {
+        if (salonId == null || salonId.isEmpty()) return;
+        Intent intent = new Intent(this, SalonReviewsActivity.class);
+        intent.putExtra("salonId", salonId);
+        startActivity(intent);
+    }
+
+    /**
+     * Shows the three newest reviews under the services. A short row of stars
+     * and the count is enough for the profile; the full list opens separately.
+     */
+    private void loadReviewPreview(String salonId) {
+        ProgressBar previewProgress = findViewById(R.id.previewReviewsProgress);
+        TextView tvPreviewEmpty = findViewById(R.id.tvPreviewEmpty);
+        RecyclerView rvPreview = findViewById(R.id.rvReviewPreview);
+        TextView tvSeeAll = findViewById(R.id.tvSeeAllReviews);
+
+        previewProgress.setVisibility(View.VISIBLE);
+        tvPreviewEmpty.setVisibility(View.GONE);
+        rvPreview.setVisibility(View.GONE);
+        tvSeeAll.setVisibility(View.GONE);
+
+        ReviewLoader.load(salonId, new ReviewLoader.Callback() {
+            @Override
+            public void onLoaded(List<ReviewLoader.Item> reviews) {
+                if (isFinishing() || isDestroyed()) return;
+                previewProgress.setVisibility(View.GONE);
+
+                if (reviews == null || reviews.isEmpty()) {
+                    tvPreviewEmpty.setText(R.string.no_reviews_yet);
+                    tvPreviewEmpty.setVisibility(View.VISIBLE);
+                    return;
+                }
+
+                int previewSize = Math.min(3, reviews.size());
+                reviewPreviewAdapter.setReviews(reviews.subList(0, previewSize));
+                rvPreview.setVisibility(View.VISIBLE);
+                tvSeeAll.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (isFinishing() || isDestroyed()) return;
+                previewProgress.setVisibility(View.GONE);
+                Log.w(TAG, "Could not load reviews: " + errorMessage);
+                tvPreviewEmpty.setText(R.string.reviews_load_failed);
+                tvPreviewEmpty.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
     /**
