@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.hairgo.app.R
 import com.hairgo.app.firebase.AuthManager
@@ -21,6 +22,7 @@ class AdminDashboardActivity : AppCompatActivity() {
 
     private lateinit var bottomNav: BottomNavigationView
     private var tvAdminName: TextView? = null
+    private var btnLogout: MaterialButton? = null
     private val authManager = AuthManager()
     private val reportManager = ReportManager()
 
@@ -30,6 +32,9 @@ class AdminDashboardActivity : AppCompatActivity() {
 
         tvAdminName = findViewById(R.id.tvAdminName)
         bottomNav = findViewById(R.id.bottomNav)
+        btnLogout = findViewById(R.id.btnLogout)
+
+        setupLogoutButton()
 
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -56,6 +61,13 @@ class AdminDashboardActivity : AppCompatActivity() {
         verifyAdminAccess(savedInstanceState)
     }
 
+    private fun setupLogoutButton() {
+        btnLogout?.setOnClickListener {
+            authManager.signOut()
+            redirectToWelcome()
+        }
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt(STATE_SELECTED_TAB, bottomNav.selectedItemId)
@@ -63,6 +75,12 @@ class AdminDashboardActivity : AppCompatActivity() {
 
     fun selectTab(itemId: Int) {
         bottomNav.selectedItemId = itemId
+        when (itemId) {
+            R.id.nav_overview -> showTab(itemId, OverviewFragment())
+            R.id.nav_users -> showTab(itemId, AdminUsersFragment())
+            R.id.nav_bookings -> showTab(itemId, AdminBookingsFragment())
+            R.id.nav_reports -> showTab(itemId, ReportsFragment())
+        }
     }
 
     private fun verifyAdminAccess(savedInstanceState: Bundle?) {
@@ -131,15 +149,6 @@ class AdminDashboardActivity : AppCompatActivity() {
 
             override fun onFailure(errorMessage: String?) {
                 Log.w(TAG_BACKFILL, "Report type backfill failed: $errorMessage")
-                fun selectTab(itemId: Int) {
-                    bottomNav.selectedItemId = itemId
-                    when (itemId) {
-                        R.id.nav_overview -> showTab(itemId, OverviewFragment())
-                        R.id.nav_users -> showTab(itemId, AdminUsersFragment())
-                        R.id.nav_bookings -> showTab(itemId, AdminBookingsFragment())
-                        R.id.nav_reports -> showTab(itemId, ReportsFragment())
-                    }
-                }
             }
         })
     }

@@ -26,7 +26,8 @@ data class AdminUserModel(
     val email: String = "",
     val phone: String = "",
     val role: String = "Client", // "Client" or "Salon Owner"
-    val dateJoined: String = ""
+    val dateJoined: String = "",
+    val isActive: Boolean = true // Tracks active/deactivated state
 )
 
 class AdminUsersFragment : Fragment() {
@@ -134,7 +135,11 @@ class AdminUsersFragment : Fragment() {
                         val phone = doc.getString("phone") ?: doc.getString("phoneNumber") ?: ""
                         val role = doc.getString("role") ?: "Client"
 
-                        // Handle Date Joined (Timestamp or String string)
+
+                        val isActive = doc.getBoolean("isActive")
+                            ?: doc.getBoolean("active")
+                            ?: (doc.getBoolean("isSuspended") == false)
+
                         val timestamp = doc.getTimestamp("createdAt")
                             ?: doc.getTimestamp("joinedDate")
                             ?: doc.getTimestamp("dateTime")
@@ -151,12 +156,27 @@ class AdminUsersFragment : Fragment() {
                             email = email,
                             phone = phone,
                             role = role,
-                            dateJoined = dateJoinedStr
+                            dateJoined = dateJoinedStr,
+                            isActive = isActive
                         )
                         allUsersList.add(user)
                     }
                     applyFilterAndSort()
                 }
+            }
+    }
+
+    private fun toggleUserStatus(user: AdminUserModel) {
+        val newStatus = !user.isActive
+        val actionText = if (newStatus) "activated" else "deactivated"
+
+        db.collection("users").document(user.userId)
+            .update("isActive", newStatus)
+            .addOnSuccessListener {
+                Toast.makeText(context, "${user.userName} has been $actionText.", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(context, "Failed to update status: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -177,9 +197,11 @@ class AdminUsersFragment : Fragment() {
         }
 
         rvUsers.layoutManager = LinearLayoutManager(requireContext())
-        rvUsers.adapter = AdminUsersAdapter(sorted) { user ->
-            openUserDetail(user)
-        }
+        rvUsers.adapter = AdminUsersAdapter(
+            users = sorted,
+            onItemClick = { user -> openUserDetail(user) },
+            onDeactivateClick = { user -> toggleUserStatus(user) }
+        )
 
         tvEmptyUsers.visibility = if (sorted.isEmpty()) View.VISIBLE else View.GONE
     }
@@ -192,6 +214,7 @@ class AdminUsersFragment : Fragment() {
             putExtra("EXTRA_PHONE", user.phone)
             putExtra("EXTRA_ROLE", user.role)
             putExtra("EXTRA_JOINED", user.dateJoined)
+            putExtra("EXTRA_IS_ACTIVE", user.isActive)
         }
         startActivity(intent)
     }
@@ -200,7 +223,8 @@ class AdminUsersFragment : Fragment() {
 // --- RecyclerView Adapter matched to admin_item_user.xml ---
 class AdminUsersAdapter(
     private val users: List<AdminUserModel>,
-    private val onItemClick: (AdminUserModel) -> Unit
+    private val onItemClick: (AdminUserModel) -> Unit,
+    private val onDeactivateClick: (AdminUserModel) -> Unit
 ) : RecyclerView.Adapter<AdminUsersAdapter.UserViewHolder>() {
 
     class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -210,7 +234,7 @@ class AdminUsersAdapter(
         val tvUserJoined: TextView = itemView.findViewById(R.id.tvUserJoined)
         val tvUserRoleBadge: TextView = itemView.findViewById(R.id.tvUserRoleBadge)
         val btnMessageUser: View? = itemView.findViewById(R.id.btnMessageUser)
-        val btnDeactivate: View? = itemView.findViewById(R.id.btnDeactivate)
+        val btnDeactivate: TextView? = itemView.findViewById(R.id.btnDeactivate)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
@@ -227,12 +251,21 @@ class AdminUsersAdapter(
         holder.tvUserRoleBadge.text = user.role
         holder.tvAvatar.text = if (user.role.equals("Salon Owner", ignoreCase = true)) "💈" else "👤"
 
+        // Dynamically toggle button label based on active status
+        if (holder.btnDeactivate is TextView) {
+            holder.btnDeactivate.text = if (user.isActive) "Deactivate" else "Activate"
+        }
+
         holder.itemView.setOnClickListener {
             onItemClick(user)
         }
 
         holder.btnMessageUser?.setOnClickListener {
             onItemClick(user)
+        }
+
+        holder.btnDeactivate?.setOnClickListener {
+            onDeactivateClick(user)
         }
     }
 

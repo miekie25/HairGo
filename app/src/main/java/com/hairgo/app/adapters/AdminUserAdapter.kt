@@ -47,9 +47,11 @@ class AdminUserAdapter(
 
         val alpha = if (user.isActive) 1f else 0.45f
         b.root.alpha = alpha
-        b.btnDeactivate.isEnabled = user.isActive
 
-        // Hide promote button if user is already a Salon Owner
+        val deactivateButton = b.btnDeactivate as? android.widget.Button
+        deactivateButton?.text = if (user.isActive) "Deactivate" else "Activate"
+        deactivateButton?.isEnabled = true
+
         b.btnPromote.visibility = if (user.role == "Salon Owner") View.GONE else View.VISIBLE
 
         b.btnPromote.setOnClickListener { onPromote(user) }
