@@ -104,46 +104,47 @@
 
                 <LinearLayout
                     android:id="@+id/heroChips"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
                     android:layout_marginTop="18dp"
+                    android:layout_marginEnd="24dp"
                     android:orientation="horizontal">
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
                         android:background="@drawable/welcome_bg_chip"
-                        android:paddingStart="12dp"
-                        android:paddingTop="6dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="6dp"
+                        android:gravity="center"
+                        android:maxLines="2"
+                        android:padding="8dp"
                         android:text="✓ Free to join"
                         android:textColor="@color/white"
                         android:textSize="12sp" />
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
                         android:layout_marginStart="8dp"
+                        android:layout_weight="1"
                         android:background="@drawable/welcome_bg_chip"
-                        android:paddingStart="12dp"
-                        android:paddingTop="6dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="6dp"
+                        android:gravity="center"
+                        android:maxLines="2"
+                        android:padding="8dp"
                         android:text="✓ Live availability"
                         android:textColor="@color/white"
                         android:textSize="12sp" />
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
                         android:layout_marginStart="8dp"
+                        android:layout_weight="1"
                         android:background="@drawable/welcome_bg_chip"
-                        android:paddingStart="12dp"
-                        android:paddingTop="6dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="6dp"
+                        android:gravity="center"
+                        android:maxLines="2"
+                        android:padding="8dp"
                         android:text="✓ Booking updates"
                         android:textColor="@color/white"
                         android:textSize="12sp" />
