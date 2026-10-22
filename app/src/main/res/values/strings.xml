@@ -137,6 +137,19 @@
     <string name="review_submit_failed">Could not submit the review: %1$s</string>
     <string name="review_missing_booking">This review is not linked to a booking.</string>
 
+    <!-- Salon reviews on the client profile -->
+    <string name="title_reviews">Reviews</string>
+    <string name="see_all_reviews">See all reviews</string>
+    <string name="no_reviews_yet">No reviews yet</string>
+    <string name="reviews_load_failed">Could not load reviews</string>
+    <string name="review_no_comment">No comment</string>
+    <string name="reviewer_client">Client</string>
+    <string name="reviews_summary">%1$s - %2$s</string>
+    <plurals name="reviews_count">
+        <item quantity="one">%d review</item>
+        <item quantity="other">%d reviews</item>
+    </plurals>
+
     <string name="report_description_required">Please describe the problem</string>
     <string name="report_description_too_short">Please provide more details (min 10 characters)</string>
     <string name="report_login_required">Please sign in first</string>
@@ -314,5 +327,66 @@
     <string name="booking_marked_completed">Booking marked as completed</string>
     <string name="booking_confirmed">Booking confirmed</string>
     <string name="booking_update_failed">Could not update the booking: %1$s</string>
+
+    <!-- Owner: salon services with price and duration -->
+    <string name="title_add_salon">Add a salon</string>
+    <string name="title_edit_services">Edit services</string>
+    <string name="btn_add">Add</string>
+    <string name="btn_save">Save</string>
+
+    <string name="label_salon_name">Salon name</string>
+    <string name="hint_salon_name">e.g. Glam Studio</string>
+    <string name="hint_salon_location">e.g. Randburg</string>
+    <string name="error_salon_name_required">Salon name is required</string>
+    <string name="error_salon_location_required">Location is required</string>
+
+    <string name="label_service_name">Service name</string>
+    <string name="label_service_price">Price (R)</string>
+    <string name="label_service_duration">Duration</string>
+    <string name="hint_service_name">e.g. Haircut</string>
+    <string name="hint_service_price">e.g. 150</string>
+    <string name="hint_service_duration">Choose minutes</string>
+    <string name="btn_add_service">Add service</string>
+    <string name="btn_update_service">Update service</string>
+    <string name="helper_service_editor">Fill in the name, price and duration, then tap Add service</string>
+    <string name="helper_service_chips">Tap a chip to change its price or duration</string>
+    <string name="helper_editing_service">Editing: %1$s</string>
+
+    <string name="error_service_name_required">Enter a service name</string>
+    <string name="error_service_price_required">Enter a price</string>
+    <string name="error_service_price_invalid">Enter a price of 0 or more</string>
+    <string name="error_service_duration_required">Choose a duration</string>
+    <string name="error_service_duration_invalid">Choose a duration from the list</string>
+    <string name="error_service_duplicate">You already added &quot;%1$s&quot;</string>
+    <string name="error_no_services">Add at least one service</string>
+
+    <string name="service_price_not_set">Price not set</string>
+    <string name="service_price_rand">R%1$s</string>
+    <string name="service_duration_minutes">%1$dmin</string>
+    <string name="service_chip_text">%1$s - %2$s - %3$s</string>
+
+    <!-- Client: service lines and booking totals -->
+    <string name="service_total">Total: %1$s - %2$dmin</string>
+    <string name="service_total_duration">Total: %1$dmin</string>
+    <string name="service_missing_price_note">Some services have no price set</string>
+    <string name="booking_total_no_price">Total price not set - %1$dmin</string>
+
+    <string name="saving_services">Saving…</string>
+    <string name="services_saved">Services updated</string>
+    <string name="services_save_failed">Could not save services</string>
+    <string name="salon_added">%1$s has been added</string>
+    <string name="salon_add_failed">Could not add salon: %1$s</string>
+    <string name="salon_refresh_failed">Salon saved, but the list could not refresh</string>
+
+    <string-array name="service_duration_options">
+        <item>15 min</item>
+        <item>30 min</item>
+        <item>45 min</item>
+        <item>60 min</item>
+        <item>90 min</item>
+        <item>120 min</item>
+        <item>150 min</item>
+        <item>180 min</item>
+    </string-array>
 
 </resources>

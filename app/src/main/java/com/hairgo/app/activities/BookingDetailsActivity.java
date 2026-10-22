@@ -1,9 +1,10 @@
 package com.hairgo.app.activities;
 
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -22,6 +23,7 @@ import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.fragments.LeaveReviewBottomSheet;
 import com.hairgo.app.fragments.ReportProblemBottomSheet;
 import com.hairgo.app.models.Booking;
+import com.hairgo.app.models.ServiceDetail;
 import com.hairgo.app.utils.BookingSections;
 import com.hairgo.app.utils.MapsHelper;
 import com.hairgo.app.utils.ReminderScheduler;
@@ -149,6 +151,18 @@ public class BookingDetailsActivity extends AppCompatActivity {
 
         Object notes = raw.get("notes");
         booking.setNotes(notes == null ? "" : notes.toString());
+
+        // New bookings keep a copy of the chosen services. Old bookings have
+        // none, so the saved totals are only used when they are there.
+        booking.setServiceDetails(BookingManager.getServiceDetails(raw));
+        Double savedPrice = BookingManager.getTotalPrice(raw);
+        if (savedPrice != null) {
+            booking.setTotalPrice(savedPrice);
+        }
+        int savedDuration = BookingManager.getTotalDuration(raw);
+        if (savedDuration > 0) {
+            booking.setTotalDurationMinutes(savedDuration);
+        }
         return booking;
     }
 
@@ -160,6 +174,8 @@ public class BookingDetailsActivity extends AppCompatActivity {
 
         TextView tvSalonName = findViewById(R.id.tvSalonName);
         TextView tvServiceName = findViewById(R.id.tvServiceName);
+        TextView tvBookingTotal = findViewById(R.id.tvBookingTotal);
+        TextView tvBookingNote = findViewById(R.id.tvBookingNote);
         TextView tvDateTime = findViewById(R.id.tvDateTime);
         tvStatusBadge = findViewById(R.id.tvStatusBadge);
         tvExpiredNote = findViewById(R.id.tvExpiredNote);
@@ -177,7 +193,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
         btnMessageSalon.setOnClickListener(v -> openChat());
 
         tvSalonName.setText(booking.getSalonName());
-        tvServiceName.setText(booking.getServiceLabel());
+        bindServices(booking, tvServiceName, tvBookingTotal, tvBookingNote);
 
         // Location is loaded separately because it lives on the salon, not the
         // booking. The row hides itself if the salon cannot be resolved.
@@ -250,6 +266,65 @@ public class BookingDetailsActivity extends AppCompatActivity {
         tvNotes.setText(notes.trim());
         tvNotesLabel.setVisibility(View.VISIBLE);
         tvNotes.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Shows one line per saved service with its price and duration, then the
+     * booking total. Old bookings have no saved services, so they keep the
+     * plain list of names and hide the total.
+     */
+    private void bindServices(Booking booking, TextView tvServiceName,
+                              TextView tvBookingTotal, TextView tvBookingNote) {
+        if (!booking.hasServiceDetails()) {
+            tvServiceName.setText(booking.getServiceLabel());
+            tvBookingTotal.setVisibility(View.GONE);
+            tvBookingNote.setVisibility(View.GONE);
+            return;
+        }
+
+        List<String> lines = new ArrayList<>();
+        for (ServiceDetail detail : booking.getServiceDetails()) {
+            lines.add(getString(R.string.service_chip_text,
+                    detail.getName(),
+                    formatServicePrice(detail),
+                    getString(R.string.service_duration_minutes, detail.getDurationMinutes())));
+        }
+        tvServiceName.setText(TextUtils.join("\n", lines));
+
+        Double totalPrice = booking.getTotalPrice();
+        int totalDuration = booking.getTotalDurationMinutes();
+        if (totalPrice == null) {
+            if (totalDuration > 0) {
+                tvBookingTotal.setText(getString(R.string.booking_total_no_price, totalDuration));
+                tvBookingTotal.setVisibility(View.VISIBLE);
+            } else {
+                tvBookingTotal.setVisibility(View.GONE);
+            }
+            tvBookingNote.setVisibility(View.GONE);
+            return;
+        }
+
+        tvBookingTotal.setText(getString(R.string.service_total,
+                getString(R.string.service_price_rand, formatPriceValue(totalPrice)),
+                totalDuration));
+        tvBookingTotal.setVisibility(View.VISIBLE);
+        tvBookingNote.setVisibility(booking.hasUnpricedServices() ? View.VISIBLE : View.GONE);
+    }
+
+    /** "R150.50" when priced, otherwise the "Price not set" text. */
+    private String formatServicePrice(ServiceDetail detail) {
+        if (!detail.hasPrice()) {
+            return getString(R.string.service_price_not_set);
+        }
+        return getString(R.string.service_price_rand, formatPriceValue(detail.getPrice()));
+    }
+
+    /** Whole rands show no decimals; cents always show two. */
+    private String formatPriceValue(double price) {
+        if (price == Math.rint(price)) {
+            return String.valueOf((long) price);
+        }
+        return String.format(Locale.US, "%.2f", price);
     }
 
     private String asString(Object value) {

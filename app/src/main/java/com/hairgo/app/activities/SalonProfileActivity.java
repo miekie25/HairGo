@@ -15,11 +15,15 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.Timestamp;
 import com.hairgo.app.R;
+import com.hairgo.app.adapters.ReviewAdapter;
 import com.hairgo.app.adapters.ServiceAdapter;
 import com.hairgo.app.firebase.BookingManager;
+import com.hairgo.app.firebase.ReviewManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.fragments.ReportProblemBottomSheet;
 import com.hairgo.app.models.Salon;
+import com.hairgo.app.models.ServiceDetail;
+import com.hairgo.app.utils.ReviewLoader;
 import com.hairgo.app.utils.SalonHours;
 import com.hairgo.app.utils.SalonPhotos;
 import com.hairgo.app.utils.Snackbars;
@@ -50,6 +54,7 @@ public class SalonProfileActivity extends AppCompatActivity {
     private View contentGroup;
     private String salonId;
     private boolean salonLoaded;
+    private ReviewAdapter reviewPreviewAdapter;
 
     /** This salon's own opening hours; defaults to 09:00–18:00 until the document loads. */
     private SalonHours salonHours = SalonHours.defaults();
@@ -85,7 +90,10 @@ public class SalonProfileActivity extends AppCompatActivity {
                 }
                 salonLoaded = true;
                 salonHours = SalonHours.fromDoc(salonData);
-                bindSalon(salon);
+                // Read the services with their price and duration. Old salons
+                // only have names saved, and those still work.
+                List<ServiceDetail> serviceDetails = SalonManager.getServiceDetails(salonData);
+                bindSalon(salon, serviceDetails);
                 loadSalonPhoto();
                 loadNextAvailableDate(salonId);
             }
@@ -137,7 +145,7 @@ public class SalonProfileActivity extends AppCompatActivity {
                 avgRating, services);
     }
 
-    private void bindSalon(Salon salon) {
+    private void bindSalon(Salon salon, List<ServiceDetail> serviceDetails) {
         progress.setVisibility(View.GONE);
         contentGroup.setVisibility(View.VISIBLE);
 
@@ -154,7 +162,9 @@ public class SalonProfileActivity extends AppCompatActivity {
 
         RecyclerView rvServices = findViewById(R.id.rvServices);
         rvServices.setLayoutManager(new LinearLayoutManager(this));
-        rvServices.setAdapter(new ServiceAdapter(salon.getServices()));
+        rvServices.setAdapter(new ServiceAdapter(serviceDetails));
+
+        setupReviewPreview(salon.getSalonId(), salon.getAvgRating());
 
         findViewById(R.id.btnBook).setOnClickListener(v -> {
             Intent intent = new Intent(this, BookAppointmentActivity.class);
@@ -167,6 +177,88 @@ public class SalonProfileActivity extends AppCompatActivity {
                 ReportProblemBottomSheet
                         .newInstanceForSalon(salon.getSalonId(), salon.getName(), null)
                         .show(getSupportFragmentManager(), "report_problem"));
+    }
+
+    private void setupReviewPreview(String salonId, double storedAvgRating) {
+        RecyclerView rvReviewPreview = findViewById(R.id.rvReviewPreview);
+        rvReviewPreview.setLayoutManager(new LinearLayoutManager(this));
+        reviewPreviewAdapter = new ReviewAdapter(true);
+        rvReviewPreview.setAdapter(reviewPreviewAdapter);
+
+        findViewById(R.id.llRating).setOnClickListener(v -> openReviews());
+        findViewById(R.id.tvSeeAllReviews).setOnClickListener(v -> openReviews());
+
+        loadReviewPreview(salonId, storedAvgRating);
+    }
+
+    private void openReviews() {
+        if (salonId == null || salonId.isEmpty()) return;
+        Intent intent = new Intent(this, SalonReviewsActivity.class);
+        intent.putExtra("salonId", salonId);
+        startActivity(intent);
+    }
+
+    /**
+     * Shows the three newest reviews under the services. A short row of stars
+     * and the count is enough for the profile; the full list opens separately.
+     */
+    private void loadReviewPreview(String salonId, double storedAvgRating) {
+        ProgressBar previewProgress = findViewById(R.id.previewReviewsProgress);
+        TextView tvPreviewEmpty = findViewById(R.id.tvPreviewEmpty);
+        RecyclerView rvPreview = findViewById(R.id.rvReviewPreview);
+        TextView tvSeeAll = findViewById(R.id.tvSeeAllReviews);
+        TextView tvSalonRating = findViewById(R.id.tvSalonRating);
+        ImageView ivRatingStar = findViewById(R.id.ivRatingStar);
+
+        previewProgress.setVisibility(View.VISIBLE);
+        tvPreviewEmpty.setVisibility(View.GONE);
+        rvPreview.setVisibility(View.GONE);
+        tvSeeAll.setVisibility(View.GONE);
+
+        ReviewLoader.load(salonId, new ReviewLoader.Callback() {
+            @Override
+            public void onLoaded(List<ReviewLoader.Item> reviews, boolean fromCache) {
+                if (isFinishing() || isDestroyed()) return;
+                previewProgress.setVisibility(View.GONE);
+
+                if (reviews == null || reviews.isEmpty()) {
+                    tvSalonRating.setText(R.string.no_reviews_yet);
+                    ivRatingStar.setVisibility(View.GONE);
+                    tvPreviewEmpty.setText(R.string.no_reviews_yet);
+                    tvPreviewEmpty.setVisibility(View.VISIBLE);
+
+                    // The reviews are the truth, so remove a rating left behind
+                    // by reviews that were deleted outside this screen.
+                    if (!fromCache && Math.abs(storedAvgRating) > 0.01) {
+                        new ReviewManager().updateSalonRating(salonId, 0.0);
+                    }
+                    return;
+                }
+
+                double average = ReviewLoader.averageRating(reviews);
+                tvSalonRating.setText(String.format(Locale.getDefault(), "%.1f", average));
+                ivRatingStar.setVisibility(View.VISIBLE);
+
+                // Repair the home-list copy when it does not match the reviews.
+                if (!fromCache && Math.abs(average - storedAvgRating) > 0.01) {
+                    new ReviewManager().updateSalonRating(salonId, average);
+                }
+
+                int previewSize = Math.min(3, reviews.size());
+                reviewPreviewAdapter.setReviews(reviews.subList(0, previewSize));
+                rvPreview.setVisibility(View.VISIBLE);
+                tvSeeAll.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (isFinishing() || isDestroyed()) return;
+                previewProgress.setVisibility(View.GONE);
+                Log.w(TAG, "Could not load reviews: " + errorMessage);
+                tvPreviewEmpty.setText(R.string.reviews_load_failed);
+                tvPreviewEmpty.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
     /**

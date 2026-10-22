@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="132dp"
+    android:layout_height="176dp"
+    android:layout_margin="6dp"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="4dp">
+
+    <ImageView
+        android:id="@+id/ivFeatured"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="Hairstyle photo"
+        android:scaleType="centerCrop" />
+
+</androidx.cardview.widget.CardView>

@@ -3,6 +3,7 @@ package com.hairgo.app.firebase;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.hairgo.app.models.ServiceDetail;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,6 +41,24 @@ public class SalonManager {
         void onFailure(String errorMessage);
     }
 
+    /**
+     * Reads the services (with price and duration) from a salon map.
+     * If the salon has no saved details yet, they are built from the old
+     * list of names (no price, 60 minutes). Never returns null.
+     */
+    public static List<ServiceDetail> getServiceDetails(Map<String, Object> salonData) {
+        if (salonData == null) {
+            return new ArrayList<>();
+        }
+        List<ServiceDetail> details = ServiceDetail.fromRawList(salonData.get("serviceDetails"));
+        if (!details.isEmpty()) {
+            return details;
+        }
+        // No details saved, so fall back to the old list of names.
+        return ServiceDetail.fromRawList(salonData.get("services"));
+    }
+
+    // Old way of creating a salon, with just service names. Used by the seeder.
     public void createSalon(String ownerId, String name, String location,
                             List<String> services, SalonCreatedCallback callback) {
         createSalon(null, ownerId, name, location, services, callback);
@@ -55,6 +74,24 @@ public class SalonManager {
      */
     public void createSalon(String documentId, String ownerId, String name, String location,
                             List<String> services, SalonCreatedCallback callback) {
+        // Turn the names into services with no price and the default duration.
+        saveNewSalon(documentId, ownerId, name, location,
+                ServiceDetail.fromNames(services), callback);
+    }
+
+    /**
+     * Creates a salon with services that have a price and a duration.
+     * Both the new details and the old list of names are saved.
+     */
+    public void createSalonWithDetails(String ownerId, String name, String location,
+                                       List<ServiceDetail> serviceDetails,
+                                       SalonCreatedCallback callback) {
+        saveNewSalon(null, ownerId, name, location, serviceDetails, callback);
+    }
+
+    // Shared code that writes a new salon document.
+    private void saveNewSalon(String documentId, String ownerId, String name, String location,
+                              List<ServiceDetail> serviceDetails, SalonCreatedCallback callback) {
         DocumentReference ref = documentId == null
                 ? db.collection("salons").document()
                 : db.collection("salons").document(documentId);
@@ -64,13 +101,28 @@ public class SalonManager {
         salon.put("ownerID", ownerId);
         salon.put("name", name);
         salon.put("location", location);
-        salon.put("services", services);
+        // The old list of names is still saved, because other screens read it.
+        salon.put("services", ServiceDetail.toNames(serviceDetails));
+        // The new list holds the name, price and duration of each service.
+        salon.put("serviceDetails", ServiceDetail.toMapList(serviceDetails));
         salon.put("isDeleted", false);
         salon.put("avgRating", 0.0);
 
         ref.set(salon)
                 .addOnSuccessListener(unused -> callback.onSuccess(ref.getId()))
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
+     * Saves a new list of services for a salon. This writes the old list of
+     * names and the new details together, so they always match.
+     */
+    public void updateServices(String salonId, List<ServiceDetail> serviceDetails,
+                               SalonCallback callback) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("services", ServiceDetail.toNames(serviceDetails));
+        updates.put("serviceDetails", ServiceDetail.toMapList(serviceDetails));
+        updateSalon(salonId, updates, callback);
     }
 
     public void getSalonById(String salonId, SalonDataCallback callback) {

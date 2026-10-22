@@ -62,6 +62,8 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
             holder.tvDateTime.setText("");
         }
 
+        bindTotal(holder, booking);
+
         String status = booking.getStatus();
         // Tell the two kinds of cancellation apart for the owner.
         String label;
@@ -139,13 +141,46 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
         return bookings.size();
     }
 
+    /**
+     * One short total line for new bookings. Old bookings have no saved
+     * totals, so the line stays hidden and the card looks the same as before.
+     */
+    private void bindTotal(ViewHolder holder, OwnerBooking booking) {
+        Double totalPrice = booking.getTotalPrice();
+        int totalDuration = booking.getTotalDurationMinutes();
+
+        if (totalPrice == null && totalDuration <= 0) {
+            holder.tvBookingTotal.setVisibility(View.GONE);
+            return;
+        }
+
+        if (totalPrice == null) {
+            holder.tvBookingTotal.setText(holder.itemView.getContext()
+                    .getString(R.string.service_total_duration, totalDuration));
+        } else {
+            String priceText = holder.itemView.getContext()
+                    .getString(R.string.service_price_rand, formatPriceValue(totalPrice));
+            holder.tvBookingTotal.setText(holder.itemView.getContext()
+                    .getString(R.string.service_total, priceText, totalDuration));
+        }
+        holder.tvBookingTotal.setVisibility(View.VISIBLE);
+    }
+
+    /** Whole rands show no decimals; cents always show two. */
+    private String formatPriceValue(double price) {
+        if (price == Math.rint(price)) {
+            return String.valueOf((long) price);
+        }
+        return String.format(Locale.US, "%.2f", price);
+    }
+
     private String capitalize(String text) {
         if (text == null || text.isEmpty()) return text;
         return text.substring(0, 1).toUpperCase(Locale.getDefault()) + text.substring(1);
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvClientName, tvService, tvDateTime, tvStatusBadge;
+        TextView tvClientName, tvService, tvBookingTotal, tvDateTime, tvStatusBadge;
         LinearLayout actionsRow;
         Button btnConfirm, btnDecline, btnMessage, btnMessageStandalone;
 
@@ -153,6 +188,7 @@ public class OwnerBookingAdapter extends RecyclerView.Adapter<OwnerBookingAdapte
             super(itemView);
             tvClientName = itemView.findViewById(R.id.tvClientName);
             tvService = itemView.findViewById(R.id.tvService);
+            tvBookingTotal = itemView.findViewById(R.id.tvBookingTotal);
             tvDateTime = itemView.findViewById(R.id.tvDateTime);
             tvStatusBadge = itemView.findViewById(R.id.tvStatusBadge);
             actionsRow = itemView.findViewById(R.id.layoutBookingActions);

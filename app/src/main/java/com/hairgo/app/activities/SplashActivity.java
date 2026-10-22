@@ -4,22 +4,23 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
 
+import com.hairgo.app.R;
 import com.hairgo.app.firebase.AuthManager;
 
 public class SplashActivity extends AppCompatActivity {
 
     private static final long SPLASH_DELAY_MS = 2700;
 
-    private boolean isReady = false;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
+        // The system splash shows briefly, then hands over to the layout below.
+        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
-        splashScreen.setKeepOnScreenCondition(() -> !isReady);
+        setContentView(R.layout.activity_splash);
 
         new Handler(Looper.getMainLooper()).postDelayed(this::route, SPLASH_DELAY_MS);
     }
@@ -63,7 +64,7 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void finishTo(Class<?> destination) {
-        isReady = true;
+        if (isFinishing() || isDestroyed()) return;
         startActivity(new Intent(SplashActivity.this, destination));
         // Remove splash from the back stack so back does not return to it.
         finish();

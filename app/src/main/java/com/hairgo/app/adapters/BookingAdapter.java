@@ -60,6 +60,7 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingV
         holder.tvSalonName.setText(booking.getSalonName());
         holder.tvServiceName.setText(booking.getServiceLabel());
         holder.tvDateTime.setText(formatRelativeDate(booking.getDateTime()));
+        bindTotal(holder, booking);
         bindSalonPhoto(holder, booking);
 
         String status = BookingSections.effectiveStatus(booking);
@@ -104,6 +105,39 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingV
         return bookingList.size();
     }
 
+    /**
+     * One short total line for new bookings. Old bookings have no saved
+     * totals, so the line stays hidden and the card looks the same as before.
+     */
+    private static void bindTotal(BookingAdapter.BookingViewHolder holder, Booking booking) {
+        Double totalPrice = booking.getTotalPrice();
+        int totalDuration = booking.getTotalDurationMinutes();
+
+        if (totalPrice == null && totalDuration <= 0) {
+            holder.tvBookingTotal.setVisibility(View.GONE);
+            return;
+        }
+
+        if (totalPrice == null) {
+            holder.tvBookingTotal.setText(holder.itemView.getContext()
+                    .getString(R.string.service_total_duration, totalDuration));
+        } else {
+            String priceText = holder.itemView.getContext()
+                    .getString(R.string.service_price_rand, formatPriceValue(totalPrice));
+            holder.tvBookingTotal.setText(holder.itemView.getContext()
+                    .getString(R.string.service_total, priceText, totalDuration));
+        }
+        holder.tvBookingTotal.setVisibility(View.VISIBLE);
+    }
+
+    /** Whole rands show no decimals; cents always show two. */
+    private static String formatPriceValue(double price) {
+        if (price == Math.rint(price)) {
+            return String.valueOf((long) price);
+        }
+        return String.format(Locale.US, "%.2f", price);
+    }
+
     private static void bindSalonPhoto(BookingAdapter.BookingViewHolder holder, Booking booking) {
         int imageRes = booking.getSalonImageRes();
         holder.ivSalonPhoto.setImageResource(
@@ -133,13 +167,14 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingV
 
     public static class BookingViewHolder extends RecyclerView.ViewHolder {
         ShapeableImageView ivSalonPhoto;
-        TextView tvSalonName, tvServiceName, tvDateTime, tvStatusBadge;
+        TextView tvSalonName, tvServiceName, tvBookingTotal, tvDateTime, tvStatusBadge;
 
         BookingViewHolder(@NonNull View itemView) {
             super(itemView);
             ivSalonPhoto = itemView.findViewById(R.id.ivSalonPhoto);
             tvSalonName = itemView.findViewById(R.id.tvSalonName);
             tvServiceName = itemView.findViewById(R.id.tvServiceName);
+            tvBookingTotal = itemView.findViewById(R.id.tvBookingTotal);
             tvDateTime = itemView.findViewById(R.id.tvDateTime);
             tvStatusBadge = itemView.findViewById(R.id.tvStatusBadge);
         }

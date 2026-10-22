@@ -4,12 +4,15 @@ import android.text.TextUtils;
 
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.Transaction;
 import com.google.firebase.firestore.WriteBatch;
+import com.hairgo.app.models.Booking;
+import com.hairgo.app.models.ServiceDetail;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -74,6 +77,37 @@ public class BookingManager {
     public interface CancelledBookingsCallback {
         void onSuccess(List<String> cancelledBookingIds);
         void onFailure(String errorMessage);
+    }
+
+    // ------------------------------------------------------------------
+    // Helpers for reading the saved service copy from a booking map.
+    // Old bookings have none of these fields, so they return safe values.
+    // ------------------------------------------------------------------
+
+    /** The services saved on a booking (name, price, duration). Empty for old bookings. */
+    public static List<ServiceDetail> getServiceDetails(Map<String, Object> bookingData) {
+        if (bookingData == null) {
+            return new ArrayList<>();
+        }
+        return ServiceDetail.fromRawList(bookingData.get("serviceDetails"));
+    }
+
+    /** The saved total price, or null if the booking has no price saved. */
+    public static Double getTotalPrice(Map<String, Object> bookingData) {
+        if (bookingData == null) {
+            return null;
+        }
+        Object value = bookingData.get("totalPrice");
+        return value instanceof Number ? ((Number) value).doubleValue() : null;
+    }
+
+    /** The saved total duration in minutes, or 0 if the booking has none saved. */
+    public static int getTotalDuration(Map<String, Object> bookingData) {
+        if (bookingData == null) {
+            return 0;
+        }
+        Object value = bookingData.get("totalDuration");
+        return value instanceof Number ? ((Number) value).intValue() : 0;
     }
 
     /**
@@ -180,6 +214,18 @@ public class BookingManager {
     }
 
     /**
+     * Creates a booking that also saves a copy of each chosen service (name,
+     * price and duration) plus the total price and total duration. Later edits
+     * to the salon's services do not change this booking.
+     */
+    public void createBookingWithDetails(String clientId, String salonId, String salonName,
+                                         List<ServiceDetail> serviceDetails, Date dateTime,
+                                         String notes, BookingCreatedCallback callback) {
+        createBookingInternal(null, clientId, salonId, salonName,
+                ServiceDetail.toNames(serviceDetails), serviceDetails, dateTime, notes, callback);
+    }
+
+    /**
      * Creates a booking, optionally writing to a known document id.
      *
      * <p>Passing a documentId turns this into an upsert: the named document is
@@ -200,6 +246,19 @@ public class BookingManager {
     public void createBooking(String documentId, String clientId, String salonId, String salonName,
                               List<String> serviceNames, Date dateTime, String notes,
                               BookingCreatedCallback callback) {
+        // The old way has only names, so no service copy is saved.
+        createBookingInternal(documentId, clientId, salonId, salonName,
+                serviceNames, null, dateTime, notes, callback);
+    }
+
+    /**
+     * Shared code behind every createBooking version. The serviceDetails list
+     * can be null, which means "names only" (the old way).
+     */
+    private void createBookingInternal(String documentId, String clientId, String salonId,
+                                       String salonName, List<String> serviceNames,
+                                       List<ServiceDetail> serviceDetails, Date dateTime,
+                                       String notes, BookingCreatedCallback callback) {
         // Re-check the rule here, not only in the UI: nothing before now +
         // the notice period may be written.
         if (dateTime == null
@@ -221,7 +280,8 @@ public class BookingManager {
         // reason (offline, a seeded client with no profile), the booking is still
         // created, just without a name.
         if (clientId == null || clientId.isEmpty()) {
-            writeBooking(ref, clientId, "", salonId, salonName, names, dateTime, note, callback);
+            writeBooking(ref, clientId, "", salonId, salonName, names, serviceDetails,
+                    dateTime, note, callback);
             return;
         }
 
@@ -231,15 +291,18 @@ public class BookingManager {
                     String last = doc.getString("surname");
                     String clientName = ((first == null ? "" : first) + " "
                             + (last == null ? "" : last)).trim();
-                    writeBooking(ref, clientId, clientName, salonId, salonName, names, dateTime, note, callback);
+                    writeBooking(ref, clientId, clientName, salonId, salonName, names,
+                            serviceDetails, dateTime, note, callback);
                 })
                 .addOnFailureListener(e ->
-                        writeBooking(ref, clientId, "", salonId, salonName, names, dateTime, note, callback));
+                        writeBooking(ref, clientId, "", salonId, salonName, names,
+                                serviceDetails, dateTime, note, callback));
     }
 
     /** Writes the booking document once the client's name (possibly empty) is known. */
     private void writeBooking(DocumentReference ref, String clientId, String clientName,
                               String salonId, String salonName, List<String> names,
+                              List<ServiceDetail> serviceDetails,
                               Date dateTime, String notes, BookingCreatedCallback callback) {
         Map<String, Object> booking = new HashMap<>();
         booking.put("bookingID", ref.getId());
@@ -254,6 +317,17 @@ public class BookingManager {
         booking.put("isDeleted", false);
         booking.put("notes", notes == null ? "" : notes);
 
+        // Save a copy of the chosen services and the totals, if we have them.
+        if (serviceDetails != null && !serviceDetails.isEmpty()) {
+            booking.put("serviceDetails", ServiceDetail.toMapList(serviceDetails));
+            // Only save a total price if at least one service has a price.
+            Double totalPrice = Booking.sumPrice(serviceDetails);
+            if (totalPrice != null) {
+                booking.put("totalPrice", totalPrice);
+            }
+            booking.put("totalDuration", Booking.sumDuration(serviceDetails));
+        }
+
         // Claim the slot and write the booking in one transaction. A competing
         // client contending for the same lock document makes this retry, see
         // the holder, and fail with the friendly message instead of
@@ -262,14 +336,14 @@ public class BookingManager {
         AtomicBoolean slotTaken = new AtomicBoolean(false);
 
         db.runTransaction(tx -> {
-            if (slotLockedByOther(tx, lockKey, dateTime, ref.getId())) {
-                slotTaken.set(true);
-                throw new IllegalStateException("Slot already taken");
-            }
-            tx.set(ref, booking);
-            tx.set(db.collection(SLOT_LOCKS).document(lockKey), lockData(ref.getId()));
-            return null;
-        })
+                    if (slotLockedByOther(tx, lockKey, dateTime, ref.getId())) {
+                        slotTaken.set(true);
+                        throw new IllegalStateException("Slot already taken");
+                    }
+                    tx.set(ref, booking);
+                    tx.set(db.collection(SLOT_LOCKS).document(lockKey), lockData(ref.getId()));
+                    return null;
+                })
                 .addOnSuccessListener(unused -> callback.onSuccess(ref.getId()))
                 .addOnFailureListener(e -> callback.onFailure(
                         slotTaken.get() ? SLOT_TAKEN_MESSAGE : e.getMessage()));
@@ -450,9 +524,33 @@ public class BookingManager {
      * deliberately drops it back to pending rather than changing the time behind
      * the salon's back. update() is used instead of the createBooking upsert so
      * unrelated fields on the document survive the change.
+     *
+     * <p>This version only knows the service names. If the names are different
+     * from what the booking already has, the saved service copy and totals are
+     * removed, so a booking never shows prices for services it no longer has.
      */
     public void updateBookingDetails(String bookingId, List<String> serviceNames, Date dateTime,
                                      BookingCallback callback) {
+        updateBookingInternal(bookingId, serviceNames, null, dateTime, callback);
+    }
+
+    /**
+     * Same as updateBookingDetails, but also saves a fresh copy of the chosen
+     * services (name, price, duration) and the new totals.
+     */
+    public void updateBookingWithDetails(String bookingId, List<ServiceDetail> serviceDetails,
+                                         Date dateTime, BookingCallback callback) {
+        updateBookingInternal(bookingId, ServiceDetail.toNames(serviceDetails),
+                serviceDetails, dateTime, callback);
+    }
+
+    /**
+     * Shared code behind both update versions. The serviceDetails list can be
+     * null, which means "names only".
+     */
+    private void updateBookingInternal(String bookingId, List<String> serviceNames,
+                                       List<ServiceDetail> serviceDetails, Date dateTime,
+                                       BookingCallback callback) {
         // Reschedules obey the same notice rule as new bookings.
         if (dateTime == null
                 || dateTime.getTime() < System.currentTimeMillis() + MIN_NOTICE_MINUTES * 60_000L) {
@@ -463,12 +561,6 @@ public class BookingManager {
 
         List<String> names = serviceNames == null ? new ArrayList<>() : serviceNames;
 
-        Map<String, Object> update = new HashMap<>();
-        update.put("serviceNames", names);
-        update.put("serviceName", TextUtils.join(", ", names));
-        update.put("dateTime", dateTime);
-        update.put("status", "pending");
-
         // Same claim-and-write transaction as createBooking, so a reschedule
         // cannot race another client for the target slot. The old slot's lock
         // self-heals: its holder's time no longer matches, so the slot reads
@@ -477,24 +569,48 @@ public class BookingManager {
         AtomicBoolean slotTaken = new AtomicBoolean(false);
 
         db.runTransaction(tx -> {
-            DocumentSnapshot current = tx.get(bookingRef);
-            if (!current.exists()) {
-                throw new IllegalStateException("Booking not found.");
-            }
+                    DocumentSnapshot current = tx.get(bookingRef);
+                    if (!current.exists()) {
+                        throw new IllegalStateException("Booking not found.");
+                    }
 
-            String salonId = current.getString("salonID");
-            if (salonId != null) {
-                String lockKey = slotLockKey(salonId, dateTime);
-                if (slotLockedByOther(tx, lockKey, dateTime, bookingId)) {
-                    slotTaken.set(true);
-                    throw new IllegalStateException("Slot already taken");
-                }
-                tx.set(db.collection(SLOT_LOCKS).document(lockKey), lockData(bookingId));
-            }
+                    String salonId = current.getString("salonID");
+                    if (salonId != null) {
+                        String lockKey = slotLockKey(salonId, dateTime);
+                        if (slotLockedByOther(tx, lockKey, dateTime, bookingId)) {
+                            slotTaken.set(true);
+                            throw new IllegalStateException("Slot already taken");
+                        }
+                        tx.set(db.collection(SLOT_LOCKS).document(lockKey), lockData(bookingId));
+                    }
 
-            tx.update(bookingRef, update);
-            return null;
-        })
+                    Map<String, Object> update = new HashMap<>();
+                    update.put("serviceNames", names);
+                    update.put("serviceName", TextUtils.join(", ", names));
+                    update.put("dateTime", dateTime);
+                    update.put("status", "pending");
+
+                    if (serviceDetails != null) {
+                        // We have the new services, so save the fresh copy and totals.
+                        update.put("serviceDetails", ServiceDetail.toMapList(serviceDetails));
+                        Double totalPrice = Booking.sumPrice(serviceDetails);
+                        update.put("totalPrice", totalPrice != null ? totalPrice : FieldValue.delete());
+                        update.put("totalDuration", Booking.sumDuration(serviceDetails));
+                    } else {
+                        // Names only. If the services changed, remove the old copy and
+                        // totals so they never show wrong prices.
+                        Object oldNames = current.get("serviceNames");
+                        boolean sameServices = oldNames instanceof List && oldNames.equals(names);
+                        if (!sameServices) {
+                            update.put("serviceDetails", FieldValue.delete());
+                            update.put("totalPrice", FieldValue.delete());
+                            update.put("totalDuration", FieldValue.delete());
+                        }
+                    }
+
+                    tx.update(bookingRef, update);
+                    return null;
+                })
                 .addOnSuccessListener(unused -> callback.onSuccess())
                 .addOnFailureListener(e -> callback.onFailure(
                         slotTaken.get() ? SLOT_TAKEN_MESSAGE : e.getMessage()));

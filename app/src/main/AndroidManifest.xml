@@ -79,6 +79,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".activities.SalonReviewsActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".activities.BookAppointmentActivity"
             android:exported="false" />
 

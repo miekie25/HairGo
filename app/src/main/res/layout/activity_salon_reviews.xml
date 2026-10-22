@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/grey_light">
+
+    <include
+        android:id="@+id/header"
+        layout="@layout/component_header"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"/>
+
+    <TextView
+        android:id="@+id/tvSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        android:textColor="@color/heading"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:visibility="gone"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvReviews"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="24dp"
+            android:clipToPadding="false"
+            android:visibility="gone"/>
+
+        <ProgressBar
+            android:id="@+id/progress"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/teal"/>
+
+        <TextView
+            android:id="@+id/tvEmpty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:padding="24dp"
+            android:text="@string/no_reviews_yet"
+            android:textColor="@color/grey_medium"
+            android:textSize="15sp"
+            android:visibility="gone"/>
+
+    </FrameLayout>
+
+</LinearLayout>
