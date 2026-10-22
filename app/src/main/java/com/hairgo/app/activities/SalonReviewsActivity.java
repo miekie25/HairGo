@@ -71,7 +71,7 @@ public class SalonReviewsActivity extends AppCompatActivity {
 
         ReviewLoader.load(salonId, new ReviewLoader.Callback() {
             @Override
-            public void onLoaded(List<ReviewLoader.Item> reviews) {
+            public void onLoaded(List<ReviewLoader.Item> reviews, boolean fromCache) {
                 if (isFinishing() || isDestroyed()) return;
 
                 if (reviews == null || reviews.isEmpty()) {
@@ -96,11 +96,7 @@ public class SalonReviewsActivity extends AppCompatActivity {
     }
 
     private String buildSummary(List<ReviewLoader.Item> reviews) {
-        double total = 0;
-        for (ReviewLoader.Item review : reviews) {
-            total += review.getRating();
-        }
-        double average = reviews.isEmpty() ? 0 : total / reviews.size();
+        double average = ReviewLoader.averageRating(reviews);
 
         String averageText = String.format(Locale.getDefault(), "%.1f", average);
         String countText = getResources().getQuantityString(

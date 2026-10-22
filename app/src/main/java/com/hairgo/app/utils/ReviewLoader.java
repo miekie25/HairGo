@@ -19,20 +19,23 @@ import java.util.Map;
 public final class ReviewLoader {
 
     public interface Callback {
-        void onLoaded(List<Item> reviews);
+        void onLoaded(List<Item> reviews, boolean fromCache);
         void onFailure(String errorMessage);
     }
 
     /** One review ready for a card. */
     public static class Item {
         private final float rating;
+        private final boolean hasRating;
         private final String comment;
         private final String clientId;
         private final Date createdAt;
         private String reviewerName;
 
-        Item(float rating, String comment, String clientId, String reviewerName, Date createdAt) {
+        Item(float rating, boolean hasRating, String comment, String clientId,
+             String reviewerName, Date createdAt) {
             this.rating = rating;
+            this.hasRating = hasRating;
             this.comment = comment;
             this.clientId = clientId;
             this.reviewerName = reviewerName;
@@ -40,6 +43,7 @@ public final class ReviewLoader {
         }
 
         public float getRating() { return rating; }
+        public boolean hasRating() { return hasRating; }
         public String getComment() { return comment; }
         public String getReviewerName() { return reviewerName; }
         public Date getCreatedAt() { return createdAt; }
@@ -56,13 +60,13 @@ public final class ReviewLoader {
     public static void load(String salonId, Callback callback) {
         new ReviewManager().getReviewsForSalon(salonId, new ReviewManager.ReviewListCallback() {
             @Override
-            public void onSuccess(List<Map<String, Object>> rawReviews) {
+            public void onSuccess(List<Map<String, Object>> rawReviews, boolean fromCache) {
                 List<Item> reviews = parse(rawReviews);
 
                 // Newest first. Reviews without a date go to the end.
                 reviews.sort((a, b) -> Long.compare(b.sortTime(), a.sortTime()));
 
-                resolveReviewerNames(reviews, callback);
+                resolveReviewerNames(reviews, fromCache, callback);
             }
 
             @Override
@@ -70,6 +74,19 @@ public final class ReviewLoader {
                 callback.onFailure(errorMessage);
             }
         });
+    }
+
+    /** The average of the reviews that actually have a rating. */
+    public static double averageRating(List<Item> reviews) {
+        double total = 0;
+        int count = 0;
+        for (Item review : reviews) {
+            if (review.hasRating()) {
+                total += review.getRating();
+                count++;
+            }
+        }
+        return count > 0 ? total / count : 0.0;
     }
 
     private static List<Item> parse(List<Map<String, Object>> rawReviews) {
@@ -87,6 +104,7 @@ public final class ReviewLoader {
             float rating = ratingValue == null
                     ? 0f
                     : (float) Math.max(0, Math.min(5, ratingValue));
+            boolean hasRating = ratingValue != null;
 
             String storedName = asString(raw.get("userName"));
             if (storedName.isEmpty()) {
@@ -107,7 +125,7 @@ public final class ReviewLoader {
                 createdAt = asDate(raw.get("timestamp"));
             }
 
-            items.add(new Item(rating, asString(raw.get("comment")), clientId,
+            items.add(new Item(rating, hasRating, asString(raw.get("comment")), clientId,
                     storedName, createdAt));
         }
 
@@ -118,7 +136,8 @@ public final class ReviewLoader {
      * Reviews store the writer's id, not their name. Look up each different
      * writer once, and use "Client" when there is no profile or no name.
      */
-    private static void resolveReviewerNames(List<Item> reviews, Callback callback) {
+    private static void resolveReviewerNames(List<Item> reviews, boolean fromCache,
+                                             Callback callback) {
         List<String> userIds = new ArrayList<>();
         for (Item review : reviews) {
             String id = review.getClientId();
@@ -129,7 +148,7 @@ public final class ReviewLoader {
         }
 
         if (userIds.isEmpty()) {
-            callback.onLoaded(reviews);
+            callback.onLoaded(reviews, fromCache);
             return;
         }
 
@@ -144,7 +163,7 @@ public final class ReviewLoader {
                     names.put(userId, firstWord(fullName));
                     if (--remaining[0] == 0) {
                         applyNames(reviews, names);
-                        callback.onLoaded(reviews);
+                        callback.onLoaded(reviews, fromCache);
                     }
                 }
 
@@ -154,7 +173,7 @@ public final class ReviewLoader {
                     names.put(userId, "");
                     if (--remaining[0] == 0) {
                         applyNames(reviews, names);
-                        callback.onLoaded(reviews);
+                        callback.onLoaded(reviews, fromCache);
                     }
                 }
             });

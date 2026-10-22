@@ -50,6 +50,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
     @Override
     public void onBindViewHolder(@NonNull ReviewViewHolder holder, int position) {
         ReviewLoader.Item review = reviews.get(position);
+        holder.ratingBar.setVisibility(review.hasRating() ? View.VISIBLE : View.GONE);
         holder.ratingBar.setRating(review.getRating());
 
         if (review.getReviewerName().isEmpty()) {

@@ -27,7 +27,7 @@ public class ReviewManager {
     }
 
     public interface ReviewListCallback {
-        void onSuccess(List<Map<String, Object>> reviews);
+        void onSuccess(List<Map<String, Object>> reviews, boolean fromCache);
         void onFailure(String errorMessage);
     }
 
@@ -61,7 +61,7 @@ public class ReviewManager {
                 .addOnSuccessListener(query -> {
                     List<Map<String, Object>> reviews = new ArrayList<>();
                     for (QueryDocumentSnapshot doc : query) reviews.add(doc.getData());
-                    callback.onSuccess(reviews);
+                    callback.onSuccess(reviews, query.getMetadata().isFromCache());
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
@@ -82,29 +82,42 @@ public class ReviewManager {
                 .whereEqualTo("isDeleted", false)
                 .get()
                 .addOnSuccessListener(query -> {
-                    int count = query.size();
                     double total = 0;
+                    int ratedCount = 0;
                     for (QueryDocumentSnapshot doc : query) {
-                        Long rating = doc.getLong("rating");
-                        if (rating != null) total += rating;
+                        // Ratings may be stored as a whole number or a decimal,
+                        // and an old review may have no rating at all.
+                        Object ratingValue = doc.get("rating");
+                        if (ratingValue instanceof Number) {
+                            total += ((Number) ratingValue).doubleValue();
+                            ratedCount++;
+                        }
                     }
-                    double avgRating = count > 0 ? total / count : 0.0;
+                    double avgRating = ratedCount > 0 ? total / ratedCount : 0.0;
 
-                    Map<String, Object> update = new HashMap<>();
-                    update.put("avgRating", avgRating);
-
-                    // The write is checked rather than fire-and-forget so a
-                    // rejected update (for example a security-rules denial)
-                    // shows up in the log instead of failing silently.
-                    db.collection("salons").document(salonId).update(update)
-                            .addOnSuccessListener(unused ->
-                                    Log.d(TAG, "avgRating=" + avgRating
-                                            + " saved for salon " + salonId))
-                            .addOnFailureListener(e ->
-                                    Log.e(TAG, "avgRating save FAILED for salon "
-                                            + salonId, e));
+                    updateSalonRating(salonId, avgRating);
                 })
                 .addOnFailureListener(e ->
                         Log.e(TAG, "Could not read reviews for salon " + salonId, e));
+    }
+
+    /**
+     * Saves the salon's average rating. This is the only field a client may
+     * change, so the salon profile can also use it to repair a stale value.
+     */
+    public void updateSalonRating(String salonId, double avgRating) {
+        Map<String, Object> update = new HashMap<>();
+        update.put("avgRating", avgRating);
+
+        // The write is checked rather than fire-and-forget so a rejected update
+        // (for example a security-rules denial) shows up in the log instead of
+        // failing silently.
+        db.collection("salons").document(salonId).update(update)
+                .addOnSuccessListener(unused ->
+                        Log.d(TAG, "avgRating=" + avgRating
+                                + " saved for salon " + salonId))
+                .addOnFailureListener(e ->
+                        Log.e(TAG, "avgRating save FAILED for salon "
+                                + salonId, e));
     }
 }

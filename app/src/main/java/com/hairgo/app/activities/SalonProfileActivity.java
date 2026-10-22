@@ -18,6 +18,7 @@ import com.hairgo.app.R;
 import com.hairgo.app.adapters.ReviewAdapter;
 import com.hairgo.app.adapters.ServiceAdapter;
 import com.hairgo.app.firebase.BookingManager;
+import com.hairgo.app.firebase.ReviewManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.fragments.ReportProblemBottomSheet;
 import com.hairgo.app.models.Salon;
@@ -163,7 +164,7 @@ public class SalonProfileActivity extends AppCompatActivity {
         rvServices.setLayoutManager(new LinearLayoutManager(this));
         rvServices.setAdapter(new ServiceAdapter(serviceDetails));
 
-        setupReviewPreview(salon.getSalonId());
+        setupReviewPreview(salon.getSalonId(), salon.getAvgRating());
 
         findViewById(R.id.btnBook).setOnClickListener(v -> {
             Intent intent = new Intent(this, BookAppointmentActivity.class);
@@ -178,7 +179,7 @@ public class SalonProfileActivity extends AppCompatActivity {
                         .show(getSupportFragmentManager(), "report_problem"));
     }
 
-    private void setupReviewPreview(String salonId) {
+    private void setupReviewPreview(String salonId, double storedAvgRating) {
         RecyclerView rvReviewPreview = findViewById(R.id.rvReviewPreview);
         rvReviewPreview.setLayoutManager(new LinearLayoutManager(this));
         reviewPreviewAdapter = new ReviewAdapter(true);
@@ -187,7 +188,7 @@ public class SalonProfileActivity extends AppCompatActivity {
         findViewById(R.id.llRating).setOnClickListener(v -> openReviews());
         findViewById(R.id.tvSeeAllReviews).setOnClickListener(v -> openReviews());
 
-        loadReviewPreview(salonId);
+        loadReviewPreview(salonId, storedAvgRating);
     }
 
     private void openReviews() {
@@ -201,11 +202,13 @@ public class SalonProfileActivity extends AppCompatActivity {
      * Shows the three newest reviews under the services. A short row of stars
      * and the count is enough for the profile; the full list opens separately.
      */
-    private void loadReviewPreview(String salonId) {
+    private void loadReviewPreview(String salonId, double storedAvgRating) {
         ProgressBar previewProgress = findViewById(R.id.previewReviewsProgress);
         TextView tvPreviewEmpty = findViewById(R.id.tvPreviewEmpty);
         RecyclerView rvPreview = findViewById(R.id.rvReviewPreview);
         TextView tvSeeAll = findViewById(R.id.tvSeeAllReviews);
+        TextView tvSalonRating = findViewById(R.id.tvSalonRating);
+        ImageView ivRatingStar = findViewById(R.id.ivRatingStar);
 
         previewProgress.setVisibility(View.VISIBLE);
         tvPreviewEmpty.setVisibility(View.GONE);
@@ -214,14 +217,31 @@ public class SalonProfileActivity extends AppCompatActivity {
 
         ReviewLoader.load(salonId, new ReviewLoader.Callback() {
             @Override
-            public void onLoaded(List<ReviewLoader.Item> reviews) {
+            public void onLoaded(List<ReviewLoader.Item> reviews, boolean fromCache) {
                 if (isFinishing() || isDestroyed()) return;
                 previewProgress.setVisibility(View.GONE);
 
                 if (reviews == null || reviews.isEmpty()) {
+                    tvSalonRating.setText(R.string.no_reviews_yet);
+                    ivRatingStar.setVisibility(View.GONE);
                     tvPreviewEmpty.setText(R.string.no_reviews_yet);
                     tvPreviewEmpty.setVisibility(View.VISIBLE);
+
+                    // The reviews are the truth, so remove a rating left behind
+                    // by reviews that were deleted outside this screen.
+                    if (!fromCache && Math.abs(storedAvgRating) > 0.01) {
+                        new ReviewManager().updateSalonRating(salonId, 0.0);
+                    }
                     return;
+                }
+
+                double average = ReviewLoader.averageRating(reviews);
+                tvSalonRating.setText(String.format(Locale.getDefault(), "%.1f", average));
+                ivRatingStar.setVisibility(View.VISIBLE);
+
+                // Repair the home-list copy when it does not match the reviews.
+                if (!fromCache && Math.abs(average - storedAvgRating) > 0.01) {
+                    new ReviewManager().updateSalonRating(salonId, average);
                 }
 
                 int previewSize = Math.min(3, reviews.size());
