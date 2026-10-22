@@ -4,13 +4,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/navy">
+    android:background="@color/grey_light">
 
-    <!-- Scrollable photo grid — everything except the bottom bar lives in here -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollContent"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:overScrollMode="never"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/bottomBar"
         app:layout_constraintStart_toStartOf="parent"
@@ -21,62 +21,626 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- App name header -->
+            <!-- ============================== HERO ============================== -->
             <LinearLayout
+                android:id="@+id/heroSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/welcome_bg_hero"
                 android:orientation="vertical"
-                android:gravity="center"
                 android:paddingTop="28dp"
-                android:paddingBottom="16dp">
+                android:paddingBottom="28dp">
+
+                <LinearLayout
+                    android:id="@+id/heroBrandRow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:contentDescription="HairGo logo"
+                        android:src="@drawable/hairgo_logo" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:fontFamily="sans-serif-condensed"
+                        android:letterSpacing="0.04"
+                        android:text="HairGo"
+                        android:textColor="@color/white"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvHeadline1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:layout_marginTop="28dp"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Book your look."
+                    android:textColor="@color/white"
+                    android:textSize="36sp" />
+
+                <TextView
+                    android:id="@+id/tvHeadline2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Skip the wait."
+                    android:textColor="@color/teal_light"
+                    android:textSize="36sp" />
+
+                <TextView
+                    android:id="@+id/tvHeroSub"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:layout_marginTop="12dp"
+                    android:lineSpacingExtra="3dp"
+                    android:text="Find salons and barbers near you, see the times that are actually free, and book in seconds."
+                    android:textColor="@color/grey_light"
+                    android:textSize="16sp" />
+
+                <!-- Auto-scrolling photo strip -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvFeatured"
+                    android:layout_width="match_parent"
+                    android:layout_height="188dp"
+                    android:layout_marginTop="22dp"
+                    android:clipToPadding="false"
+                    android:overScrollMode="never"
+                    android:paddingStart="18dp" />
+
+                <LinearLayout
+                    android:id="@+id/heroChips"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginTop="18dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/welcome_bg_chip"
+                        android:paddingStart="12dp"
+                        android:paddingTop="6dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="6dp"
+                        android:text="✓ Free to join"
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/welcome_bg_chip"
+                        android:paddingStart="12dp"
+                        android:paddingTop="6dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="6dp"
+                        android:text="✓ Live availability"
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/welcome_bg_chip"
+                        android:paddingStart="12dp"
+                        android:paddingTop="6dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="6dp"
+                        android:text="✓ Booking updates"
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ============================ HOW IT WORKS ============================ -->
+            <LinearLayout
+                android:id="@+id/secHow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="16dp"
+                android:background="@drawable/welcome_bg_card"
+                android:orientation="vertical"
+                android:padding="20dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="HairGo"
-                    android:textColor="@color/white"
-                    android:textSize="32sp"
-                    android:textStyle="bold"
-                    android:fontFamily="sans-serif-condensed"
-                    android:letterSpacing="0.02" />
+                    android:text="How it works"
+                    android:textColor="@color/navy"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <!-- Step 1 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/welcome_bg_step"
+                        android:gravity="center"
+                        android:text="1"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Find your salon"
+                            android:textColor="@color/navy"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Browse salons and see the services each one offers."
+                            android:textColor="@color/grey_dark"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Step 2 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/welcome_bg_step"
+                        android:gravity="center"
+                        android:text="2"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Pick a time"
+                            android:textColor="@color/navy"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Choose your services, a date and a free time slot."
+                            android:textColor="@color/grey_dark"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Step 3 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/welcome_bg_step"
+                        android:gravity="center"
+                        android:text="3"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Get confirmed"
+                            android:textColor="@color/navy"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="The salon accepts your request and you get notified straight away."
+                            android:textColor="@color/grey_dark"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </LinearLayout>
             </LinearLayout>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvHairstyles"
+            <!-- ============================== WHY HAIRGO ============================== -->
+            <LinearLayout
+                android:id="@+id/secWhy"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:padding="4dp" />
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="16dp"
+                android:orientation="vertical">
 
-            <!-- Bottom padding so the last row of photos isn't hidden behind the button bar -->
-            <View
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="Why you'll love HairGo"
+                    android:textColor="@color/navy"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/welcome_bg_feature"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🕒"
+                            android:textSize="28sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="Live availability"
+                            android:textColor="@color/navy"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Only free time slots are shown, so no double-booking."
+                            android:textColor="@color/grey_dark"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/welcome_bg_feature"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="✂️"
+                            android:textSize="28sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="Several services"
+                            android:textColor="@color/navy"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="A haircut and a beard trim in one booking."
+                            android:textColor="@color/grey_dark"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/welcome_bg_feature"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🔔"
+                            android:textSize="28sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="Reminders"
+                            android:textColor="@color/navy"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Updates when you're confirmed, plus reminders before you go."
+                            android:textColor="@color/grey_dark"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/welcome_bg_feature"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⭐"
+                            android:textSize="28sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="Ratings"
+                            android:textColor="@color/navy"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Rate your visits and see how each salon scores."
+                            android:textColor="@color/grey_dark"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ============================== GET INSPIRED ============================== -->
+            <LinearLayout
+                android:id="@+id/secInspire"
                 android:layout_width="match_parent"
-                android:layout_height="16dp" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:text="Get inspired"
+                    android:textColor="@color/navy"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="2dp"
+                    android:text="Tap any photo to see it full screen."
+                    android:textColor="@color/grey_dark"
+                    android:textSize="14sp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvHairstyles"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:nestedScrollingEnabled="false"
+                    android:padding="12dp" />
+            </LinearLayout>
+
+            <!-- ============================== FOR OWNERS ============================== -->
+            <LinearLayout
+                android:id="@+id/secOwner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="16dp"
+                android:background="@drawable/welcome_bg_card_navy"
+                android:orientation="vertical"
+                android:padding="22dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Own a salon or barbershop?"
+                    android:textColor="@color/white"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Put your business in front of new clients."
+                    android:textColor="@color/teal_light"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="✓  Booking requests sent straight to your phone"
+                    android:textColor="@color/white"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="✓  Confirm or decline in one tap"
+                    android:textColor="@color/white"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="✓  Manage more than one salon"
+                    android:textColor="@color/white"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btnListSalon"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="20dp"
+                    android:backgroundTint="@color/white"
+                    android:text="List your salon"
+                    android:textColor="@color/navy"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- ============================== FINAL CALL TO ACTION ============================== -->
+            <LinearLayout
+                android:id="@+id/secFinal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="28dp"
+                android:background="@drawable/welcome_bg_card"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="22dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Ready for your next look?"
+                    android:textColor="@color/navy"
+                    android:textSize="22sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:text="Join HairGo and book your first appointment today."
+                    android:textColor="@color/grey_dark"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btnFinalSignUp"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="18dp"
+                    android:backgroundTint="@color/teal"
+                    android:text="Create your free account"
+                    android:textColor="@color/white"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvFinalLogin"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="6dp"
+                    android:text="Already have an account? Log in"
+                    android:textColor="@color/teal"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Persistent bottom bar — stays fixed, does NOT scroll with the photos -->
+    <!-- Fixed bottom bar: always one tap from signing up -->
     <LinearLayout
         android:id="@+id/bottomBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:background="@color/navy_dark"
         android:elevation="8dp"
+        android:orientation="horizontal"
         android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <Button
             android:id="@+id/btnLogin"
+            style="?attr/borderlessButtonStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginEnd="8dp"
-            style="?attr/borderlessButtonStyle"
-            android:text="Log In"
+            android:layout_weight="1"
+            android:text="Log in"
             android:textColor="@color/white" />
 
         <Button
@@ -84,9 +648,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Sign Up"
+            android:backgroundTint="@color/teal"
+            android:text="Get started"
             android:textColor="@color/white"
-            android:backgroundTint="@color/teal" />
+            android:textStyle="bold" />
 
     </LinearLayout>
 
