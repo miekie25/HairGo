@@ -1,5 +1,6 @@
 package com.hairgo.app.adapters;
 
+import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import com.hairgo.app.utils.BookingSections;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class BookingSectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -28,6 +30,7 @@ public class BookingSectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private final List<BookingSections.BookingSection> sections;
     private final List<AdapterItem> items = new ArrayList<>();
     private final int[] sectionCounts = new int[2];
+    private Map<String, Bitmap> photos;
 
     private static class AdapterItem {
         final int viewType;
@@ -46,6 +49,11 @@ public class BookingSectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         this.sections = sections;
         this.listener = listener;
         buildItems();
+    }
+
+    public void setPhotos(Map<String, Bitmap> photos) {
+        this.photos = photos;
+        notifyDataSetChanged();
     }
 
     private void buildItems() {
@@ -101,7 +109,8 @@ public class BookingSectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                     item.booking,
                     booking -> {
                         if (listener != null) listener.onBookingClick(booking);
-                    });
+                    },
+                    photos);
         }
     }
 

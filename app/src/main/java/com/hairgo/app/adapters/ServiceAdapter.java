@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -32,23 +33,28 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
 
     @Override
     public void onBindViewHolder(@NonNull ServiceViewHolder holder, int position) {
+        ServiceDetail service = services.get(position);
         Context context = holder.itemView.getContext();
-        holder.tvServiceName.setText(serviceLine(services.get(position), context));
+
+        holder.tvServiceName.setText(service.getName());
+
+        // Price chip
+        String priceText;
+        if (service.hasPrice()) {
+            priceText = context.getString(R.string.service_price_rand, formatPrice(service.getPrice()));
+        } else {
+            priceText = context.getString(R.string.service_price_not_set);
+        }
+        holder.tvServicePrice.setText(priceText);
+
+        // Duration chip
+        String durationText = context.getString(R.string.service_duration_minutes, service.getDurationMinutes());
+        holder.tvServiceDuration.setText(durationText);
     }
 
     @Override
     public int getItemCount() {
         return services.size();
-    }
-
-    // Builds one line, for example "Haircut - R150 - 45min".
-    private String serviceLine(ServiceDetail service, Context context) {
-        String price = service.hasPrice()
-                ? context.getString(R.string.service_price_rand, formatPrice(service.getPrice()))
-                : context.getString(R.string.service_price_not_set);
-        String duration = context.getString(R.string.service_duration_minutes,
-                service.getDurationMinutes());
-        return context.getString(R.string.service_chip_text, service.getName(), price, duration);
     }
 
     // Whole numbers show no cents. Cents always show two digits, like 150.50.
@@ -64,10 +70,16 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
 
     static class ServiceViewHolder extends RecyclerView.ViewHolder {
         TextView tvServiceName;
+        TextView tvServicePrice;
+        TextView tvServiceDuration;
+        ImageView ivServiceIcon;
 
         ServiceViewHolder(@NonNull View itemView) {
             super(itemView);
             tvServiceName = itemView.findViewById(R.id.tvServiceName);
+            tvServicePrice = itemView.findViewById(R.id.tvServicePrice);
+            tvServiceDuration = itemView.findViewById(R.id.tvServiceDuration);
+            ivServiceIcon = itemView.findViewById(R.id.ivServiceIcon);
         }
     }
 }

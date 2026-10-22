@@ -103,8 +103,9 @@
     <string name="section_past">Past</string>
     <string name="no_bookings_found">No bookings yet</string>
     <string name="title_booking_details">Booking Details</string>
-    <string name="label_service">Service</string>
+<string name="label_service">Service</string>
     <string name="label_date_time">Date &amp; Time</string>
+    <string name="total">Total</string>
     <string name="label_location">Location</string>
     <string name="maps_open_location">Open in Google Maps</string>
     <string name="maps_app_not_found">No app available to open this location</string>
@@ -127,6 +128,9 @@
     <string name="payment_cash_option_unknown">Pay full amount in cash at the salon</string>
     <string name="payment_failed_no_booking">Payment failed. Nothing was charged.</string>
     <string name="payment_summary_label">Payment</string>
+    <string name="payment_badge_deposit">Deposit Paid</string>
+    <string name="payment_badge_full">Full Paid</string>
+    <string name="payment_badge_cash">Cash at Salon</string>
     <string name="payment_deposit_summary">Deposit paid: R%1$s\nOutstanding: R%2$s</string>
     <string name="payment_full_summary">Paid in full by card: R%1$s</string>
     <string name="payment_status_unknown">Payment status unknown</string>

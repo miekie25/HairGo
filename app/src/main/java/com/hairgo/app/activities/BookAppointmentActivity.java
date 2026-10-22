@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -18,10 +19,15 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.Timestamp;
 import com.hairgo.app.R;
+import com.hairgo.app.adapters.ServicePickerAdapter;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.Booking;
@@ -286,27 +292,46 @@ public class BookAppointmentActivity extends AppCompatActivity {
     private void showServicePicker() {
         if (availableServices.isEmpty()) return;
 
-        final boolean[] checked = new boolean[availableServices.size()];
-        String[] labels = new String[availableServices.size()];
-        for (int i = 0; i < availableServices.size(); i++) {
-            ServiceDetail detail = availableServices.get(i);
-            checked[i] = isSelected(detail.getName());
-            labels[i] = serviceLine(detail);
+        // Track checked state for each service
+        final List<Boolean> checkedStates = new ArrayList<>();
+        for (ServiceDetail detail : availableServices) {
+            checkedStates.add(isSelected(detail.getName()));
         }
 
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.select_services_title)
-                .setMultiChoiceItems(labels, checked,
-                        (dialog, which, isChecked) -> checked[which] = isChecked)
-                .setPositiveButton(R.string.ok, (dialog, which) -> {
-                    selectedServices.clear();
-                    for (int i = 0; i < availableServices.size(); i++) {
-                        if (checked[i]) selectedServices.add(availableServices.get(i));
-                    }
-                    updateServiceSummary();
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .show();
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_select_services, null);
+        RecyclerView rvServices = dialogView.findViewById(R.id.rvServices);
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+        MaterialButton btnConfirm = dialogView.findViewById(R.id.btnConfirm);
+
+        rvServices.setLayoutManager(new LinearLayoutManager(this));
+
+        ServicePickerAdapter adapter = new ServicePickerAdapter(
+                availableServices,
+                checkedStates,
+                (position, isChecked) -> {
+                    // State is already updated in adapter via checkedStates list
+                }
+        );
+        rvServices.setAdapter(adapter);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnConfirm.setOnClickListener(v -> {
+            selectedServices.clear();
+            for (int i = 0; i < availableServices.size(); i++) {
+                if (checkedStates.get(i)) {
+                    selectedServices.add(availableServices.get(i));
+                }
+            }
+            updateServiceSummary();
+            dialog.dismiss();
+        });
+
+        dialog.show();
     }
 
     private void updateServiceSummary() {

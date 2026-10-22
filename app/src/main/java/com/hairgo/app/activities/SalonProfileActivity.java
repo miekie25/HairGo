@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -13,6 +14,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.Timestamp;
 import com.hairgo.app.R;
 import com.hairgo.app.adapters.ReviewAdapter;
@@ -49,7 +52,6 @@ public class SalonProfileActivity extends AppCompatActivity {
     /** How far ahead to look for a free day before giving up on showing a date. */
     private static final int AVAILABILITY_LOOKAHEAD_DAYS = 30;
 
-    private TextView tvNextAvailable;
     private ProgressBar progress;
     private View contentGroup;
     private String salonId;
@@ -185,7 +187,7 @@ public class SalonProfileActivity extends AppCompatActivity {
         reviewPreviewAdapter = new ReviewAdapter(true);
         rvReviewPreview.setAdapter(reviewPreviewAdapter);
 
-        findViewById(R.id.llRating).setOnClickListener(v -> openReviews());
+        findViewById(R.id.tvSalonRating).setOnClickListener(v -> openReviews());
         findViewById(R.id.tvSeeAllReviews).setOnClickListener(v -> openReviews());
 
         loadReviewPreview(salonId, storedAvgRating);
@@ -208,7 +210,6 @@ public class SalonProfileActivity extends AppCompatActivity {
         RecyclerView rvPreview = findViewById(R.id.rvReviewPreview);
         TextView tvSeeAll = findViewById(R.id.tvSeeAllReviews);
         TextView tvSalonRating = findViewById(R.id.tvSalonRating);
-        ImageView ivRatingStar = findViewById(R.id.ivRatingStar);
 
         previewProgress.setVisibility(View.VISIBLE);
         tvPreviewEmpty.setVisibility(View.GONE);
@@ -223,7 +224,6 @@ public class SalonProfileActivity extends AppCompatActivity {
 
                 if (reviews == null || reviews.isEmpty()) {
                     tvSalonRating.setText(R.string.no_reviews_yet);
-                    ivRatingStar.setVisibility(View.GONE);
                     tvPreviewEmpty.setText(R.string.no_reviews_yet);
                     tvPreviewEmpty.setVisibility(View.VISIBLE);
 
@@ -237,7 +237,6 @@ public class SalonProfileActivity extends AppCompatActivity {
 
                 double average = ReviewLoader.averageRating(reviews);
                 tvSalonRating.setText(String.format(Locale.getDefault(), "%.1f", average));
-                ivRatingStar.setVisibility(View.VISIBLE);
 
                 // Repair the home-list copy when it does not match the reviews.
                 if (!fromCache && Math.abs(average - storedAvgRating) > 0.01) {
@@ -269,10 +268,11 @@ public class SalonProfileActivity extends AppCompatActivity {
     private void loadSalonPhoto() {
         SalonPhotos.fetchPhoto(salonId, bitmap -> {
             if (bitmap == null || isFinishing() || isDestroyed()) return;
-            ImageView icon = findViewById(R.id.ivSalonIcon);
-            icon.setPadding(0, 0, 0, 0);
-            icon.setImageTintList(null);
-            icon.setImageBitmap(bitmap);
+            ShapeableImageView pfp = findViewById(R.id.ivSalonPfp);
+            pfp.setImageBitmap(bitmap);
+            pfp.setBackground(null);
+            pfp.setImageTintList(null);
+            pfp.setScaleType(ImageView.ScaleType.CENTER_CROP);
         });
     }
 
@@ -289,8 +289,9 @@ public class SalonProfileActivity extends AppCompatActivity {
      * composite index on salonID + isDeleted + dateTime has not been created.
      */
     private void loadNextAvailableDate(String salonId) {
-            tvNextAvailable = findViewById(R.id.tvNextAvailable);
-        tvNextAvailable.setVisibility(View.GONE);
+        MaterialCardView cardNextAvailable = findViewById(R.id.tvNextAvailable);
+        TextView tvNextAvailableText = (TextView) ((ViewGroup) cardNextAvailable.getChildAt(0)).getChildAt(1);
+        cardNextAvailable.setVisibility(View.GONE);
 
         Calendar startOfToday = Calendar.getInstance();
         startOfToday.set(Calendar.HOUR_OF_DAY, 0);
@@ -306,13 +307,13 @@ public class SalonProfileActivity extends AppCompatActivity {
                         DateTimeFormatter formatter =
                                 DateTimeFormatter.ofPattern("EEE d MMM, hh:mm a", Locale.getDefault());
                         if (next == null) {
-                            tvNextAvailable.setText(getString(
+                            tvNextAvailableText.setText(getString(
                                     R.string.salon_no_available_slots, AVAILABILITY_LOOKAHEAD_DAYS));
                         } else {
-                            tvNextAvailable.setText(getString(
+                            tvNextAvailableText.setText(getString(
                                     R.string.salon_next_available, next.format(formatter)));
                         }
-                        tvNextAvailable.setVisibility(View.VISIBLE);
+                        cardNextAvailable.setVisibility(View.VISIBLE);
                     }
 
                     @Override

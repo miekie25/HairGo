@@ -25,12 +25,15 @@ import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.models.Booking;
 import com.hairgo.app.utils.BookingSections;
 import com.hairgo.app.utils.BookingStatusNotifier;
+import com.hairgo.app.utils.SalonPhotos;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class BookingsFragment extends Fragment {
 
@@ -236,6 +239,31 @@ public class BookingsFragment extends Fragment {
 
         // Update in place so the RecyclerView keeps its scroll position.
         adapter.updateSections(sections);
+
+        // Fetch salon photos for the bookings
+        fetchSalonPhotos(sections);
+    }
+
+    private void fetchSalonPhotos(List<BookingSections.BookingSection> sections) {
+        if (!isAdded()) return;
+
+        // Collect unique salon IDs from all bookings
+        Set<String> salonIds = new HashSet<>();
+        for (BookingSections.BookingSection section : sections) {
+            if (section == null) continue;
+            for (Booking booking : section.getBookings()) {
+                if (booking != null && booking.getSalonId() != null && !booking.getSalonId().isEmpty()) {
+                    salonIds.add(booking.getSalonId());
+                }
+            }
+        }
+
+        if (salonIds.isEmpty()) return;
+
+        SalonPhotos.fetchPhotos(new ArrayList<>(salonIds), photos -> {
+            if (!isAdded()) return;
+            adapter.setPhotos(photos);
+        });
     }
 
     private String asString(Object value) {

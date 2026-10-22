@@ -11,7 +11,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="24dp">
+        android:padding="16dp">
 
         <include
             android:id="@+id/header"
@@ -35,27 +35,29 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="invisible"
-            app:constraint_referenced_ids="tvStatusBadge,tvExpiredNote,tvSalonName,divider1,tvServiceLabel,tvServiceName,tvBookingTotal,tvBookingNote,tvPaymentLabel,tvPayment,tvDateTimeLabel,tvDateTime,tvNotesLabel,tvNotes,divider2,btnMessageSalon,btnCancelBooking,btnEditBooking,btnLeaveReview,btnReportSalon"/>
+            app:constraint_referenced_ids="tvStatusBadge,tvExpiredNote,cardSalonHeader,cardBookingDetails,cardNotes,btnMessageSalon,btnCancelBooking,btnEditBooking,btnLeaveReview,btnReportSalon"/>
 
+        <!-- Status Badge -->
         <TextView
             android:id="@+id/tvStatusBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:background="@drawable/bg_badge_pill"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_status_badge"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
             android:textColor="@color/white"
             android:textSize="12sp"
             android:textStyle="bold"
             app:layout_constraintTop_toBottomOf="@id/header"
             app:layout_constraintStart_toStartOf="parent"/>
 
+        <!-- Expired Note -->
         <TextView
             android:id="@+id/tvExpiredNote"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="8dp"
             android:visibility="gone"
             android:text="@string/booking_expired_explanation"
             android:textColor="@color/grey_medium"
@@ -64,245 +66,372 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <TextView
-            android:id="@+id/tvSalonName"
+        <!-- Salon Header Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardSalonHeader"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:textColor="@color/heading"
-            android:textSize="22sp"
-            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/grey_border"
+            app:cardBackgroundColor="@color/surface"
             app:layout_constraintTop_toBottomOf="@id/tvExpiredNote"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:id="@+id/tvSalonLocation"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:visibility="gone"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackground"
-            android:paddingHorizontal="4dp"
-            android:paddingVertical="4dp"
-            android:drawablePadding="6dp"
-            android:drawableStart="@drawable/ic_location"
-            android:drawableEnd="@drawable/ic_chevron_right"
-            android:drawableTint="@color/teal_primary"
-            android:contentDescription="@string/maps_open_location"
-            android:textColor="@color/teal_primary"
-            android:textSize="15sp"
-            app:layout_constraintTop_toBottomOf="@id/tvSalonName"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:text="Sandton, Johannesburg"/>
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp">
 
-        <View
-            android:id="@+id/divider1"
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_marginTop="20dp"
-            android:background="@color/grey_border"
-            app:layout_constraintTop_toBottomOf="@id/tvSalonLocation"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/ivSalonPhoto"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="@string/salon_photo_desc"
+                    android:background="@drawable/bg_circle_teal_light"
+                    android:src="@drawable/ic_salon_placeholder_teal"
+                    android:tint="@color/teal"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.HairGo_Circle_Small"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
 
-        <TextView
-            android:id="@+id/tvServiceLabel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/label_service"
-            android:textColor="@color/grey_medium"
-            android:textSize="13sp"
-            app:layout_constraintTop_toBottomOf="@id/divider1"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+                <TextView
+                    android:id="@+id/tvSalonName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="12dp"
+                    android:textColor="@color/heading"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toTopOf="@id/ivSalonPhoto"
+                    app:layout_constraintStart_toEndOf="@id/ivSalonPhoto"
+                    app:layout_constraintEnd_toEndOf="parent"/>
 
-        <TextView
-            android:id="@+id/tvServiceName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="@color/grey_dark"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@id/tvServiceLabel"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+                <TextView
+                    android:id="@+id/tvSalonLocation"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="12dp"
+                    android:visibility="gone"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:paddingHorizontal="4dp"
+                    android:paddingVertical="4dp"
+                    android:drawablePadding="6dp"
+                    android:drawableStart="@drawable/ic_location"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:drawableTint="@color/teal_primary"
+                    android:contentDescription="@string/maps_open_location"
+                    android:textColor="@color/teal_primary"
+                    android:textSize="14sp"
+                    app:layout_constraintTop_toBottomOf="@id/tvSalonName"
+                    app:layout_constraintStart_toEndOf="@id/ivSalonPhoto"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    tools:text="Sandton, Johannesburg"/>
 
-        <TextView
-            android:id="@+id/tvBookingTotal"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:visibility="gone"
-            android:textColor="@color/heading"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@id/tvServiceName"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        <TextView
-            android:id="@+id/tvBookingNote"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:visibility="gone"
-            android:text="@string/service_missing_price_note"
-            android:textColor="@color/grey_medium"
-            android:textSize="13sp"
-            app:layout_constraintTop_toBottomOf="@id/tvBookingTotal"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <TextView
-            android:id="@+id/tvPaymentLabel"
+        <!-- Combined Booking Details Card (Gradient) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardBookingDetails"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="@android:color/transparent"
+            app:layout_constraintTop_toBottomOf="@id/cardSalonHeader"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_card_gradient"
+                android:padding="16dp">
+
+                <!-- Service Section -->
+                <TextView
+                    android:id="@+id/tvServiceLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_service"
+                    android:textColor="@color/white"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tvServiceName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toBottomOf="@id/tvServiceLabel"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <!-- Divider 1 -->
+                <View
+                    android:id="@+id/dividerBooking1"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:background="#33FFFFFF"
+                    app:layout_constraintTop_toBottomOf="@id/tvServiceName"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <!-- Total Section -->
+                <TextView
+                    android:id="@+id/tvTotalLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/total"
+                    android:textColor="@color/white"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toBottomOf="@id/dividerBooking1"
+                    app:layout_constraintStart_toStartOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tvBookingTotal"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:visibility="gone"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toBottomOf="@id/tvTotalLabel"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tvBookingNote"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:visibility="gone"
+                    android:text="@string/service_missing_price_note"
+                    android:textColor="#B3FFFFFF"
+                    android:textSize="13sp"
+                    app:layout_constraintTop_toBottomOf="@id/tvBookingTotal"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <!-- Divider 2 -->
+                <View
+                    android:id="@+id/dividerBooking2"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:background="#33FFFFFF"
+                    app:layout_constraintTop_toBottomOf="@id/tvBookingNote"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <!-- Payment Section -->
+                <TextView
+                    android:id="@+id/tvPaymentLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/payment_summary_label"
+                    android:textColor="@color/white"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toBottomOf="@id/dividerBooking2"
+                    app:layout_constraintStart_toStartOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tvPaymentBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:visibility="gone"
+                    android:background="@drawable/bg_payment_badge"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:textColor="@color/teal_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toTopOf="@id/tvPaymentLabel"
+                    app:layout_constraintBottom_toBottomOf="@id/tvPaymentLabel"
+                    app:layout_constraintStart_toEndOf="@id/tvPaymentLabel"/>
+
+                <TextView
+                    android:id="@+id/tvPayment"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toBottomOf="@id/tvPaymentLabel"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <!-- Divider 3 -->
+                <View
+                    android:id="@+id/dividerBooking3"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:background="#33FFFFFF"
+                    app:layout_constraintTop_toBottomOf="@id/tvPayment"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <!-- Date/Time Section -->
+                <TextView
+                    android:id="@+id/tvDateTimeLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/label_date_time"
+                    android:textColor="@color/white"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toBottomOf="@id/dividerBooking3"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tvDateTime"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toBottomOf="@id/tvDateTimeLabel"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Notes Card (Separate, Surface) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardNotes"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:visibility="gone"
-            android:text="@string/payment_summary_label"
-            android:textColor="@color/grey_medium"
-            android:textSize="13sp"
-            app:layout_constraintTop_toBottomOf="@id/tvBookingNote"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/grey_border"
+            app:cardBackgroundColor="@color/surface"
+            app:layout_constraintTop_toBottomOf="@id/cardBookingDetails"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:id="@+id/tvPayment"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:visibility="gone"
-            android:textColor="@color/grey_dark"
-            android:textSize="16sp"
-            app:layout_constraintTop_toBottomOf="@id/tvPaymentLabel"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp">
 
-        <TextView
-            android:id="@+id/tvDateTimeLabel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/label_date_time"
-            android:textColor="@color/grey_medium"
-            android:textSize="13sp"
-            app:layout_constraintTop_toBottomOf="@id/tvPayment"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+                <TextView
+                    android:id="@+id/tvNotesLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_notes"
+                    android:textColor="@color/heading"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
 
-        <TextView
-            android:id="@+id/tvDateTime"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="@color/grey_dark"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@id/tvDateTimeLabel"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+                <TextView
+                    android:id="@+id/tvNotes"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/grey_dark"
+                    android:textSize="15sp"
+                    app:layout_constraintTop_toBottomOf="@id/tvNotesLabel"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
 
-        <TextView
-            android:id="@+id/tvNotesLabel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:visibility="gone"
-            android:text="@string/label_notes"
-            android:textColor="@color/grey_medium"
-            android:textSize="13sp"
-            app:layout_constraintTop_toBottomOf="@id/tvDateTime"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        <TextView
-            android:id="@+id/tvNotes"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:visibility="gone"
-            android:textColor="@color/grey_dark"
-            android:textSize="16sp"
-            app:layout_constraintTop_toBottomOf="@id/tvNotesLabel"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <View
-            android:id="@+id/divider2"
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_marginTop="20dp"
-            android:background="@color/grey_border"
-            app:layout_constraintTop_toBottomOf="@id/tvNotes"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <!-- Client-side action: open the chat with this booking's salon. -->
+        <!-- Buttons -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnMessageSalon"
+            style="@style/ButtonActionPrimary"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:layout_marginTop="24dp"
             android:text="@string/btn_message_salon"
-            style="@style/ButtonPrimary"
-            app:layout_constraintTop_toBottomOf="@id/divider2"
+            app:layout_constraintTop_toBottomOf="@id/cardNotes"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnCancelBooking"
+            style="@style/ButtonActionDanger"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_height="56dp"
             android:text="@string/btn_cancel_booking"
-            style="@style/ButtonDangerOutline"
             app:layout_constraintTop_toBottomOf="@id/btnMessageSalon"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- Shown only for a pending booking ("Edit Booking") or a confirmed one
-             ("Reschedule"), where saving returns it to the salon for re-approval. -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnEditBooking"
+            style="@style/ButtonActionOutline"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_height="56dp"
             android:visibility="gone"
             android:text="@string/btn_edit_booking"
-            style="@style/ButtonSecondaryOutline"
             app:layout_constraintTop_toBottomOf="@id/btnCancelBooking"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- Only shown once a booking is completed, since only completed
-             bookings may be reviewed. -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnLeaveReview"
+            style="@style/ButtonActionPrimary"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_height="56dp"
             android:visibility="gone"
             android:text="@string/leave_a_review"
-            style="@style/ButtonPrimary"
             app:layout_constraintTop_toBottomOf="@id/btnEditBooking"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- Client-side action: report this salon to the platform team, with the
-             booking noted so the admin can trace it back. Visible for any status. -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnReportSalon"
+            style="@style/ButtonActionOutline"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_height="56dp"
+            android:layout_marginBottom="24dp"
             android:text="@string/report_salon_action"
-            style="@style/ButtonSecondaryOutline"
             app:layout_constraintTop_toBottomOf="@id/btnLeaveReview"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>

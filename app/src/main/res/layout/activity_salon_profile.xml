@@ -11,6 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <!-- Header with elevation -->
         <include
             android:id="@+id/header"
             layout="@layout/component_header"
@@ -18,138 +19,181 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
+        <!-- Gradient background (160dp tall, full width) -->
+        <View
+            android:id="@+id/gradientBackground"
+            android:layout_width="0dp"
+            android:layout_height="160dp"
+            android:background="@drawable/welcome_bg_hero"
+            app:layout_constraintTop_toBottomOf="@id/header"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Circular salon PFP (140dp) centered on gradient bottom edge -->
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivSalonPfp"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:layout_marginTop="90dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="@string/salon_photo_desc"
+            android:background="@drawable/bg_circle_teal_light"
+            android:src="@drawable/ic_salon_placeholder"
+            android:tint="@color/teal"
+            android:padding="0dp"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.HairGo_Circle"
+            app:strokeWidth="4dp"
+            app:strokeColor="@color/white"
+            app:layout_constraintTop_toBottomOf="@id/header"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Progress bar (centered over PFP) -->
         <ProgressBar
             android:id="@+id/progress"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:indeterminateTint="@color/teal"
-            app:layout_constraintTop_toBottomOf="@id/header"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="@id/ivSalonPfp"
+            app:layout_constraintBottom_toBottomOf="@id/ivSalonPfp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
+        <!-- Content group (visible after load) -->
         <androidx.constraintlayout.widget.Group
             android:id="@+id/contentGroup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="invisible"
-            app:constraint_referenced_ids="ivSalonIcon,tvSalonName,llLocation,llRating,divider,tvServicesLabel,rvServices,llReviewsSection,btnBook,btnReportSalon"/>
+            app:constraint_referenced_ids="cardSalonName,tvNextAvailable,divider,tvServicesLabel,rvServices,llReviewsSection,btnBook,btnReportSalon"/>
 
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/ivSalonIcon"
-            android:layout_width="88dp"
-            android:layout_height="88dp"
-            android:layout_marginTop="24dp"
-            android:padding="22dp"
-            android:background="@drawable/bg_circle_teal_light"
-            android:src="@drawable/ic_salon_placeholder"
-            android:contentDescription="@string/salon_photo_desc"
-            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.HairGo_Circle"
-            app:tint="@color/teal"
-            app:layout_constraintTop_toBottomOf="@id/header"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <TextView
-            android:id="@+id/tvSalonName"
+        <!-- Salon name card (full width, 16dp margins, below PFP) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardSalonName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginHorizontal="24dp"
-            android:gravity="center"
-            android:textColor="@color/heading"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@id/ivSalonIcon"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <LinearLayout
-            android:id="@+id/llLocation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            app:layout_constraintTop_toBottomOf="@id/tvSalonName"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="0dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/surface"
+            app:layout_constraintTop_toBottomOf="@id/ivSalonPfp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_location"
-                app:tint="@color/grey_medium"/>
-
-            <TextView
-                android:id="@+id/tvSalonLocation"
-                android:layout_width="wrap_content"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:textColor="@color/grey_medium"
-                android:textSize="14sp"/>
+                android:padding="16dp"
+                android:background="@drawable/bg_card_gradient">
 
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/tvSalonName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textColor="@color/white"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
 
-        <LinearLayout
-            android:id="@+id/llRating"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackground"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="4dp"
-            android:contentDescription="@string/see_all_reviews"
-            app:layout_constraintTop_toBottomOf="@id/llLocation"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+                <LinearLayout
+                    android:id="@+id/llLocation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    app:layout_constraintTop_toBottomOf="@id/tvSalonName"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
 
-            <ImageView
-                android:id="@+id/ivRatingStar"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_star"
-                app:tint="@color/warning"/>
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_location"
+                        app:tint="@color/white"/>
 
-            <TextView
-                android:id="@+id/tvSalonRating"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:textColor="@color/grey_dark"
-                android:textSize="14sp"
-                android:textStyle="bold"/>
+                    <TextView
+                        android:id="@+id/tvSalonLocation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:textColor="@color/white"
+                        android:textSize="13sp"/>
 
-            <ImageView
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:layout_marginStart="2dp"
-                android:src="@drawable/ic_chevron_right"
-                app:tint="@color/grey_medium"
-                android:importantForAccessibility="no"/>
+                </LinearLayout>
 
-        </LinearLayout>
+                <!-- Rating badge (clickable, opens reviews) -->
+                <TextView
+                    android:id="@+id/tvSalonRating"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="3dp"
+                    android:textColor="@color/teal_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_rating_badge"
+                    android:gravity="center"
+                    android:drawableStart="@drawable/ic_star"
+                    android:drawablePadding="4dp"
+                    android:drawableTint="@color/teal_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="@string/see_all_reviews"
+                    app:layout_constraintTop_toBottomOf="@id/llLocation"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
 
-        <TextView
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Next available date card -->
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/tvNextAvailable"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:layout_marginHorizontal="24dp"
-            android:background="@drawable/bg_circle_teal_light"
-            android:gravity="center"
-            android:padding="12dp"
-            android:textColor="@color/teal"
-            android:textSize="14sp"
+            android:layout_marginHorizontal="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="1dp"
+            app:cardBackgroundColor="@color/teal_light"
             android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/llRating"
+            app:layout_constraintTop_toBottomOf="@id/cardSalonName"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="12dp">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_calendar"
+                    app:tint="@color/teal"
+                    android:importantForAccessibility="no"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textColor="@color/teal_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold"/>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Divider -->
         <View
             android:id="@+id/divider"
             android:layout_width="0dp"
@@ -161,11 +205,12 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
+        <!-- Services section header -->
         <TextView
             android:id="@+id/tvServicesLabel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:layout_marginHorizontal="24dp"
             android:text="@string/section_services"
             android:textColor="@color/heading"
@@ -175,17 +220,19 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
+        <!-- Services RecyclerView -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvServices"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="10dp"
             android:layout_marginHorizontal="24dp"
             android:nestedScrollingEnabled="false"
             app:layout_constraintTop_toBottomOf="@id/tvServicesLabel"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
+        <!-- Reviews section -->
         <LinearLayout
             android:id="@+id/llReviewsSection"
             android:layout_width="0dp"
@@ -195,6 +242,7 @@
             android:orientation="vertical"
             app:layout_constraintTop_toBottomOf="@id/rvServices"
             app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginBottom="16dp"
             app:layout_constraintEnd_toEndOf="parent">
 
             <TextView
@@ -234,7 +282,7 @@
                 android:id="@+id/tvSeeAllReviews"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="8dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?attr/selectableItemBackground"
@@ -247,10 +295,11 @@
 
         </LinearLayout>
 
+        <!-- Book Now button -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnBook"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:layout_marginTop="24dp"
             android:layout_marginHorizontal="24dp"
             android:layout_marginBottom="0dp"
@@ -261,11 +310,11 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- Client-side action: report this salon to the platform team. -->
+        <!-- Report Salon button -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnReportSalon"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_marginTop="12dp"
             android:layout_marginHorizontal="24dp"
             android:layout_marginBottom="24dp"

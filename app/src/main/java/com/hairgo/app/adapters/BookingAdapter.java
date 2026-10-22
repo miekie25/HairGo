@@ -1,5 +1,6 @@
 package com.hairgo.app.adapters;
 
+import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingViewHolder> {
 
@@ -32,10 +34,16 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingV
 
     private final List<Booking> bookingList;
     private final OnBookingClickListener listener;
+    private Map<String, Bitmap> photos;
 
     public BookingAdapter(List<Booking> bookingList, OnBookingClickListener listener) {
         this.bookingList = bookingList;
         this.listener = listener;
+    }
+
+    public void setPhotos(Map<String, Bitmap> photos) {
+        this.photos = photos;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -47,7 +55,7 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingV
 
     @Override
     public void onBindViewHolder(@NonNull BookingViewHolder holder, int position) {
-        bindBooking(holder, bookingList.get(position), listener);
+        bindBooking(holder, bookingList.get(position), listener, photos);
     }
 
     /**
@@ -56,12 +64,13 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingV
      */
     public static void bindBooking(@NonNull BookingViewHolder holder,
                                    @NonNull Booking booking,
-                                   OnBookingClickListener listener) {
+                                   OnBookingClickListener listener,
+                                   Map<String, Bitmap> photos) {
         holder.tvSalonName.setText(booking.getSalonName());
         holder.tvServiceName.setText(booking.getServiceLabel());
         holder.tvDateTime.setText(formatRelativeDate(booking.getDateTime()));
         bindTotal(holder, booking);
-        bindSalonPhoto(holder, booking);
+        bindSalonPhoto(holder, booking, photos);
 
         String status = BookingSections.effectiveStatus(booking);
         holder.tvStatusBadge.setText(status == null ? "" : status);
@@ -138,7 +147,14 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingV
         return String.format(Locale.US, "%.2f", price);
     }
 
-    private static void bindSalonPhoto(BookingAdapter.BookingViewHolder holder, Booking booking) {
+    private static void bindSalonPhoto(BookingAdapter.BookingViewHolder holder, Booking booking, Map<String, Bitmap> photos) {
+        if (photos != null) {
+            Bitmap photo = photos.get(booking.getSalonId());
+            if (photo != null) {
+                holder.ivSalonPhoto.setImageBitmap(photo);
+                return;
+            }
+        }
         int imageRes = booking.getSalonImageRes();
         holder.ivSalonPhoto.setImageResource(
                 imageRes != 0 ? imageRes : R.drawable.ic_salon_placeholder_teal);

@@ -16,6 +16,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.Timestamp;
 import com.hairgo.app.R;
 import com.hairgo.app.firebase.BookingManager;
@@ -28,6 +29,7 @@ import com.hairgo.app.models.ServiceDetail;
 import com.hairgo.app.utils.BookingSections;
 import com.hairgo.app.utils.MapsHelper;
 import com.hairgo.app.utils.ReminderScheduler;
+import com.hairgo.app.utils.SalonPhotos;
 import com.hairgo.app.utils.Snackbars;
 
 import java.text.SimpleDateFormat;
@@ -53,6 +55,9 @@ public class BookingDetailsActivity extends AppCompatActivity {
     private String currentStatus;
     private String bookingId;
     private String currentSalonId;
+    private ShapeableImageView ivSalonPhoto;
+    private TextView tvPaymentBadge;
+    private TextView tvTotalLabel;
 
     private final ActivityResultLauncher<Intent> editLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
@@ -187,6 +192,9 @@ public class BookingDetailsActivity extends AppCompatActivity {
         btnEditBooking = findViewById(R.id.btnEditBooking);
         btnLeaveReview = findViewById(R.id.btnLeaveReview);
         btnReportSalon = findViewById(R.id.btnReportSalon);
+        ivSalonPhoto = findViewById(R.id.ivSalonPhoto);
+        tvPaymentBadge = findViewById(R.id.tvPaymentBadge);
+        tvTotalLabel = findViewById(R.id.tvTotalLabel);
         currentSalonId = booking.getSalonId();
 
         btnLeaveReview.setOnClickListener(v -> showLeaveReview());
@@ -195,6 +203,18 @@ public class BookingDetailsActivity extends AppCompatActivity {
         btnMessageSalon.setOnClickListener(v -> openChat());
 
         tvSalonName.setText(booking.getSalonName());
+
+        // Load salon photo
+        if (currentSalonId != null && !currentSalonId.isEmpty()) {
+            SalonPhotos.fetchPhoto(currentSalonId, bitmap -> {
+                if (bitmap != null && !isFinishing() && !isDestroyed()) {
+                    ivSalonPhoto.setImageBitmap(bitmap);
+                    ivSalonPhoto.setBackground(null);
+                    ivSalonPhoto.setImageTintList(null);
+                }
+            });
+        }
+
         bindServices(booking, tvServiceName, tvBookingTotal, tvBookingNote);
         bindPayment(booking);
 
@@ -259,16 +279,19 @@ public class BookingDetailsActivity extends AppCompatActivity {
     private void bindNotes(String notes) {
         TextView tvNotesLabel = findViewById(R.id.tvNotesLabel);
         TextView tvNotes = findViewById(R.id.tvNotes);
+        com.google.android.material.card.MaterialCardView cardNotes = findViewById(R.id.cardNotes);
 
         if (notes == null || notes.trim().isEmpty()) {
             tvNotesLabel.setVisibility(View.GONE);
             tvNotes.setVisibility(View.GONE);
+            if (cardNotes != null) cardNotes.setVisibility(View.GONE);
             return;
         }
 
         tvNotes.setText(notes.trim());
         tvNotesLabel.setVisibility(View.VISIBLE);
         tvNotes.setVisibility(View.VISIBLE);
+        if (cardNotes != null) cardNotes.setVisibility(View.VISIBLE);
     }
 
     /**
@@ -280,8 +303,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
                               TextView tvBookingTotal, TextView tvBookingNote) {
         if (!booking.hasServiceDetails()) {
             tvServiceName.setText(booking.getServiceLabel());
-            tvBookingTotal.setVisibility(View.GONE);
-            tvBookingNote.setVisibility(View.GONE);
+            if (tvBookingNote != null) tvBookingNote.setVisibility(View.GONE);
             return;
         }
 
@@ -298,36 +320,67 @@ public class BookingDetailsActivity extends AppCompatActivity {
         int totalDuration = booking.getTotalDurationMinutes();
         if (totalPrice == null) {
             if (totalDuration > 0) {
+                if (tvTotalLabel != null) tvTotalLabel.setText(R.string.total);
                 tvBookingTotal.setText(getString(R.string.booking_total_no_price, totalDuration));
                 tvBookingTotal.setVisibility(View.VISIBLE);
             } else {
                 tvBookingTotal.setVisibility(View.GONE);
             }
-            tvBookingNote.setVisibility(View.GONE);
+            if (tvBookingNote != null) tvBookingNote.setVisibility(View.GONE);
             return;
         }
 
+        if (tvTotalLabel != null) tvTotalLabel.setText(R.string.total);
         tvBookingTotal.setText(getString(R.string.service_total,
                 getString(R.string.service_price_rand, formatPriceValue(totalPrice)),
                 totalDuration));
         tvBookingTotal.setVisibility(View.VISIBLE);
-        tvBookingNote.setVisibility(booking.hasUnpricedServices() ? View.VISIBLE : View.GONE);
+        if (tvBookingNote != null) tvBookingNote.setVisibility(booking.hasUnpricedServices() ? View.VISIBLE : View.GONE);
     }
 
     private void bindPayment(Booking booking) {
         TextView label = findViewById(R.id.tvPaymentLabel);
         TextView value = findViewById(R.id.tvPayment);
         String summary = paymentSummary(booking.getPaymentDetails());
+        String badgeText = paymentBadgeText(booking.getPaymentDetails());
 
         if (summary == null) {
             label.setVisibility(View.GONE);
             value.setVisibility(View.GONE);
+            if (tvPaymentBadge != null) tvPaymentBadge.setVisibility(View.GONE);
             return;
         }
 
         value.setText(summary);
         label.setVisibility(View.VISIBLE);
         value.setVisibility(View.VISIBLE);
+
+        if (tvPaymentBadge != null) {
+            if (badgeText != null && !badgeText.isEmpty()) {
+                tvPaymentBadge.setText(badgeText);
+                tvPaymentBadge.setVisibility(View.VISIBLE);
+            } else {
+                tvPaymentBadge.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private String paymentBadgeText(PaymentDetails payment) {
+        if (payment == null) return null;
+
+        if (PaymentDetails.TYPE_CASH.equals(payment.getType())) {
+            return getString(R.string.payment_badge_cash);
+        }
+
+        if (PaymentDetails.TYPE_DEPOSIT.equals(payment.getType())) {
+            return getString(R.string.payment_badge_deposit);
+        }
+
+        if (PaymentDetails.TYPE_FULL.equals(payment.getType())) {
+            return getString(R.string.payment_badge_full);
+        }
+
+        return null;
     }
 
     private String paymentSummary(PaymentDetails payment) {

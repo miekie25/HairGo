@@ -37,7 +37,7 @@
 
     <style name="ShapeAppearanceOverlay.HairGo_Thumb" parent="">
         <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">10dp</item>
+        <item name="cornerSize">14dp</item>
     </style>
 
     <style name="ShapeAppearanceOverlay.HairGo_Circle" parent="">
@@ -52,9 +52,64 @@
         <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.HairGo_Snackbar</item>
     </style>
 
-    <style name="ShapeAppearanceOverlay.HairGo_Snackbar" parent="">
+<style name="ShapeAppearanceOverlay.HairGo_Snackbar" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">16dp</item>
     </style>
 
+    <style name="ShapeAppearanceOverlay.HairGo_BottomCorners" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">0dp</item>
+        <item name="cornerSizeTopRight">0dp</item>
+        <item name="cornerSizeBottomLeft">32dp</item>
+        <item name="cornerSizeBottomRight">32dp</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.HairGo_ServiceCard" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.HairGo_TopCorners" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">20dp</item>
+        <item name="cornerSizeTopRight">20dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.HairGo_Circle_Small" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="ButtonActionPrimary" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/bg_button_teal</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:layout_height">56dp</item>
+        <item name="android:layout_marginTop">12dp</item>
+    </style>
+
+    <style name="ButtonActionOutline" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/bg_button_outline_teal</item>
+        <item name="android:textColor">@color/teal</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:layout_height">56dp</item>
+        <item name="android:layout_marginTop">12dp</item>
+    </style>
+
+    <style name="ButtonActionDanger" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/bg_button_outline_error</item>
+        <item name="android:textColor">@color/error</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:layout_height">56dp</item>
+        <item name="android:layout_marginTop">12dp</item>
+    </style>
 </resources>
