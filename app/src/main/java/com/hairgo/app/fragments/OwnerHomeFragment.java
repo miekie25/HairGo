@@ -16,8 +16,10 @@ import com.hairgo.app.R;
 import com.hairgo.app.activities.OwnerDashboardActivity;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.models.OwnerBooking;
+import com.hairgo.app.models.PaymentDetails;
 import com.hairgo.app.utils.OwnerSession;
 
+import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +68,11 @@ public class OwnerHomeFragment extends Fragment {
                 if (!isAdded() || getView() == null) return;
 
                 int today = 0, pending = 0, confirmed = 0, completed = 0;
+                BigDecimal totalValue = BigDecimal.ZERO;
+                BigDecimal amountPaid = BigDecimal.ZERO;
+                BigDecimal outstandingBalance = BigDecimal.ZERO;
+                int bookingsWithOutstanding = 0;
+
                 for (Map<String, Object> map : raw) {
                     OwnerBooking booking = OwnerBooking.fromMap(map);
                     if (booking == null) continue;
@@ -77,11 +84,36 @@ public class OwnerHomeFragment extends Fragment {
                     if ("pending".equals(booking.getStatus())) pending++;
                     if ("confirmed".equals(booking.getStatus()) && !booking.isPast()) confirmed++;
                     if ("completed".equals(booking.getStatus())) completed++;
+
+                    // Payment summary calculations (only for bookings with known prices)
+                    Double bookingTotal = booking.getTotalPrice();
+                    if (bookingTotal != null) {
+                        totalValue = totalValue.add(BigDecimal.valueOf(bookingTotal));
+                    }
+
+                    PaymentDetails payment = booking.getPaymentDetails();
+                    if (payment != null) {
+                        Double paid = payment.getAmountPaid();
+                        if (paid != null) {
+                            amountPaid = amountPaid.add(BigDecimal.valueOf(paid));
+                        }
+                        Double outstanding = payment.getAmountOutstanding();
+                        if (outstanding != null && outstanding > 0) {
+                            outstandingBalance = outstandingBalance.add(BigDecimal.valueOf(outstanding));
+                            bookingsWithOutstanding++;
+                        }
+                    }
                 }
                 setText(R.id.tvTodayBookingsCount, String.valueOf(today));
                 setText(R.id.tvPendingCount, String.valueOf(pending));
                 setText(R.id.tvConfirmedCount, String.valueOf(confirmed));
                 setText(R.id.tvCompletedCount, String.valueOf(completed));
+
+                // Payment summary
+                setText(R.id.tvTotalValue, formatPrice(totalValue));
+                setText(R.id.tvAmountPaid, formatPrice(amountPaid));
+                setText(R.id.tvOutstandingBalance, formatPrice(outstandingBalance));
+                setText(R.id.tvBookingsWithOutstanding, String.valueOf(bookingsWithOutstanding));
             }
 
             @Override
@@ -89,6 +121,15 @@ public class OwnerHomeFragment extends Fragment {
                 // Leave the zeros; the Bookings tab reports load errors.
             }
         });
+    }
+
+    private String formatPrice(BigDecimal value) {
+        if (value == null || value.compareTo(BigDecimal.ZERO) == 0) {
+            return "R0";
+        }
+        // Strip trailing zeros: 150.0 -> "R150", 150.50 -> "R150.5"
+        BigDecimal stripped = value.stripTrailingZeros();
+        return "R" + stripped.toPlainString();
     }
 
     private void setText(int viewId, String value) {

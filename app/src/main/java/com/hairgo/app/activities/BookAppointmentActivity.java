@@ -92,10 +92,18 @@ public class BookAppointmentActivity extends AppCompatActivity {
 
                 if (result.getResultCode() == RESULT_OK
                         && payment != null && salon != null && clientId != null) {
+                    // Add payment timestamp for successful card payments
+                    PaymentDetails paymentWithTimestamp = new PaymentDetails(
+                            payment.getType(),
+                            payment.getStatus(),
+                            payment.getAmountPaid(),
+                            payment.getAmountOutstanding(),
+                            com.google.firebase.Timestamp.now()
+                    );
                     if (pendingEditPayment) {
-                        completeEditWithPayment(salon, payment);
+                        completeEditWithPayment(salon, paymentWithTimestamp);
                     } else {
-                        createBooking(salon, clientId, payment);
+                        createBooking(salon, clientId, paymentWithTimestamp);
                     }
                 } else {
                     enableConfirmButton();

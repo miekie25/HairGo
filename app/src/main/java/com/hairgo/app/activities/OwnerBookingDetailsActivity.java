@@ -5,8 +5,10 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -19,6 +21,7 @@ import com.hairgo.app.R;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.OwnerManager;
 import com.hairgo.app.models.OwnerBooking;
+import com.hairgo.app.models.PaymentDetails;
 import com.hairgo.app.models.ServiceDetail;
 import com.hairgo.app.utils.Snackbars;
 
@@ -45,11 +48,14 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
     private TextView tvDateTime;
     private TextView tvNotesLabel;
     private TextView tvNotes;
+    private TextView tvPaymentLabel;
+    private TextView tvPayment;
 
     private androidx.appcompat.widget.AppCompatButton btnMessageClient;
     private androidx.appcompat.widget.AppCompatButton btnConfirm;
     private androidx.appcompat.widget.AppCompatButton btnDecline;
     private androidx.appcompat.widget.AppCompatButton btnMarkCompleted;
+    private androidx.appcompat.widget.AppCompatButton btnRecordCashPayment;
 
     private BookingManager bookingManager;
     private OwnerManager ownerManager;
@@ -82,11 +88,14 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
         tvDateTime = findViewById(R.id.tvDateTime);
         tvNotesLabel = findViewById(R.id.tvNotesLabel);
         tvNotes = findViewById(R.id.tvNotes);
+        tvPaymentLabel = findViewById(R.id.tvPaymentLabel);
+        tvPayment = findViewById(R.id.tvPayment);
 
         btnMessageClient = findViewById(R.id.btnMessageClient);
         btnConfirm = findViewById(R.id.btnConfirm);
         btnDecline = findViewById(R.id.btnDecline);
         btnMarkCompleted = findViewById(R.id.btnMarkCompleted);
+        btnRecordCashPayment = findViewById(R.id.btnRecordCashPayment);
 
         bookingManager = new BookingManager();
         ownerManager = new OwnerManager();
@@ -137,6 +146,7 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
         TextView tvBookingTotal = findViewById(R.id.tvBookingTotal);
         TextView tvBookingNote = findViewById(R.id.tvBookingNote);
         bindServices(booking, tvServiceName, tvBookingTotal, tvBookingNote);
+        bindPayment(booking);
 
         if (booking.getDateTime() != null) {
             SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy • HH:mm", Locale.getDefault());
@@ -272,6 +282,132 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
         tvNotes.setText(notes.trim());
         tvNotesLabel.setVisibility(View.VISIBLE);
         tvNotes.setVisibility(View.VISIBLE);
+    }
+
+    private void bindPayment(OwnerBooking booking) {
+        PaymentDetails payment = booking.getPaymentDetails();
+        String summary = paymentSummary(payment);
+
+        if (summary == null) {
+            tvPaymentLabel.setVisibility(View.GONE);
+            tvPayment.setVisibility(View.GONE);
+            btnRecordCashPayment.setVisibility(View.GONE);
+            return;
+        }
+
+        tvPayment.setText(summary);
+        tvPaymentLabel.setVisibility(View.VISIBLE);
+        tvPayment.setVisibility(View.VISIBLE);
+
+        // Show Record Cash Payment button only for cash bookings with outstanding balance
+        boolean canRecordCash = payment != null && payment.canRecordCashPayment();
+        btnRecordCashPayment.setVisibility(canRecordCash ? View.VISIBLE : View.GONE);
+
+        if (canRecordCash) {
+            btnRecordCashPayment.setOnClickListener(v -> showRecordCashPaymentDialog(payment));
+        }
+    }
+
+    private String paymentSummary(PaymentDetails payment) {
+        if (payment == null) {
+            return getString(R.string.payment_status_unknown);
+        }
+
+        if (PaymentDetails.TYPE_CASH.equals(payment.getType())) {
+            if (payment.getAmountOutstanding() == null) {
+                return getString(R.string.payment_cash_summary_unknown);
+            }
+            return getString(R.string.payment_cash_summary,
+                    formatPriceValue(payment.getAmountOutstanding()));
+        }
+
+        if (PaymentDetails.TYPE_DEPOSIT.equals(payment.getType())) {
+            if (payment.getAmountPaid() == null || payment.getAmountOutstanding() == null) {
+                return getString(R.string.payment_status_unknown);
+            }
+            return getString(R.string.payment_deposit_summary_owner,
+                    formatPriceValue(payment.getAmountPaid()),
+                    formatPriceValue(payment.getAmountOutstanding()));
+        }
+
+        if (PaymentDetails.TYPE_FULL.equals(payment.getType())) {
+            if (payment.getAmountPaid() == null) {
+                return getString(R.string.payment_status_unknown);
+            }
+            return getString(R.string.payment_full_summary_owner,
+                    formatPriceValue(payment.getAmountPaid()));
+        }
+
+        return getString(R.string.payment_status_unknown);
+    }
+
+    private void showRecordCashPaymentDialog(PaymentDetails payment) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.title_record_cash_payment);
+
+        double outstanding = payment.getAmountOutstanding() == null ? 0.0 : payment.getAmountOutstanding();
+        String message = getString(R.string.message_record_cash_payment, formatPriceValue(outstanding));
+        builder.setMessage(message);
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED);
+        input.setHint(R.string.hint_cash_amount);
+        input.setPadding(48, 24, 48, 24);
+        builder.setView(input);
+
+        builder.setPositiveButton(R.string.ok, (dialog, which) -> {
+            String amountStr = input.getText().toString().trim();
+            if (amountStr.isEmpty()) {
+                Snackbars.show(findViewById(android.R.id.content), R.string.error_cash_amount_required);
+                return;
+            }
+
+            double amount;
+            try {
+                amount = Double.parseDouble(amountStr);
+            } catch (NumberFormatException e) {
+                Snackbars.show(findViewById(android.R.id.content), R.string.error_cash_amount_invalid);
+                return;
+            }
+
+            if (amount <= 0) {
+                Snackbars.show(findViewById(android.R.id.content), R.string.error_cash_amount_invalid);
+                return;
+            }
+
+            if (amount > outstanding) {
+                Snackbars.show(findViewById(android.R.id.content),
+                        getString(R.string.error_cash_amount_exceeds_outstanding, formatPriceValue(outstanding)));
+                return;
+            }
+
+            recordCashPayment(amount);
+        });
+
+        builder.setNegativeButton(R.string.cancel, null);
+        builder.show();
+    }
+
+    private void recordCashPayment(double amount) {
+        btnRecordCashPayment.setEnabled(false);
+        bookingManager.recordCashPayment(bookingId, amount, new BookingManager.BookingCallback() {
+            @Override
+            public void onSuccess() {
+                if (isFinishing() || isDestroyed()) return;
+                btnRecordCashPayment.setEnabled(true);
+                // Reload the booking to refresh payment display
+                loadBooking();
+                Snackbars.show(findViewById(android.R.id.content),
+                        getString(R.string.cash_payment_recorded, formatPriceValue(amount)));
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (isFinishing() || isDestroyed()) return;
+                btnRecordCashPayment.setEnabled(true);
+                Snackbars.show(findViewById(android.R.id.content), errorMessage);
+            }
+        });
     }
 
     /** Pending: Confirm + Decline.  Confirmed: Mark completed.  Anything else: none. */

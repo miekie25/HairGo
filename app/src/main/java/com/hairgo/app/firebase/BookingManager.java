@@ -659,6 +659,48 @@ public class BookingManager {
                         slotTaken.get() ? SLOT_TAKEN_MESSAGE : e.getMessage()));
     }
 
+    /**
+     * Records a cash payment for a booking. Uses a transaction to read the
+     * current payment state, validate the amount, and write the updated
+     * payment fields atomically. Only the salon owner (or admin) can call
+     * this, enforced by Firestore security rules.
+     *
+     * @param bookingId The booking to record payment for.
+     * @param amount The cash amount to record. Must be > 0 and <= outstanding.
+     * @param callback Success or failure callback.
+     */
+    public void recordCashPayment(String bookingId, double amount, BookingCallback callback) {
+        if (amount <= 0) {
+            callback.onFailure("Payment amount must be greater than zero.");
+            return;
+        }
+
+        DocumentReference bookingRef = db.collection("bookings").document(bookingId);
+
+        db.runTransaction(tx -> {
+                    DocumentSnapshot current = tx.get(bookingRef);
+                    if (!current.exists()) {
+                        throw new IllegalStateException("Booking not found.");
+                    }
+
+                    PaymentDetails currentPayment = PaymentDetails.fromMap(current.getData());
+                    if (currentPayment == null || !currentPayment.canRecordCashPayment()) {
+                        throw new IllegalStateException("This booking does not accept cash payments or has no outstanding balance.");
+                    }
+
+                    PaymentDetails updatedPayment = currentPayment.recordCashPayment(amount, com.google.firebase.Timestamp.now());
+                    if (updatedPayment == null) {
+                        throw new IllegalStateException("Invalid payment amount.");
+                    }
+
+                    Map<String, Object> paymentFields = updatedPayment.toMap();
+                    tx.update(bookingRef, paymentFields);
+                    return null;
+                })
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
     /** Convenience overload for a single service. */
     public void updateBookingDetails(String bookingId, String serviceName, Date dateTime,
                                      BookingCallback callback) {

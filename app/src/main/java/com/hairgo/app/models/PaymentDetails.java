@@ -1,7 +1,10 @@
 package com.hairgo.app.models;
 
+import com.google.firebase.Timestamp;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,12 +24,18 @@ public class PaymentDetails {
     private final String status;
     private final Double amountPaid;
     private final Double amountOutstanding;
+    private final Timestamp paymentTimestamp;
 
     public PaymentDetails(String type, String status, Double amountPaid, Double amountOutstanding) {
+        this(type, status, amountPaid, amountOutstanding, null);
+    }
+
+    public PaymentDetails(String type, String status, Double amountPaid, Double amountOutstanding, Timestamp paymentTimestamp) {
         this.type = type;
         this.status = status;
         this.amountPaid = amountPaid;
         this.amountOutstanding = amountOutstanding;
+        this.paymentTimestamp = paymentTimestamp;
     }
 
     public static PaymentDetails depositByCard(double total) {
@@ -34,16 +43,16 @@ public class PaymentDetails {
         BigDecimal paid = roundedTotal.multiply(DEPOSIT_RATE).setScale(2, RoundingMode.HALF_UP);
         BigDecimal outstanding = roundedTotal.subtract(paid);
         return new PaymentDetails(TYPE_DEPOSIT, STATUS_PARTIAL,
-                paid.doubleValue(), outstanding.doubleValue());
+                paid.doubleValue(), outstanding.doubleValue(), null);
     }
 
     public static PaymentDetails fullByCard(double total) {
-        return new PaymentDetails(TYPE_FULL, STATUS_PAID, round(total).doubleValue(), 0.0);
+        return new PaymentDetails(TYPE_FULL, STATUS_PAID, round(total).doubleValue(), 0.0, null);
     }
 
     public static PaymentDetails cashAtSalon(Double total) {
         Double outstanding = total == null ? null : round(total).doubleValue();
-        return new PaymentDetails(TYPE_CASH, STATUS_DUE, 0.0, outstanding);
+        return new PaymentDetails(TYPE_CASH, STATUS_DUE, 0.0, outstanding, null);
     }
 
     public boolean isCardPayment() {
@@ -104,8 +113,14 @@ public class PaymentDetails {
             return null;
         }
 
+        Timestamp timestamp = null;
+        Object timestampValue = raw.get("paymentTimestamp");
+        if (timestampValue instanceof Timestamp) {
+            timestamp = (Timestamp) timestampValue;
+        }
+
         return new PaymentDetails(typeValue.toString(), statusValue.toString(),
-                asDouble(raw.get("amountPaid")), asDouble(raw.get("amountOutstanding")));
+                asDouble(raw.get("amountPaid")), asDouble(raw.get("amountOutstanding")), timestamp);
     }
 
     public Map<String, Object> toMap() {
@@ -117,6 +132,9 @@ public class PaymentDetails {
         }
         if (amountOutstanding != null) {
             map.put("amountOutstanding", amountOutstanding);
+        }
+        if (paymentTimestamp != null) {
+            map.put("paymentTimestamp", paymentTimestamp);
         }
         return map;
     }
@@ -133,4 +151,49 @@ public class PaymentDetails {
     public String getStatus() { return status; }
     public Double getAmountPaid() { return amountPaid; }
     public Double getAmountOutstanding() { return amountOutstanding; }
+
+    /**
+     * Returns a new PaymentDetails with the given cash payment recorded.
+     * Only valid for TYPE_CASH bookings with a known positive outstanding balance.
+     * Returns null if the payment cannot be recorded.
+     */
+    public PaymentDetails recordCashPayment(double amount) {
+        return recordCashPayment(amount, com.google.firebase.Timestamp.now());
+    }
+
+    /**
+     * Returns a new PaymentDetails with the given cash payment recorded at the specified time.
+     * Used for recording cash payments with a specific timestamp.
+     */
+    public PaymentDetails recordCashPayment(double amount, com.google.firebase.Timestamp timestamp) {
+        if (!TYPE_CASH.equals(type)) return null;
+        if (amountOutstanding == null || amountOutstanding <= 0) return null;
+        if (amount <= 0 || amount > amountOutstanding) return null;
+
+        BigDecimal paidBefore = amountPaid == null ? BigDecimal.ZERO : round(amountPaid);
+        BigDecimal outstandingBefore = round(amountOutstanding);
+        BigDecimal payment = round(amount);
+
+        BigDecimal paidAfter = paidBefore.add(payment);
+        BigDecimal outstandingAfter = outstandingBefore.subtract(payment);
+        if (outstandingAfter.signum() < 0) outstandingAfter = BigDecimal.ZERO;
+
+        String newStatus = outstandingAfter.signum() == 0 ? STATUS_PAID : STATUS_DUE;
+        return new PaymentDetails(TYPE_CASH, newStatus, paidAfter.doubleValue(), outstandingAfter.doubleValue(), timestamp);
+    }
+
+    /**
+     * True if this payment record allows recording an additional cash payment.
+     */
+    public boolean canRecordCashPayment() {
+        return TYPE_CASH.equals(type)
+                && amountOutstanding != null
+                && amountOutstanding > 0;
+    }
+
+    public Timestamp getPaymentTimestamp() { return paymentTimestamp; }
+
+    public Date getPaymentTimestampAsDate() {
+        return paymentTimestamp == null ? null : paymentTimestamp.toDate();
+    }
 }

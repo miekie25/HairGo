@@ -21,6 +21,7 @@ public class OwnerBooking {
     private List<ServiceDetail> serviceDetails; // saved copy of the services, new bookings only
     private Double totalPrice; // null means no booked service has a price
     private int totalDurationMinutes; // 0 means it was not saved (old booking)
+    private PaymentDetails paymentDetails; // null for bookings made before payments
 
     public OwnerBooking(String bookingId, String clientId, String clientName,
                         String serviceName, Date dateTime, String status) {
@@ -74,6 +75,8 @@ public class OwnerBooking {
         if (durationValue instanceof Number) {
             booking.totalDurationMinutes = ((Number) durationValue).intValue();
         }
+
+        booking.paymentDetails = PaymentDetails.fromMap(raw);
         return booking;
     }
 
@@ -135,4 +138,6 @@ public class OwnerBooking {
         }
         return false;
     }
+
+    public PaymentDetails getPaymentDetails() { return paymentDetails; }
 }

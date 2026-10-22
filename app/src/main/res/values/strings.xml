@@ -129,8 +129,25 @@
     <string name="payment_summary_label">Payment</string>
     <string name="payment_deposit_summary">Deposit paid: R%1$s\nOutstanding: R%2$s</string>
     <string name="payment_full_summary">Paid in full by card: R%1$s</string>
+    <string name="payment_status_unknown">Payment status unknown</string>
     <string name="payment_cash_summary">Cash due at salon: R%1$s</string>
     <string name="payment_cash_summary_unknown">Cash due at salon</string>
+    <string name="payment_deposit_summary_owner">Simulated card payment — Deposit paid: R%1$s\nOutstanding: R%2$s</string>
+    <string name="payment_full_summary_owner">Simulated card payment — Paid in full: R%1$s</string>
+    <string name="btn_record_cash_payment">Record Cash Payment</string>
+    <string name="title_record_cash_payment">Record Cash Payment</string>
+    <string name="message_record_cash_payment">Outstanding balance: R%1$s\n\nEnter the cash amount received from the client:</string>
+    <string name="hint_cash_amount">Amount (R)</string>
+    <string name="error_cash_amount_required">Enter an amount.</string>
+    <string name="error_cash_amount_invalid">Enter a valid amount.</string>
+    <string name="error_cash_amount_exceeds_outstanding">Amount cannot exceed the outstanding balance of R%1$s.</string>
+    <string name="error_cash_payment_not_allowed">This booking does not accept cash payments.</string>
+    <string name="cash_payment_recorded">Cash payment of R%1$s recorded.</string>
+    <string name="cash_payment_recorded_paid_in_full">Cash payment of R%1$s recorded. Booking is now paid in full.</string>
+    <string name="payment_summary_total_value">Total booking value</string>
+    <string name="payment_summary_amount_paid">Amount paid</string>
+    <string name="payment_summary_outstanding">Outstanding balance</string>
+    <string name="payment_summary_bookings_outstanding">Bookings with outstanding</string>
     <string name="title_card_payment">Card payment</string>
     <string name="label_amount_due">Amount to pay</string>
     <string name="payment_deposit_label">Deposit</string>
@@ -321,6 +338,27 @@
     <string name="report_tap_to_close">Tap anywhere to close</string>
     <string name="close">Close</string>
 
+    <!-- Owner Payment Reports -->
+    <string name="reports_title">Payment Reports</string>
+    <string name="reports_subtitle">View payment summaries by period</string>
+    <string name="report_period_today">Today</string>
+    <string name="report_period_this_month">This Month</string>
+    <string name="reports_booking_summary">Booking Summary</string>
+    <string name="reports_payment_summary">Payment Summary</string>
+    <string name="reports_payment_breakdown">Payment Method Breakdown</string>
+    <string name="reports_total_value">Total booking value</string>
+    <string name="reports_bookings_outstanding">Bookings with outstanding</string>
+    <string name="reports_amount_paid">Amount paid</string>
+    <string name="reports_outstanding_balance">Outstanding balance</string>
+    <string name="reports_card_payments">Simulated card payments</string>
+    <string name="reports_cash_payments">Owner-recorded cash</string>
+    <string name="reports_card_payments_note">Includes deposits &amp; full payments</string>
+    <string name="reports_cash_payments_note">Recorded at salon by owner</string>
+    <string name="reports_data_completeness_note">Note: Totals reflect only bookings with known payment data. Legacy bookings without payment records are excluded.</string>
+    <string name="reports_unknown_payment_dates">Payments without recorded dates: %1$s</string>
+    <string name="reports_empty">No bookings for this period.</string>
+    <string name="reports_load_failed">Could not load reports: %1$s</string>
+
     <!-- Salon setup (owner registration) -->
     <string name="salon_setup_intro_title">Set up your salon</string>
     <string name="salon_setup_intro_body">Add your salon details so clients can find and book you.</string>
@@ -443,3 +481,5 @@
     </string-array>
 
 </resources>
+
+

@@ -32,6 +32,7 @@ import com.hairgo.app.fragments.MessagesFragment;
 import com.hairgo.app.fragments.OwnerBookingsFragment;
 import com.hairgo.app.fragments.OwnerHomeFragment;
 import com.hairgo.app.fragments.OwnerProfileFragment;
+import com.hairgo.app.fragments.OwnerReportsFragment;
 import com.hairgo.app.models.OwnerSalon;
 import com.hairgo.app.models.ServiceDetail;
 import com.hairgo.app.utils.OwnerSession;
@@ -208,6 +209,8 @@ public class OwnerDashboardActivity extends AppCompatActivity {
                 fragment.setArguments(args);
                 pendingBookingsFilter = -1;
             }
+        } else if (tabId == R.id.nav_owner_reports) {
+            fragment = new OwnerReportsFragment();
         } else if (tabId == R.id.nav_owner_messages) {
             fragment = MessagesFragment.newInstance(true);
         } else if (tabId == R.id.nav_owner_profile) {

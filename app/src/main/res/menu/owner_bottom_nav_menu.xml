@@ -12,6 +12,11 @@
         android:title="Bookings" />
 
     <item
+        android:id="@+id/nav_owner_reports"
+        android:icon="@drawable/ic_nav_reports"
+        android:title="Reports" />
+
+    <item
         android:id="@+id/nav_owner_messages"
         android:icon="@drawable/ic_message"
         android:title="@string/nav_messages" />

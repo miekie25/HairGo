@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/reports_title"
+            android:textColor="@color/heading"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="16dp"
+            android:text="@string/reports_subtitle"
+            android:textColor="@color/grey_medium"
+            android:textSize="14sp" />
+
+        <!-- Period selector -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupPeriod"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipToday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/report_period_today"
+                style="@style/Widget.MaterialComponents.Chip.Choice" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipThisMonth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/report_period_this_month"
+                style="@style/Widget.MaterialComponents.Chip.Choice" />
+        </com.google.android.material.chip.ChipGroup>
+
+        <ProgressBar
+            android:id="@+id/progressReports"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_gravity="center_horizontal"
+            android:indeterminateTint="@color/teal"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvEmptyReports"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:text="@string/reports_empty"
+            android:textColor="@color/grey_medium"
+            android:textSize="16sp"
+            android:visibility="gone" />
+
+        <!-- Booking Summary Section -->
+        <TextView
+            android:id="@+id/tvBookingSummaryLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/reports_booking_summary"
+            android:textColor="@color/heading"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/layoutBookingSummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <!-- Total booking value -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardReportTotalValue"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:id="@+id/tvReportTotalValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="R0"
+                        android:textColor="@color/navy"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/reports_total_value"
+                        android:textColor="@color/grey_medium"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Bookings with outstanding -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardReportBookingsOutstanding"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:id="@+id/tvReportBookingsOutstanding"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="@color/warning"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/reports_bookings_outstanding"
+                        android:textColor="@color/grey_medium"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+
+        <!-- Payment Summary Section -->
+        <TextView
+            android:id="@+id/tvPaymentSummaryLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/reports_payment_summary"
+            android:textColor="@color/heading"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/layoutPaymentSummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <!-- Amount paid -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardReportAmountPaid"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:id="@+id/tvReportAmountPaid"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="R0"
+                        android:textColor="@color/teal"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/reports_amount_paid"
+                        android:textColor="@color/grey_medium"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Outstanding balance -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardReportOutstandingBalance"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:id="@+id/tvReportOutstandingBalance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="R0"
+                        android:textColor="@color/error"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/reports_outstanding_balance"
+                        android:textColor="@color/grey_medium"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+
+        <!-- Payment Method Breakdown -->
+        <TextView
+            android:id="@+id/tvPaymentBreakdownLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/reports_payment_breakdown"
+            android:textColor="@color/heading"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/layoutPaymentBreakdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <!-- Simulated card payments -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardReportCardPayments"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:id="@+id/tvReportCardPayments"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="R0"
+                        android:textColor="@color/navy"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/reports_card_payments"
+                        android:textColor="@color/grey_medium"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/reports_card_payments_note"
+                        android:textColor="@color/grey_medium"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Cash payments recorded -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardReportCashPayments"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:id="@+id/tvReportCashPayments"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="R0"
+                        android:textColor="@color/teal"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/reports_cash_payments"
+                        android:textColor="@color/grey_medium"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/reports_cash_payments_note"
+                        android:textColor="@color/grey_medium"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+
+        <!-- Data completeness note -->
+        <TextView
+            android:id="@+id/tvDataCompletenessNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:padding="12dp"
+            android:background="@color/grey_light"
+            android:text="@string/reports_data_completeness_note"
+            android:textColor="@color/grey_dark"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
