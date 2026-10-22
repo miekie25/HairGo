@@ -20,6 +20,7 @@ import com.hairgo.app.R;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.Salon;
+import com.hairgo.app.models.ServiceDetail;
 import com.hairgo.app.utils.Notifications;
 import com.hairgo.app.utils.ReminderScheduler;
 import com.hairgo.app.utils.SalonHours;
@@ -29,6 +30,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -36,10 +38,17 @@ import java.util.Map;
 public class BookAppointmentActivity extends AppCompatActivity {
 
     private TextView tvSelectedServices, tvSelectedDate, tvSelectedTime, tvError;
+    private TextView tvServiceTotal, tvServicePriceNote;
+    private View llServiceSummary;
     private EditText etNotes;
 
-    private final List<String> availableServices = new ArrayList<>();
-    private final List<String> selectedServices = new ArrayList<>();
+    // The services the salon offers, with their price and duration.
+    private final List<ServiceDetail> availableServices = new ArrayList<>();
+    // The services the client has ticked so far.
+    private final List<ServiceDetail> selectedServices = new ArrayList<>();
+    // The saved services of the booking being edited, by name. Old bookings
+    // have no saved copy, so this map can be empty.
+    private final Map<String, ServiceDetail> editingServiceDetails = new HashMap<>();
 
     private final Calendar selectedDateTime = Calendar.getInstance();
     private boolean dateChosen = false;
@@ -88,6 +97,9 @@ public class BookAppointmentActivity extends AppCompatActivity {
         tvSelectedTime = findViewById(R.id.tvSelectedTime);
         tvError = findViewById(R.id.tvError);
         etNotes = findViewById(R.id.etNotes);
+        tvServiceTotal = findViewById(R.id.tvServiceTotal);
+        tvServicePriceNote = findViewById(R.id.tvServicePriceNote);
+        llServiceSummary = findViewById(R.id.llServiceSummary);
 
         LinearLayout rowService = findViewById(R.id.rowService);
         LinearLayout rowDate = findViewById(R.id.rowDate);
@@ -97,6 +109,37 @@ public class BookAppointmentActivity extends AppCompatActivity {
         rowDate.setOnClickListener(v -> showDatePicker());
         rowTime.setOnClickListener(v -> showTimePicker());
 
+        if (isEditing()) {
+            // Read the booking first so services that the salon no longer
+            // offers keep the price and duration saved on the booking.
+            loadBookingServiceDetailsThenSalon(salonId);
+        } else {
+            loadSalon(salonId);
+        }
+    }
+
+    private void loadBookingServiceDetailsThenSalon(String salonId) {
+        new BookingManager().getBookingById(editingBookingId,
+                new BookingManager.BookingDataCallback() {
+                    @Override
+                    public void onSuccess(Map<String, Object> booking) {
+                        for (ServiceDetail detail : BookingManager.getServiceDetails(booking)) {
+                            editingServiceDetails.put(detail.getName(), detail);
+                        }
+                        loadSalon(salonId);
+                    }
+
+                    @Override
+                    public void onFailure(String errorMessage) {
+                        // The form still works. Services without a saved copy
+                        // simply show no price.
+                        Log.w("BookAppointment", "getBookingById failed: " + errorMessage);
+                        loadSalon(salonId);
+                    }
+                });
+    }
+
+    private void loadSalon(String salonId) {
         new SalonManager().getSalonById(salonId, new SalonManager.SalonDataCallback() {
             @Override
             public void onSuccess(Map<String, Object> salonData) {
@@ -106,7 +149,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
                     return;
                 }
                 salonHours = SalonHours.fromDoc(salonData);
-                bindSalon(salon);
+                bindSalon(salon, SalonManager.getServiceDetails(salonData));
             }
 
             @Override
@@ -135,20 +178,33 @@ public class BookAppointmentActivity extends AppCompatActivity {
         return new Salon(salonId, name.toString(), location == null ? "" : location.toString(), avgRating, services);
     }
 
-    private void bindSalon(Salon salon) {
+    private void bindSalon(Salon salon, List<ServiceDetail> serviceDetails) {
         TextView tvSalonLabel = findViewById(R.id.tvSalonLabel);
         tvSalonLabel.setText(getString(isEditing()
                 ? R.string.title_reschedule_booking
                 : R.string.title_book_appointment) + " — " + salon.getName());
 
         availableServices.clear();
-        availableServices.addAll(salon.getServices());
+        availableServices.addAll(serviceDetails);
         // A booked service may no longer be listed by the salon; keep it
         // selectable so editing does not silently change what was booked.
+        // For services that were booked, the saved copy wins, so a reschedule
+        // keeps the price and duration the client booked.
         if (isEditing()) {
             for (String booked : editingServiceNames) {
-                if (booked != null && !booked.isEmpty() && !availableServices.contains(booked)) {
-                    availableServices.add(0, booked);
+                if (booked == null || booked.isEmpty()) continue;
+                ServiceDetail saved = editingServiceDetails.get(booked);
+                int index = indexOfService(availableServices, booked);
+                if (saved != null) {
+                    if (index >= 0) {
+                        availableServices.set(index, saved);
+                    } else {
+                        availableServices.add(0, saved);
+                    }
+                } else if (index < 0) {
+                    // No saved copy, so keep the name with no price.
+                    availableServices.add(0, new ServiceDetail(booked, null,
+                            ServiceDetail.DEFAULT_DURATION_MINUTES));
                 }
             }
         }
@@ -174,10 +230,12 @@ public class BookAppointmentActivity extends AppCompatActivity {
         if (availableServices.isEmpty()) return;
 
         final boolean[] checked = new boolean[availableServices.size()];
+        String[] labels = new String[availableServices.size()];
         for (int i = 0; i < availableServices.size(); i++) {
-            checked[i] = selectedServices.contains(availableServices.get(i));
+            ServiceDetail detail = availableServices.get(i);
+            checked[i] = isSelected(detail.getName());
+            labels[i] = serviceLine(detail);
         }
-        String[] labels = availableServices.toArray(new String[0]);
 
         new AlertDialog.Builder(this)
                 .setTitle(R.string.select_services_title)
@@ -198,17 +256,93 @@ public class BookAppointmentActivity extends AppCompatActivity {
         if (selectedServices.isEmpty()) {
             tvSelectedServices.setText(R.string.hint_choose_services);
             tvSelectedServices.setTextColor(getColor(R.color.grey_medium));
-        } else {
-            tvSelectedServices.setText(TextUtils.join(", ", selectedServices));
-            tvSelectedServices.setTextColor(getColor(R.color.grey_dark));
+            llServiceSummary.setVisibility(View.GONE);
+            return;
         }
+
+        List<String> names = new ArrayList<>();
+        double totalPrice = 0;
+        boolean anyPrice = false;
+        boolean missingPrice = false;
+        int totalDuration = 0;
+
+        for (ServiceDetail detail : selectedServices) {
+            names.add(detail.getName());
+            totalDuration += detail.getDurationMinutes();
+            if (detail.hasPrice()) {
+                // Only services with a price count. A missing price is never R0.
+                totalPrice += detail.getPrice();
+                anyPrice = true;
+            } else {
+                missingPrice = true;
+            }
+        }
+
+        tvSelectedServices.setText(TextUtils.join(", ", names));
+        tvSelectedServices.setTextColor(getColor(R.color.grey_dark));
+
+        if (anyPrice) {
+            tvServiceTotal.setText(getString(R.string.service_total,
+                    getString(R.string.service_price_rand, formatPrice(totalPrice)),
+                    totalDuration));
+        } else {
+            // No selected service has a price, so only the duration is shown.
+            tvServiceTotal.setText(getString(R.string.service_total_duration, totalDuration));
+        }
+
+        tvServicePriceNote.setVisibility(missingPrice ? View.VISIBLE : View.GONE);
+        llServiceSummary.setVisibility(View.VISIBLE);
+    }
+
+    /** True when a service with this name is already ticked. */
+    private boolean isSelected(String name) {
+        for (ServiceDetail detail : selectedServices) {
+            if (detail.getName().equals(name)) return true;
+        }
+        return false;
+    }
+
+    private ServiceDetail findServiceByName(List<ServiceDetail> list, String name) {
+        int index = indexOfService(list, name);
+        return index < 0 ? null : list.get(index);
+    }
+
+    // Returns the position of the service with this name, or -1.
+    private int indexOfService(List<ServiceDetail> list, String name) {
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i).getName().equals(name)) return i;
+        }
+        return -1;
+    }
+
+    /** Builds one line, for example "Haircut - R150 - 45min". */
+    private String serviceLine(ServiceDetail service) {
+        String price = service.hasPrice()
+                ? getString(R.string.service_price_rand, formatPrice(service.getPrice()))
+                : getString(R.string.service_price_not_set);
+        String duration = getString(R.string.service_duration_minutes,
+                service.getDurationMinutes());
+        return getString(R.string.service_chip_text, service.getName(), price, duration);
+    }
+
+    // Whole numbers show no cents. Cents always show two digits, like 150.50.
+    private String formatPrice(Double price) {
+        if (price == null) {
+            return "";
+        }
+        if (price == Math.rint(price)) {
+            return String.valueOf((long) (double) price);
+        }
+        return String.format(Locale.US, "%.2f", price);
     }
 
     /** Restores the existing booking's services, date and time into the form. */
     private void prefillFromBooking() {
         selectedServices.clear();
         for (String booked : editingServiceNames) {
-            if (booked != null && !booked.isEmpty()) selectedServices.add(booked);
+            if (booked == null || booked.isEmpty()) continue;
+            ServiceDetail detail = findServiceByName(availableServices, booked);
+            if (detail != null) selectedServices.add(detail);
         }
 
         if (editingDateTimeMillis > 0L) {
@@ -473,7 +607,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
             return;
         }
 
-        new BookingManager().createBooking(
+        new BookingManager().createBookingWithDetails(
                 clientId,
                 salon.getSalonId(),
                 salon.getName(),
@@ -511,7 +645,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
      * pending, so the salon re-confirms the new details.
      */
     private void updateBooking(Salon salon) {
-        new BookingManager().updateBookingDetails(
+        new BookingManager().updateBookingWithDetails(
                 editingBookingId,
                 new ArrayList<>(selectedServices),
                 selectedDateTime.getTime(),
@@ -532,7 +666,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
 
                     @Override
                     public void onFailure(String errorMessage) {
-                        Log.w("BookAppointment", "updateBookingDetails failed: " + errorMessage);
+                        Log.w("BookAppointment", "updateBookingWithDetails failed: " + errorMessage);
                         findViewById(R.id.btnConfirmBooking).setEnabled(true);
                         showError(errorMessage);
                     }

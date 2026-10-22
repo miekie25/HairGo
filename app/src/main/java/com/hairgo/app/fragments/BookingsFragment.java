@@ -163,8 +163,22 @@ public class BookingsFragment extends Fragment {
                 continue;
             }
 
-            parsed.add(new Booking(bookingId, salonId, salonName,
-                    serviceNames, dateTime, status, 0));
+            Booking booking = new Booking(bookingId, salonId, salonName,
+                    serviceNames, dateTime, status, 0);
+
+            // New bookings keep a copy of the chosen services. Old bookings
+            // have none, so their card looks exactly as it did before.
+            booking.setServiceDetails(BookingManager.getServiceDetails(raw));
+            Double savedPrice = BookingManager.getTotalPrice(raw);
+            if (savedPrice != null) {
+                booking.setTotalPrice(savedPrice);
+            }
+            int savedDuration = BookingManager.getTotalDuration(raw);
+            if (savedDuration > 0) {
+                booking.setTotalDurationMinutes(savedDuration);
+            }
+
+            parsed.add(booking);
         }
 
         return parsed;

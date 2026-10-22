@@ -35,7 +35,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="invisible"
-            app:constraint_referenced_ids="tvStatusBadge,tvExpiredNote,tvSalonName,divider1,tvServiceLabel,tvServiceName,tvDateTimeLabel,tvDateTime,tvNotesLabel,tvNotes,divider2,btnMessageSalon,btnCancelBooking,btnEditBooking,btnLeaveReview,btnReportSalon"/>
+            app:constraint_referenced_ids="tvStatusBadge,tvExpiredNote,tvSalonName,divider1,tvServiceLabel,tvServiceName,tvBookingTotal,tvBookingNote,tvDateTimeLabel,tvDateTime,tvNotesLabel,tvNotes,divider2,btnMessageSalon,btnCancelBooking,btnEditBooking,btnLeaveReview,btnReportSalon"/>
 
         <TextView
             android:id="@+id/tvStatusBadge"
@@ -134,6 +134,32 @@
             app:layout_constraintEnd_toEndOf="parent"/>
 
         <TextView
+            android:id="@+id/tvBookingTotal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            android:textColor="@color/heading"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/tvServiceName"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvBookingNote"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:visibility="gone"
+            android:text="@string/service_missing_price_note"
+            android:textColor="@color/grey_medium"
+            android:textSize="13sp"
+            app:layout_constraintTop_toBottomOf="@id/tvBookingTotal"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
             android:id="@+id/tvDateTimeLabel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -141,7 +167,7 @@
             android:text="@string/label_date_time"
             android:textColor="@color/grey_medium"
             android:textSize="13sp"
-            app:layout_constraintTop_toBottomOf="@id/tvServiceName"
+            app:layout_constraintTop_toBottomOf="@id/tvBookingNote"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 

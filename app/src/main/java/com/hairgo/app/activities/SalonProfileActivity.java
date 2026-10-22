@@ -20,6 +20,7 @@ import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.fragments.ReportProblemBottomSheet;
 import com.hairgo.app.models.Salon;
+import com.hairgo.app.models.ServiceDetail;
 import com.hairgo.app.utils.SalonHours;
 import com.hairgo.app.utils.SalonPhotos;
 import com.hairgo.app.utils.Snackbars;
@@ -85,7 +86,10 @@ public class SalonProfileActivity extends AppCompatActivity {
                 }
                 salonLoaded = true;
                 salonHours = SalonHours.fromDoc(salonData);
-                bindSalon(salon);
+                // Read the services with their price and duration. Old salons
+                // only have names saved, and those still work.
+                List<ServiceDetail> serviceDetails = SalonManager.getServiceDetails(salonData);
+                bindSalon(salon, serviceDetails);
                 loadSalonPhoto();
                 loadNextAvailableDate(salonId);
             }
@@ -137,7 +141,7 @@ public class SalonProfileActivity extends AppCompatActivity {
                 avgRating, services);
     }
 
-    private void bindSalon(Salon salon) {
+    private void bindSalon(Salon salon, List<ServiceDetail> serviceDetails) {
         progress.setVisibility(View.GONE);
         contentGroup.setVisibility(View.VISIBLE);
 
@@ -154,7 +158,7 @@ public class SalonProfileActivity extends AppCompatActivity {
 
         RecyclerView rvServices = findViewById(R.id.rvServices);
         rvServices.setLayoutManager(new LinearLayoutManager(this));
-        rvServices.setAdapter(new ServiceAdapter(salon.getServices()));
+        rvServices.setAdapter(new ServiceAdapter(serviceDetails));
 
         findViewById(R.id.btnBook).setOnClickListener(v -> {
             Intent intent = new Intent(this, BookAppointmentActivity.class);

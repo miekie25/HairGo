@@ -352,6 +352,12 @@
     <string name="service_duration_minutes">%1$dmin</string>
     <string name="service_chip_text">%1$s - %2$s - %3$s</string>
 
+    <!-- Client: service lines and booking totals -->
+    <string name="service_total">Total: %1$s - %2$dmin</string>
+    <string name="service_total_duration">Total: %1$dmin</string>
+    <string name="service_missing_price_note">Some services have no price set</string>
+    <string name="booking_total_no_price">Total price not set - %1$dmin</string>
+
     <string name="saving_services">Saving…</string>
     <string name="services_saved">Services updated</string>
     <string name="services_save_failed">Could not save services</string>

@@ -5,6 +5,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -18,9 +19,12 @@ import com.hairgo.app.R;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.OwnerManager;
 import com.hairgo.app.models.OwnerBooking;
+import com.hairgo.app.models.ServiceDetail;
 import com.hairgo.app.utils.Snackbars;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -129,7 +133,10 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
 
         String clientName = booking.getClientName();
         tvClientName.setText(clientName.isEmpty() ? "Unknown client" : clientName);
-        tvServiceName.setText(booking.getServiceName());
+
+        TextView tvBookingTotal = findViewById(R.id.tvBookingTotal);
+        TextView tvBookingNote = findViewById(R.id.tvBookingNote);
+        bindServices(booking, tvServiceName, tvBookingTotal, tvBookingNote);
 
         if (booking.getDateTime() != null) {
             SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy • HH:mm", Locale.getDefault());
@@ -194,6 +201,65 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
         tvPhone.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0);
         tvPhone.setOnClickListener(null);
         tvPhone.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Shows one line per saved service with its price and duration, then the
+     * booking total. Old bookings have no saved services, so they keep the
+     * plain service name and hide the total.
+     */
+    private void bindServices(OwnerBooking booking, TextView tvServiceName,
+                              TextView tvBookingTotal, TextView tvBookingNote) {
+        if (!booking.hasServiceDetails()) {
+            tvServiceName.setText(booking.getServiceName());
+            tvBookingTotal.setVisibility(View.GONE);
+            tvBookingNote.setVisibility(View.GONE);
+            return;
+        }
+
+        List<String> lines = new ArrayList<>();
+        for (ServiceDetail detail : booking.getServiceDetails()) {
+            lines.add(getString(R.string.service_chip_text,
+                    detail.getName(),
+                    formatServicePrice(detail),
+                    getString(R.string.service_duration_minutes, detail.getDurationMinutes())));
+        }
+        tvServiceName.setText(TextUtils.join("\n", lines));
+
+        Double totalPrice = booking.getTotalPrice();
+        int totalDuration = booking.getTotalDurationMinutes();
+        if (totalPrice == null) {
+            if (totalDuration > 0) {
+                tvBookingTotal.setText(getString(R.string.booking_total_no_price, totalDuration));
+                tvBookingTotal.setVisibility(View.VISIBLE);
+            } else {
+                tvBookingTotal.setVisibility(View.GONE);
+            }
+            tvBookingNote.setVisibility(View.GONE);
+            return;
+        }
+
+        tvBookingTotal.setText(getString(R.string.service_total,
+                getString(R.string.service_price_rand, formatPriceValue(totalPrice)),
+                totalDuration));
+        tvBookingTotal.setVisibility(View.VISIBLE);
+        tvBookingNote.setVisibility(booking.hasUnpricedServices() ? View.VISIBLE : View.GONE);
+    }
+
+    /** "R150.50" when priced, otherwise the "Price not set" text. */
+    private String formatServicePrice(ServiceDetail detail) {
+        if (!detail.hasPrice()) {
+            return getString(R.string.service_price_not_set);
+        }
+        return getString(R.string.service_price_rand, formatPriceValue(detail.getPrice()));
+    }
+
+    /** Whole rands show no decimals; cents always show two. */
+    private String formatPriceValue(double price) {
+        if (price == Math.rint(price)) {
+            return String.valueOf((long) price);
+        }
+        return String.format(Locale.US, "%.2f", price);
     }
 
     private void bindNotes(String notes) {

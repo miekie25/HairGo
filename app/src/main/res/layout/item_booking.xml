@@ -104,6 +104,19 @@
             app:layout_constraintStart_toEndOf="@id/ivDateIcon"
             app:layout_constraintEnd_toStartOf="@id/ivChevron"/>
 
+        <TextView
+            android:id="@+id/tvBookingTotal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:visibility="gone"
+            android:textColor="@color/grey_dark"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/tvDateTime"
+            app:layout_constraintStart_toStartOf="@id/tvSalonName"
+            app:layout_constraintEnd_toStartOf="@id/ivChevron"/>
+
         <ImageView
             android:id="@+id/ivChevron"
             android:layout_width="20dp"
