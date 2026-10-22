@@ -21,6 +21,7 @@ public class Booking {
     private String status; // pending, confirmed, completed, cancelled, expired
     private int salonImageRes; // local drawable, 0 means use the placeholder
     private String notes; // optional free-text the client wrote when booking
+    private PaymentDetails paymentDetails; // null for bookings made before payments
 
     public Booking() {
         this.serviceNames = new ArrayList<>();
@@ -134,4 +135,6 @@ public class Booking {
     public int getSalonImageRes() { return salonImageRes; }
     public String getNotes() { return notes == null ? "" : notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public PaymentDetails getPaymentDetails() { return paymentDetails; }
+    public void setPaymentDetails(PaymentDetails paymentDetails) { this.paymentDetails = paymentDetails; }
 }

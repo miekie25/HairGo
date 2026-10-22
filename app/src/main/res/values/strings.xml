@@ -118,6 +118,53 @@
     <string name="booking_cancelled">Booking cancelled.</string>
     <string name="booking_cancel_failed">Could not cancel the booking: %1$s</string>
 
+    <!-- Client payments -->
+    <string name="payment_choice_title">Choose payment</string>
+    <string name="payment_card_unavailable_unpriced">Card payments are unavailable because this booking does not have a complete price. You can pay in cash at the salon.</string>
+    <string name="payment_deposit_option">Pay 10%% deposit by card — R%1$s now, R%2$s at the salon</string>
+    <string name="payment_full_option">Pay full amount by card — R%1$s</string>
+    <string name="payment_cash_option">Pay full amount in cash at the salon — R%1$s</string>
+    <string name="payment_cash_option_unknown">Pay full amount in cash at the salon</string>
+    <string name="payment_failed_no_booking">Payment failed. Nothing was charged.</string>
+    <string name="payment_summary_label">Payment</string>
+    <string name="payment_deposit_summary">Deposit paid: R%1$s\nOutstanding: R%2$s</string>
+    <string name="payment_full_summary">Paid in full by card: R%1$s</string>
+    <string name="payment_cash_summary">Cash due at salon: R%1$s</string>
+    <string name="payment_cash_summary_unknown">Cash due at salon</string>
+    <string name="title_card_payment">Card payment</string>
+    <string name="label_amount_due">Amount to pay</string>
+    <string name="payment_deposit_label">Deposit</string>
+    <string name="payment_full_label">Full amount</string>
+    <string name="payment_additional_deposit_label">Additional deposit</string>
+    <string name="payment_remaining_balance_label">Remaining balance</string>
+    <string name="card_demo_note">Demo only — no real payment is taken. Any 16-digit card succeeds; a number ending in 0000 simulates failure.</string>
+    <string name="hint_cardholder_name">Name on card</string>
+    <string name="hint_card_number">Card number</string>
+    <string name="hint_card_expiry">MM/YY</string>
+    <string name="hint_card_cvv">CVV</string>
+    <string name="btn_pay_amount">Pay %1$s</string>
+    <string name="error_cardholder_required">Enter the name on the card.</string>
+    <string name="error_card_number_invalid">Enter a 16-digit card number.</string>
+    <string name="error_card_expiry_invalid">Enter expiry as MM/YY.</string>
+    <string name="error_card_cvv_invalid">Enter the 3-digit CVV.</string>
+    <string name="title_payment_result">Payment</string>
+    <string name="payment_processing_title">Processing payment…</string>
+    <string name="payment_processing_message">Please wait while we process your card payment.</string>
+    <string name="payment_processing_amount">Amount: %1$s</string>
+    <string name="payment_success_title">Payment successful</string>
+    <string name="payment_success_message">Your payment went through. Finishing up now.</string>
+    <string name="payment_failed_title">Payment failed</string>
+    <string name="payment_failed_message">No payment was taken. Please check your card and try again.</string>
+    <string name="btn_try_again">Try again</string>
+    <string name="card_ending">Card ending %1$s</string>
+    <string name="saving_booking">Saving booking…</string>
+    <string name="title_confirmation">Confirmation</string>
+    <string name="confirmation_service_line">Service: %1$s</string>
+    <string name="confirmation_date_time_line">Date &amp; Time: %1$s</string>
+    <string name="confirmation_total">Total: %1$s</string>
+    <string name="btn_view_booking">View booking</string>
+    <string name="btn_done">Done</string>
+
     <string name="select_time_title">Select Time</string>
     <string name="fully_booked_title">Fully Booked</string>
     <string name="fully_booked_message">No available slots for this date. Please choose another date.</string>
@@ -169,6 +216,12 @@
     <string name="booking_updated">Booking updated — waiting for the salon to confirm.</string>
     <string name="reschedule_confirm_title">Reschedule this booking?</string>
     <string name="reschedule_confirm_message">Saving sends this booking back to the salon to confirm the new date and time.</string>
+    <string name="edit_payment_required_title">Additional payment required</string>
+    <string name="edit_deposit_payment_required_message">Your new total is R%1$s. An additional deposit of R%2$s is due now by card. R%3$s will remain due at the salon.</string>
+    <string name="edit_full_payment_required_message">Your new total is R%1$s. The remaining R%2$s is due now by card.</string>
+    <string name="error_edit_card_needs_prices">Every service must have a price before you can save changes to a card-paid booking.</string>
+    <string name="error_edit_payment_load_failed">Could not load this booking\'s payment details. Please close and try again.</string>
+    <string name="error_edit_card_price_unknown">Cannot update this card payment because one or more selected services do not have a price. Please contact the salon.</string>
 
     <!-- Profile Screen (Nikita's new strings) -->
     <string name="profile_initials_placeholder">JD</string>

@@ -61,7 +61,9 @@ Nine top-level collections. These field lists are the de facto schema:
   hours (per-day open/close map), isDeleted
 - `bookings` - bookingID, clientID, clientName, salonID, salonName,
   serviceNames[], dateTime, status (pending/confirmed/completed/cancelled/
-  expired), notes, isDeleted
+  expired), notes, isDeleted, paymentType (deposit/full/cash), paymentStatus
+  (partial/paid/due), amountPaid, amountOutstanding (payment fields are added
+  only to new bookings; older bookings keep working without them)
 - `reviews` - reviewID, bookingID, clientID, salonID, rating, comment,
   createdAt, isDeleted
 - `reports` - reportID, userID, type (app/salon), salonID, bookingID, category,

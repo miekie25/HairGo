@@ -5,12 +5,17 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.RadioButton;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -19,6 +24,8 @@ import com.google.firebase.Timestamp;
 import com.hairgo.app.R;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.SalonManager;
+import com.hairgo.app.models.Booking;
+import com.hairgo.app.models.PaymentDetails;
 import com.hairgo.app.models.Salon;
 import com.hairgo.app.models.ServiceDetail;
 import com.hairgo.app.utils.Notifications;
@@ -40,6 +47,9 @@ public class BookAppointmentActivity extends AppCompatActivity {
     private TextView tvSelectedServices, tvSelectedDate, tvSelectedTime, tvError;
     private TextView tvServiceTotal, tvServicePriceNote;
     private View llServiceSummary;
+    private View cardPaymentOptions;
+    private TextView tvPaymentNote;
+    private RadioButton rbDeposit, rbFull, rbCash;
     private EditText etNotes;
 
     // The services the salon offers, with their price and duration.
@@ -61,6 +71,37 @@ public class BookAppointmentActivity extends AppCompatActivity {
     private String editingBookingId;
     private List<String> editingServiceNames;
     private long editingDateTimeMillis;
+
+    private PaymentDetails editingPaymentDetails;
+    private boolean editingBookingLoadSucceeded = false;
+    private boolean pendingEditPayment = false;
+    private PaymentDetails pendingCardPayment;
+    private Salon pendingCardSalon;
+    private String pendingCardClientId;
+    private AlertDialog savingDialog;
+
+
+    private final ActivityResultLauncher<Intent> cardPaymentLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                PaymentDetails payment = pendingCardPayment;
+                Salon salon = pendingCardSalon;
+                String clientId = pendingCardClientId;
+                pendingCardPayment = null;
+                pendingCardSalon = null;
+                pendingCardClientId = null;
+
+                if (result.getResultCode() == RESULT_OK
+                        && payment != null && salon != null && clientId != null) {
+                    if (pendingEditPayment) {
+                        completeEditWithPayment(salon, payment);
+                    } else {
+                        createBooking(salon, clientId, payment);
+                    }
+                } else {
+                    enableConfirmButton();
+                    pendingEditPayment = false;
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +141,11 @@ public class BookAppointmentActivity extends AppCompatActivity {
         tvServiceTotal = findViewById(R.id.tvServiceTotal);
         tvServicePriceNote = findViewById(R.id.tvServicePriceNote);
         llServiceSummary = findViewById(R.id.llServiceSummary);
+        cardPaymentOptions = findViewById(R.id.cardPaymentOptions);
+        tvPaymentNote = findViewById(R.id.tvPaymentNote);
+        rbDeposit = findViewById(R.id.rbDeposit);
+        rbFull = findViewById(R.id.rbFull);
+        rbCash = findViewById(R.id.rbCash);
 
         LinearLayout rowService = findViewById(R.id.rowService);
         LinearLayout rowDate = findViewById(R.id.rowDate);
@@ -126,6 +172,9 @@ public class BookAppointmentActivity extends AppCompatActivity {
                         for (ServiceDetail detail : BookingManager.getServiceDetails(booking)) {
                             editingServiceDetails.put(detail.getName(), detail);
                         }
+                        editingPaymentDetails = BookingManager.getPaymentDetails(booking);
+                        editingBookingLoadSucceeded = true;
+
                         loadSalon(salonId);
                     }
 
@@ -257,6 +306,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
             tvSelectedServices.setText(R.string.hint_choose_services);
             tvSelectedServices.setTextColor(getColor(R.color.grey_medium));
             llServiceSummary.setVisibility(View.GONE);
+            updatePaymentOptions();
             return;
         }
 
@@ -292,6 +342,46 @@ public class BookAppointmentActivity extends AppCompatActivity {
 
         tvServicePriceNote.setVisibility(missingPrice ? View.VISIBLE : View.GONE);
         llServiceSummary.setVisibility(View.VISIBLE);
+        updatePaymentOptions();
+    }
+
+    private void updatePaymentOptions() {
+        if (isEditing() || selectedServices.isEmpty()) {
+            cardPaymentOptions.setVisibility(View.GONE);
+            return;
+        }
+
+        Double totalPrice = Booking.sumPrice(selectedServices);
+        boolean hasCompletePrice = totalPrice != null && allSelectedServicesPriced();
+        boolean canPayByCard = hasCompletePrice && totalPrice > 0;
+
+        if (canPayByCard) {
+            PaymentDetails deposit = PaymentDetails.depositByCard(totalPrice);
+            rbDeposit.setText(getString(R.string.payment_deposit_option,
+                    formatPrice(deposit.getAmountPaid()),
+                    formatPrice(deposit.getAmountOutstanding())));
+            rbFull.setText(getString(R.string.payment_full_option,
+                    formatPrice(totalPrice)));
+            rbDeposit.setVisibility(View.VISIBLE);
+            rbFull.setVisibility(View.VISIBLE);
+            tvPaymentNote.setVisibility(View.GONE);
+        } else {
+            rbDeposit.setVisibility(View.GONE);
+            rbFull.setVisibility(View.GONE);
+            tvPaymentNote.setVisibility(View.VISIBLE);
+        }
+
+        rbCash.setText(hasCompletePrice
+                ? getString(R.string.payment_cash_option, formatPrice(totalPrice))
+                : getString(R.string.payment_cash_option_unknown));
+
+        if (rbDeposit.getVisibility() != View.VISIBLE) {
+            rbCash.setChecked(true);
+        } else if (!rbDeposit.isChecked() && !rbFull.isChecked() && !rbCash.isChecked()) {
+            rbDeposit.setChecked(true);
+        }
+
+        cardPaymentOptions.setVisibility(View.VISIBLE);
     }
 
     /** True when a service with this name is already ticked. */
@@ -607,6 +697,38 @@ public class BookAppointmentActivity extends AppCompatActivity {
             return;
         }
 
+        PaymentDetails payment = selectedPayment();
+        if (PaymentDetails.TYPE_CASH.equals(payment.getType())) {
+            createBooking(salon, clientId, payment);
+        } else {
+            startCardPayment(salon, clientId, payment);
+        }
+    }
+
+    private PaymentDetails selectedPayment() {
+        Double totalPrice = Booking.sumPrice(selectedServices);
+        boolean hasCompletePrice = totalPrice != null && allSelectedServicesPriced();
+        if (hasCompletePrice && totalPrice > 0) {
+            if (rbDeposit.isChecked()) return PaymentDetails.depositByCard(totalPrice);
+            if (rbFull.isChecked()) return PaymentDetails.fullByCard(totalPrice);
+        }
+        return PaymentDetails.cashAtSalon(hasCompletePrice ? totalPrice : null);
+    }
+
+    private void startCardPayment(Salon salon, String clientId, PaymentDetails payment) {
+        pendingCardPayment = payment;
+        pendingCardSalon = salon;
+        pendingCardClientId = clientId;
+
+        Intent intent = new Intent(this, MockCardPaymentActivity.class);
+        intent.putExtra(MockCardPaymentActivity.EXTRA_AMOUNT,
+                payment.getAmountPaid() == null ? 0.0 : payment.getAmountPaid());
+        intent.putExtra(MockCardPaymentActivity.EXTRA_PAYMENT_TYPE, payment.getType());
+        cardPaymentLauncher.launch(intent);
+    }
+
+    private void createBooking(Salon salon, String clientId, PaymentDetails payment) {
+        showSavingDialog();
         new BookingManager().createBookingWithDetails(
                 clientId,
                 salon.getSalonId(),
@@ -614,9 +736,12 @@ public class BookAppointmentActivity extends AppCompatActivity {
                 new ArrayList<>(selectedServices),
                 selectedDateTime.getTime(),
                 etNotes.getText().toString(),
+                payment,
                 new BookingManager.BookingCreatedCallback() {
                     @Override
                     public void onSuccess(String bookingId) {
+                        dismissSavingDialog();
+
                         // Tell the user, then line up the 1 day / 1 hour reminders.
                         Notifications.requestPermission(BookAppointmentActivity.this);
                         Notifications.show(BookAppointmentActivity.this, bookingId.hashCode(),
@@ -627,17 +752,71 @@ public class BookAppointmentActivity extends AppCompatActivity {
                         ReminderScheduler.schedule(BookAppointmentActivity.this, bookingId,
                                 salon.getName(), selectedDateTime.getTime());
 
-                        Snackbars.showThen(findViewById(android.R.id.content),
-                                R.string.booking_created_success, BookAppointmentActivity.this::openBookingsTab);
+                        openConfirmation(bookingId, salon, payment);
                     }
 
                     @Override
                     public void onFailure(String errorMessage) {
                         Log.w("BookAppointment", "createBooking failed: " + errorMessage);
-                        findViewById(R.id.btnConfirmBooking).setEnabled(true);
+                        dismissSavingDialog();
+                        enableConfirmButton();
                         showError(errorMessage);
                     }
                 });
+    }
+
+    private boolean allSelectedServicesPriced() {
+        if (selectedServices.isEmpty()) return false;
+        for (ServiceDetail detail : selectedServices) {
+            if (!detail.hasPrice()) return false;
+        }
+        return true;
+    }
+
+    private void enableConfirmButton() {
+        findViewById(R.id.btnConfirmBooking).setEnabled(true);
+    }
+
+    private void showSavingDialog() {
+        if (savingDialog != null && savingDialog.isShowing()) return;
+
+        int padding = Math.round(24 * getResources().getDisplayMetrics().density);
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setGravity(Gravity.CENTER_HORIZONTAL);
+        container.setPadding(padding, padding, padding, padding);
+
+        ProgressBar progressBar = new ProgressBar(this);
+        container.addView(progressBar);
+
+        TextView label = new TextView(this);
+        label.setText(R.string.saving_booking);
+        label.setTextColor(getColor(R.color.heading));
+        label.setTextSize(15);
+        label.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        labelParams.topMargin = Math.round(12 * getResources().getDisplayMetrics().density);
+        container.addView(label, labelParams);
+
+        savingDialog = new AlertDialog.Builder(this)
+                .setView(container)
+                .setCancelable(false)
+                .create();
+        savingDialog.show();
+    }
+
+    private void dismissSavingDialog() {
+        if (savingDialog != null && savingDialog.isShowing()) {
+            savingDialog.dismiss();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        dismissSavingDialog();
+        super.onDestroy();
     }
 
     /**
@@ -645,14 +824,76 @@ public class BookAppointmentActivity extends AppCompatActivity {
      * pending, so the salon re-confirms the new details.
      */
     private void updateBooking(Salon salon) {
+        if (!editingBookingLoadSucceeded) {
+            showError(getString(R.string.error_edit_payment_load_failed));
+            enableConfirmButton();
+            return;
+        }
+
+        Double newTotal = Booking.sumPrice(selectedServices);
+        boolean hasCompletePrice = newTotal != null && allSelectedServicesPriced();
+
+        if (editingPaymentDetails != null && editingPaymentDetails.isCardPayment()) {
+            if (!hasCompletePrice) {
+                showError(getString(R.string.error_edit_card_needs_prices));
+                enableConfirmButton();
+                return;
+            }
+
+            double additionalAmount = editingPaymentDetails.additionalPaymentForNewTotal(newTotal);
+            if (additionalAmount > 0) {
+                PaymentDetails updatedPayment = editingPaymentDetails.recalculateForNewTotal(newTotal);
+                String message;
+                if (PaymentDetails.TYPE_DEPOSIT.equals(editingPaymentDetails.getType())) {
+                    double outstanding = updatedPayment.getAmountOutstanding() == null ? 0.0 : updatedPayment.getAmountOutstanding();
+                    message = getString(R.string.edit_deposit_payment_required_message,
+                            formatPrice(newTotal), formatPrice(additionalAmount), formatPrice(outstanding));
+                } else {
+                    message = getString(R.string.edit_full_payment_required_message,
+                            formatPrice(newTotal), formatPrice(additionalAmount));
+                }
+
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.edit_payment_required_title)
+                        .setMessage(message)
+                        .setPositiveButton(R.string.ok, (dialog, which) -> {
+                            pendingCardPayment = updatedPayment;
+                            pendingCardSalon = salon;
+                            pendingCardClientId = FirebaseAuth.getInstance().getCurrentUser() != null
+                                    ? FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+                            pendingEditPayment = true;
+
+                            Intent intent = new Intent(BookAppointmentActivity.this, MockCardPaymentActivity.class);
+                            intent.putExtra(MockCardPaymentActivity.EXTRA_AMOUNT, additionalAmount);
+                            intent.putExtra(MockCardPaymentActivity.EXTRA_PAYMENT_TYPE, updatedPayment.getType());
+                            intent.putExtra(MockCardPaymentActivity.EXTRA_IS_ADDITIONAL_PAYMENT, true);
+                            cardPaymentLauncher.launch(intent);
+                        })
+                        .setNegativeButton(R.string.cancel, (dialog, which) -> enableConfirmButton())
+                        .show();
+                return;
+            }
+
+            PaymentDetails updatedPayment = editingPaymentDetails.recalculateForNewTotal(newTotal);
+            completeEditWithPayment(salon, updatedPayment);
+        } else {
+            PaymentDetails updatedPayment = null;
+            if (editingPaymentDetails != null && PaymentDetails.TYPE_CASH.equals(editingPaymentDetails.getType())) {
+                updatedPayment = editingPaymentDetails.recalculateForNewTotal(newTotal == null ? 0.0 : newTotal);
+            }
+            completeEditWithPayment(salon, updatedPayment);
+        }
+    }
+
+    private void completeEditWithPayment(Salon salon, PaymentDetails payment) {
         new BookingManager().updateBookingWithDetails(
                 editingBookingId,
                 new ArrayList<>(selectedServices),
                 selectedDateTime.getTime(),
+                payment,
                 new BookingManager.BookingCallback() {
                     @Override
                     public void onSuccess() {
-                        // The old time no longer applies; re-arm reminders for the new one.
                         ReminderScheduler.cancel(BookAppointmentActivity.this, editingBookingId);
                         ReminderScheduler.schedule(BookAppointmentActivity.this, editingBookingId,
                                 salon.getName(), selectedDateTime.getTime());
@@ -667,17 +908,33 @@ public class BookAppointmentActivity extends AppCompatActivity {
                     @Override
                     public void onFailure(String errorMessage) {
                         Log.w("BookAppointment", "updateBookingWithDetails failed: " + errorMessage);
-                        findViewById(R.id.btnConfirmBooking).setEnabled(true);
+                        enableConfirmButton();
+                        pendingEditPayment = false;
                         showError(errorMessage);
                     }
                 });
     }
 
-    /** Returns to the dashboard already showing the bookings tab. */
-    private void openBookingsTab() {
-        Intent intent = new Intent(this, ClientDashboardActivity.class);
-        intent.putExtra(ClientDashboardActivity.EXTRA_SELECTED_TAB, R.id.nav_bookings);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    private void openConfirmation(String bookingId, Salon salon, PaymentDetails payment) {
+        Double totalPrice = Booking.sumPrice(selectedServices);
+        int totalDuration = Booking.sumDuration(selectedServices);
+
+        Intent intent = new Intent(this, BookingConfirmationActivity.class);
+        intent.putExtra(BookingConfirmationActivity.EXTRA_BOOKING_ID, bookingId);
+        intent.putExtra(BookingConfirmationActivity.EXTRA_SALON_NAME, salon.getName());
+        intent.putExtra(BookingConfirmationActivity.EXTRA_SERVICE_LABEL,
+                TextUtils.join(", ", ServiceDetail.toNames(selectedServices)));
+        intent.putExtra(BookingConfirmationActivity.EXTRA_DATE_TIME,
+                selectedDateTime.getTimeInMillis());
+        intent.putExtra(BookingConfirmationActivity.EXTRA_TOTAL_PRICE,
+                totalPrice == null ? Double.NaN : totalPrice);
+        intent.putExtra(BookingConfirmationActivity.EXTRA_TOTAL_DURATION, totalDuration);
+        intent.putExtra(BookingConfirmationActivity.EXTRA_PAYMENT_TYPE, payment.getType());
+        intent.putExtra(BookingConfirmationActivity.EXTRA_AMOUNT_PAID,
+                payment.getAmountPaid() == null ? Double.NaN : payment.getAmountPaid());
+        intent.putExtra(BookingConfirmationActivity.EXTRA_AMOUNT_OUTSTANDING,
+                payment.getAmountOutstanding() == null
+                        ? Double.NaN : payment.getAmountOutstanding());
         startActivity(intent);
         finish();
     }

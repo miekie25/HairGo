@@ -23,6 +23,7 @@ import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.fragments.LeaveReviewBottomSheet;
 import com.hairgo.app.fragments.ReportProblemBottomSheet;
 import com.hairgo.app.models.Booking;
+import com.hairgo.app.models.PaymentDetails;
 import com.hairgo.app.models.ServiceDetail;
 import com.hairgo.app.utils.BookingSections;
 import com.hairgo.app.utils.MapsHelper;
@@ -151,6 +152,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
 
         Object notes = raw.get("notes");
         booking.setNotes(notes == null ? "" : notes.toString());
+        booking.setPaymentDetails(BookingManager.getPaymentDetails(raw));
 
         // New bookings keep a copy of the chosen services. Old bookings have
         // none, so the saved totals are only used when they are there.
@@ -194,6 +196,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
 
         tvSalonName.setText(booking.getSalonName());
         bindServices(booking, tvServiceName, tvBookingTotal, tvBookingNote);
+        bindPayment(booking);
 
         // Location is loaded separately because it lives on the salon, not the
         // booking. The row hides itself if the salon cannot be resolved.
@@ -309,6 +312,51 @@ public class BookingDetailsActivity extends AppCompatActivity {
                 totalDuration));
         tvBookingTotal.setVisibility(View.VISIBLE);
         tvBookingNote.setVisibility(booking.hasUnpricedServices() ? View.VISIBLE : View.GONE);
+    }
+
+    private void bindPayment(Booking booking) {
+        TextView label = findViewById(R.id.tvPaymentLabel);
+        TextView value = findViewById(R.id.tvPayment);
+        String summary = paymentSummary(booking.getPaymentDetails());
+
+        if (summary == null) {
+            label.setVisibility(View.GONE);
+            value.setVisibility(View.GONE);
+            return;
+        }
+
+        value.setText(summary);
+        label.setVisibility(View.VISIBLE);
+        value.setVisibility(View.VISIBLE);
+    }
+
+    private String paymentSummary(PaymentDetails payment) {
+        if (payment == null) return null;
+
+        if (PaymentDetails.TYPE_CASH.equals(payment.getType())) {
+            if (payment.getAmountOutstanding() == null) {
+                return getString(R.string.payment_cash_summary_unknown);
+            }
+            return getString(R.string.payment_cash_summary,
+                    formatPriceValue(payment.getAmountOutstanding()));
+        }
+
+        if (PaymentDetails.TYPE_DEPOSIT.equals(payment.getType())) {
+            if (payment.getAmountPaid() == null || payment.getAmountOutstanding() == null) {
+                return null;
+            }
+            return getString(R.string.payment_deposit_summary,
+                    formatPriceValue(payment.getAmountPaid()),
+                    formatPriceValue(payment.getAmountOutstanding()));
+        }
+
+        if (PaymentDetails.TYPE_FULL.equals(payment.getType())) {
+            if (payment.getAmountPaid() == null) return null;
+            return getString(R.string.payment_full_summary,
+                    formatPriceValue(payment.getAmountPaid()));
+        }
+
+        return null;
     }
 
     /** "R150.50" when priced, otherwise the "Price not set" text. */

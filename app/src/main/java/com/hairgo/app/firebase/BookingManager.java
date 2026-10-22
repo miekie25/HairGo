@@ -12,6 +12,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.Transaction;
 import com.google.firebase.firestore.WriteBatch;
 import com.hairgo.app.models.Booking;
+import com.hairgo.app.models.PaymentDetails;
 import com.hairgo.app.models.ServiceDetail;
 
 import java.text.SimpleDateFormat;
@@ -108,6 +109,10 @@ public class BookingManager {
         }
         Object value = bookingData.get("totalDuration");
         return value instanceof Number ? ((Number) value).intValue() : 0;
+    }
+
+    public static PaymentDetails getPaymentDetails(Map<String, Object> bookingData) {
+        return PaymentDetails.fromMap(bookingData);
     }
 
     /**
@@ -222,7 +227,17 @@ public class BookingManager {
                                          List<ServiceDetail> serviceDetails, Date dateTime,
                                          String notes, BookingCreatedCallback callback) {
         createBookingInternal(null, clientId, salonId, salonName,
-                ServiceDetail.toNames(serviceDetails), serviceDetails, dateTime, notes, callback);
+                ServiceDetail.toNames(serviceDetails), serviceDetails, dateTime, notes,
+                null, callback);
+    }
+
+    public void createBookingWithDetails(String clientId, String salonId, String salonName,
+                                         List<ServiceDetail> serviceDetails, Date dateTime,
+                                         String notes, PaymentDetails payment,
+                                         BookingCreatedCallback callback) {
+        createBookingInternal(null, clientId, salonId, salonName,
+                ServiceDetail.toNames(serviceDetails), serviceDetails, dateTime, notes,
+                payment, callback);
     }
 
     /**
@@ -248,7 +263,7 @@ public class BookingManager {
                               BookingCreatedCallback callback) {
         // The old way has only names, so no service copy is saved.
         createBookingInternal(documentId, clientId, salonId, salonName,
-                serviceNames, null, dateTime, notes, callback);
+                serviceNames, null, dateTime, notes, null, callback);
     }
 
     /**
@@ -258,7 +273,8 @@ public class BookingManager {
     private void createBookingInternal(String documentId, String clientId, String salonId,
                                        String salonName, List<String> serviceNames,
                                        List<ServiceDetail> serviceDetails, Date dateTime,
-                                       String notes, BookingCreatedCallback callback) {
+                                       String notes, PaymentDetails payment,
+                                       BookingCreatedCallback callback) {
         // Re-check the rule here, not only in the UI: nothing before now +
         // the notice period may be written.
         if (dateTime == null
@@ -281,7 +297,7 @@ public class BookingManager {
         // created, just without a name.
         if (clientId == null || clientId.isEmpty()) {
             writeBooking(ref, clientId, "", salonId, salonName, names, serviceDetails,
-                    dateTime, note, callback);
+                    dateTime, note, payment, callback);
             return;
         }
 
@@ -292,18 +308,19 @@ public class BookingManager {
                     String clientName = ((first == null ? "" : first) + " "
                             + (last == null ? "" : last)).trim();
                     writeBooking(ref, clientId, clientName, salonId, salonName, names,
-                            serviceDetails, dateTime, note, callback);
+                            serviceDetails, dateTime, note, payment, callback);
                 })
                 .addOnFailureListener(e ->
                         writeBooking(ref, clientId, "", salonId, salonName, names,
-                                serviceDetails, dateTime, note, callback));
+                                serviceDetails, dateTime, note, payment, callback));
     }
 
     /** Writes the booking document once the client's name (possibly empty) is known. */
     private void writeBooking(DocumentReference ref, String clientId, String clientName,
                               String salonId, String salonName, List<String> names,
                               List<ServiceDetail> serviceDetails,
-                              Date dateTime, String notes, BookingCreatedCallback callback) {
+                              Date dateTime, String notes, PaymentDetails payment,
+                              BookingCreatedCallback callback) {
         Map<String, Object> booking = new HashMap<>();
         booking.put("bookingID", ref.getId());
         booking.put("clientID", clientId);
@@ -326,6 +343,10 @@ public class BookingManager {
                 booking.put("totalPrice", totalPrice);
             }
             booking.put("totalDuration", Booking.sumDuration(serviceDetails));
+        }
+
+        if (payment != null) {
+            booking.putAll(payment.toMap());
         }
 
         // Claim the slot and write the booking in one transaction. A competing
@@ -531,7 +552,7 @@ public class BookingManager {
      */
     public void updateBookingDetails(String bookingId, List<String> serviceNames, Date dateTime,
                                      BookingCallback callback) {
-        updateBookingInternal(bookingId, serviceNames, null, dateTime, callback);
+        updateBookingInternal(bookingId, serviceNames, null, dateTime, null, callback);
     }
 
     /**
@@ -540,17 +561,28 @@ public class BookingManager {
      */
     public void updateBookingWithDetails(String bookingId, List<ServiceDetail> serviceDetails,
                                          Date dateTime, BookingCallback callback) {
+        updateBookingWithDetails(bookingId, serviceDetails, dateTime, null, callback);
+    }
+
+    /**
+     * Same as above, but also saves recalculated payment details in the same
+     * transaction.
+     */
+    public void updateBookingWithDetails(String bookingId, List<ServiceDetail> serviceDetails,
+                                         Date dateTime, PaymentDetails payment,
+                                         BookingCallback callback) {
         updateBookingInternal(bookingId, ServiceDetail.toNames(serviceDetails),
-                serviceDetails, dateTime, callback);
+                serviceDetails, dateTime, payment, callback);
     }
 
     /**
      * Shared code behind both update versions. The serviceDetails list can be
-     * null, which means "names only".
+     * null, which means "names only"; the payment can be null when it should
+     * not change.
      */
     private void updateBookingInternal(String bookingId, List<String> serviceNames,
                                        List<ServiceDetail> serviceDetails, Date dateTime,
-                                       BookingCallback callback) {
+                                       PaymentDetails payment, BookingCallback callback) {
         // Reschedules obey the same notice rule as new bookings.
         if (dateTime == null
                 || dateTime.getTime() < System.currentTimeMillis() + MIN_NOTICE_MINUTES * 60_000L) {
@@ -606,6 +638,17 @@ public class BookingManager {
                             update.put("totalPrice", FieldValue.delete());
                             update.put("totalDuration", FieldValue.delete());
                         }
+                    }
+
+                    if (payment != null) {
+                        Map<String, Object> paymentFields = payment.toMap();
+                        if (payment.getAmountPaid() == null) {
+                            paymentFields.put("amountPaid", FieldValue.delete());
+                        }
+                        if (payment.getAmountOutstanding() == null) {
+                            paymentFields.put("amountOutstanding", FieldValue.delete());
+                        }
+                        update.putAll(paymentFields);
                     }
 
                     tx.update(bookingRef, update);

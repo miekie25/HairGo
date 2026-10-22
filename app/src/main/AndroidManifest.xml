@@ -87,6 +87,19 @@
             android:exported="false" />
 
         <activity
+            android:name=".activities.MockCardPaymentActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".activities.PaymentResultActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.BookingConfirmationActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".activities.BookingDetailsActivity"
             android:exported="false" />
 

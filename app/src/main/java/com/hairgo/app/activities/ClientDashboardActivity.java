@@ -96,6 +96,19 @@ public class ClientDashboardActivity extends AppCompatActivity implements Notifi
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+
+        if (bottomNav != null) {
+            int requestedTab = intent.getIntExtra(EXTRA_SELECTED_TAB,
+                    bottomNav.getSelectedItemId());
+            bottomNav.setSelectedItemId(requestedTab);
+            intent.removeExtra(EXTRA_SELECTED_TAB);
+        }
+    }
+
+    @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(STATE_SELECTED_TAB, bottomNav.getSelectedItemId());
