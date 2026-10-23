@@ -13,7 +13,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
-import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.hairgo.app.R
 import com.hairgo.app.activities.UserDetailActivity
@@ -25,9 +24,10 @@ data class AdminUserModel(
     val userName: String = "",
     val email: String = "",
     val phone: String = "",
-    val role: String = "Client", // "Client" or "Salon Owner"
+    val role: String = "Client",
     val dateJoined: String = "",
-    val isActive: Boolean = true // Tracks active/deactivated state
+    val isActive: Boolean = true,
+    val createdAtMs: Long = 0L // Added for accurate chronological sorting
 )
 
 class AdminUsersFragment : Fragment() {
@@ -38,7 +38,9 @@ class AdminUsersFragment : Fragment() {
     private lateinit var tvEmptyUsers: TextView
 
     private val db = FirebaseFirestore.getInstance()
-    private var allUsersList = mutableListOf<AdminUserModel>()
+    private val allUsersList = mutableListOf<AdminUserModel>()
+    private val displayedUsersList = mutableListOf<AdminUserModel>()
+    private lateinit var usersAdapter: AdminUsersAdapter
 
     private var currentRoleFilter = "All"
     private var currentSortMode = SortMode.DATE_NEWEST
@@ -63,9 +65,20 @@ class AdminUsersFragment : Fragment() {
         rvUsers = view.findViewById(R.id.rvUsers)
         tvEmptyUsers = view.findViewById(R.id.tvEmptyUsers)
 
+        setupRecyclerView()
         setupRoleFilters()
         setupSortSelector()
         fetchUsersFromFirestore()
+    }
+
+    private fun setupRecyclerView() {
+        usersAdapter = AdminUsersAdapter(
+            users = displayedUsersList,
+            onItemClick = { user -> openUserDetail(user) },
+            onDeactivateClick = { user -> toggleUserStatus(user) }
+        )
+        rvUsers.layoutManager = LinearLayoutManager(requireContext())
+        rvUsers.adapter = usersAdapter
     }
 
     private fun setupRoleFilters() {
@@ -109,11 +122,12 @@ class AdminUsersFragment : Fragment() {
     }
 
     private fun fetchUsersFromFirestore() {
-        // Real-time listener for Firestore 'users' collection
         db.collection("users")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Toast.makeText(context, "Error fetching users: ${error.message}", Toast.LENGTH_SHORT).show()
+                    context?.let {
+                        Toast.makeText(it, "Error fetching users: ${error.message}", Toast.LENGTH_SHORT).show()
+                    }
                     return@addSnapshotListener
                 }
 
@@ -124,7 +138,6 @@ class AdminUsersFragment : Fragment() {
                     for (doc in snapshot.documents) {
                         val userId = doc.id
 
-                        // Handle user name variations across document schemas
                         val userName = doc.getString("name")
                             ?: doc.getString("userName")
                             ?: doc.getString("clientName")
@@ -135,7 +148,6 @@ class AdminUsersFragment : Fragment() {
                         val phone = doc.getString("phone") ?: doc.getString("phoneNumber") ?: ""
                         val role = doc.getString("role") ?: "Client"
 
-
                         val isActive = doc.getBoolean("isActive")
                             ?: doc.getBoolean("active")
                             ?: (doc.getBoolean("isSuspended") == false)
@@ -143,6 +155,8 @@ class AdminUsersFragment : Fragment() {
                         val timestamp = doc.getTimestamp("createdAt")
                             ?: doc.getTimestamp("joinedDate")
                             ?: doc.getTimestamp("dateTime")
+
+                        val timestampMs = timestamp?.toDate()?.time ?: 0L
 
                         val dateJoinedStr = if (timestamp != null) {
                             "Joined ${dateFormat.format(timestamp.toDate())}"
@@ -157,7 +171,8 @@ class AdminUsersFragment : Fragment() {
                             phone = phone,
                             role = role,
                             dateJoined = dateJoinedStr,
-                            isActive = isActive
+                            isActive = isActive,
+                            createdAtMs = timestampMs
                         )
                         allUsersList.add(user)
                     }
@@ -173,59 +188,64 @@ class AdminUsersFragment : Fragment() {
         db.collection("users").document(user.userId)
             .update("isActive", newStatus)
             .addOnSuccessListener {
-                Toast.makeText(context, "${user.userName} has been $actionText.", Toast.LENGTH_SHORT).show()
+                context?.let {
+                    Toast.makeText(it, "${user.userName} has been $actionText.", Toast.LENGTH_SHORT).show()
+                }
             }
             .addOnFailureListener { e ->
-                Toast.makeText(context, "Failed to update status: ${e.message}", Toast.LENGTH_SHORT).show()
+                context?.let {
+                    Toast.makeText(it, "Failed to update status: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
     }
 
     private fun applyFilterAndSort() {
-        // Filter by role
         val filtered = if (currentRoleFilter == "All") {
             allUsersList
         } else {
             allUsersList.filter { it.role.equals(currentRoleFilter, ignoreCase = true) }
         }
 
-        // Sort
         val sorted = when (currentSortMode) {
-            SortMode.DATE_NEWEST -> filtered
-            SortMode.DATE_OLDEST -> filtered.reversed()
+            SortMode.DATE_NEWEST -> filtered.sortedByDescending { it.createdAtMs }
+            SortMode.DATE_OLDEST -> filtered.sortedBy { it.createdAtMs }
             SortMode.ALPHA_AZ -> filtered.sortedBy { it.userName.lowercase() }
             SortMode.ALPHA_ZA -> filtered.sortedByDescending { it.userName.lowercase() }
         }
 
-        rvUsers.layoutManager = LinearLayoutManager(requireContext())
-        rvUsers.adapter = AdminUsersAdapter(
-            users = sorted,
-            onItemClick = { user -> openUserDetail(user) },
-            onDeactivateClick = { user -> toggleUserStatus(user) }
-        )
-
+        usersAdapter.updateData(sorted)
         tvEmptyUsers.visibility = if (sorted.isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun openUserDetail(user: AdminUserModel) {
-        val intent = Intent(requireContext(), UserDetailActivity::class.java).apply {
-            putExtra("EXTRA_USER_ID", user.userId)
-            putExtra("EXTRA_NAME", user.userName)
-            putExtra("EXTRA_EMAIL", user.email)
-            putExtra("EXTRA_PHONE", user.phone)
-            putExtra("EXTRA_ROLE", user.role)
-            putExtra("EXTRA_JOINED", user.dateJoined)
-            putExtra("EXTRA_IS_ACTIVE", user.isActive)
+        try {
+            val intent = Intent(requireContext(), UserDetailActivity::class.java).apply {
+                putExtra("EXTRA_USER_ID", user.userId)
+                putExtra("EXTRA_NAME", user.userName)
+                putExtra("EXTRA_EMAIL", user.email)
+                putExtra("EXTRA_PHONE", user.phone)
+                putExtra("EXTRA_ROLE", user.role)
+                putExtra("EXTRA_JOINED", user.dateJoined)
+                putExtra("EXTRA_IS_ACTIVE", user.isActive)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Unable to open user details: ${e.message}", Toast.LENGTH_LONG).show()
+            e.printStackTrace()
         }
-        startActivity(intent)
     }
 }
-
 // --- RecyclerView Adapter matched to admin_item_user.xml ---
 class AdminUsersAdapter(
-    private val users: List<AdminUserModel>,
+    private var users: List<AdminUserModel>,
     private val onItemClick: (AdminUserModel) -> Unit,
     private val onDeactivateClick: (AdminUserModel) -> Unit
 ) : RecyclerView.Adapter<AdminUsersAdapter.UserViewHolder>() {
+
+    fun updateData(newUsers: List<AdminUserModel>) {
+        this.users = newUsers
+        notifyDataSetChanged()
+    }
 
     class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tvAvatar: TextView = itemView.findViewById(R.id.tvAvatar)
@@ -234,7 +254,7 @@ class AdminUsersAdapter(
         val tvUserJoined: TextView = itemView.findViewById(R.id.tvUserJoined)
         val tvUserRoleBadge: TextView = itemView.findViewById(R.id.tvUserRoleBadge)
         val btnMessageUser: View? = itemView.findViewById(R.id.btnMessageUser)
-        val btnDeactivate: TextView? = itemView.findViewById(R.id.btnDeactivate)
+        val btnDeactivate: View? = itemView.findViewById(R.id.btnDeactivate) // Changed from TextView to View to prevent ClassCastException
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
@@ -251,22 +271,15 @@ class AdminUsersAdapter(
         holder.tvUserRoleBadge.text = user.role
         holder.tvAvatar.text = if (user.role.equals("Salon Owner", ignoreCase = true)) "💈" else "👤"
 
-        // Dynamically toggle button label based on active status
-        if (holder.btnDeactivate is TextView) {
-            holder.btnDeactivate.text = if (user.isActive) "Deactivate" else "Activate"
+        // Safely set text/label if it's a TextView or Button, otherwise ignore safely
+        when (val btn = holder.btnDeactivate) {
+            is TextView -> btn.text = if (user.isActive) "Deactivate" else "Activate"
+            is com.google.android.material.button.MaterialButton -> btn.text = if (user.isActive) "Deactivate" else "Activate"
         }
 
-        holder.itemView.setOnClickListener {
-            onItemClick(user)
-        }
-
-        holder.btnMessageUser?.setOnClickListener {
-            onItemClick(user)
-        }
-
-        holder.btnDeactivate?.setOnClickListener {
-            onDeactivateClick(user)
-        }
+        holder.itemView.setOnClickListener { onItemClick(user) }
+        holder.btnMessageUser?.setOnClickListener { onItemClick(user) }
+        holder.btnDeactivate?.setOnClickListener { onDeactivateClick(user) }
     }
 
     override fun getItemCount(): Int = users.size
