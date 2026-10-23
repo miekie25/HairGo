@@ -6,25 +6,156 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="@color/grey_light">
+    android:background="@color/home_bg">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:layout_height="wrap_content">
 
-        <include
+        <!-- Gradient header with back button and title -->
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/header"
-            layout="@layout/component_header"
+            android:layout_width="0dp"
+            android:layout_height="200dp"
+            android:background="@drawable/bg_salon_header"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="12dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_back_arrow"
+                android:contentDescription="@string/back"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"/>
+
+            <TextView
+                android:id="@+id/tvHeaderTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="56dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="56dp"
+                android:gravity="center"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/title_booking_details"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- Salon identity, sitting inside the header -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardSalonHeader"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="64dp"
+            android:layout_marginEnd="16dp"
+            app:cardCornerRadius="0dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp"
+            app:cardBackgroundColor="@android:color/transparent"
+            app:layout_constraintTop_toTopOf="@id/header"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/ivSalonPhoto"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="@string/salon_photo_desc"
+                    android:background="@drawable/bg_circle_teal_light"
+                    android:src="@drawable/ic_salon_placeholder_teal"
+                    android:tint="@color/home_icon"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.HairGo_Circle_Small"
+                    app:strokeWidth="2dp"
+                    app:strokeColor="@color/white"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tvSalonName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="8dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textColor="@color/white"
+                    android:textSize="21sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toTopOf="@id/ivSalonPhoto"
+                    app:layout_constraintStart_toEndOf="@id/ivSalonPhoto"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tvSalonLocation"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="8dp"
+                    android:visibility="gone"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:paddingVertical="2dp"
+                    android:drawablePadding="5dp"
+                    android:drawableStart="@drawable/ic_location"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:drawableTint="@color/home_header_subtext"
+                    android:contentDescription="@string/maps_open_location"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textColor="@color/home_header_subtext"
+                    android:textSize="13sp"
+                    app:layout_constraintTop_toBottomOf="@id/tvSalonName"
+                    app:layout_constraintStart_toEndOf="@id/ivSalonPhoto"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    tools:text="Sandton, Johannesburg"/>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Status pill in the header area -->
+        <TextView
+            android:id="@+id/tvStatusBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_booking_status_pending"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="5dp"
+            android:letterSpacing="0.06"
+            android:textAllCaps="true"
+            android:textColor="@color/booking_status_pending_text"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@id/header"
+            app:layout_constraintStart_toStartOf="parent"/>
 
         <ProgressBar
             android:id="@+id/progress"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:indeterminateTint="@color/teal"
+            android:indeterminateTint="@color/home_icon"
             app:layout_constraintTop_toBottomOf="@id/header"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -35,48 +166,35 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="invisible"
-            app:constraint_referenced_ids="tvStatusBadge,tvExpiredNote,cardSalonHeader,cardBookingDetails,cardNotes,btnMessageSalon,btnCancelBooking,btnEditBooking,btnLeaveReview,btnReportSalon"/>
+            app:constraint_referenced_ids="tvStatusBadge,tvExpiredNote,cardSalonHeader,cardDateTime,cardBookingDetails,cardNotes,btnMessageSalon,btnCancelBooking,btnEditBooking,btnLeaveReview,btnReportSalon"/>
 
-        <!-- Status Badge -->
-        <TextView
-            android:id="@+id/tvStatusBadge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:background="@drawable/bg_status_badge"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
-            android:textColor="@color/white"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@id/header"
-            app:layout_constraintStart_toStartOf="parent"/>
-
-        <!-- Expired Note -->
+        <!-- Expired explanation -->
         <TextView
             android:id="@+id/tvExpiredNote"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp"
             android:visibility="gone"
             android:text="@string/booking_expired_explanation"
-            android:textColor="@color/grey_medium"
+            android:textColor="@color/salon_chip_warning_text"
             android:textSize="13sp"
-            app:layout_constraintTop_toBottomOf="@id/tvStatusBadge"
+            app:layout_constraintTop_toBottomOf="@id/header"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- Salon Header Card -->
+        <!-- Date and time card -->
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardSalonHeader"
+            android:id="@+id/cardDateTime"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="0dp"
+            android:layout_marginHorizontal="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="3dp"
             app:strokeWidth="1dp"
-            app:strokeColor="@color/grey_border"
-            app:cardBackgroundColor="@color/surface"
+            app:strokeColor="@color/home_border"
+            app:cardBackgroundColor="@color/salon_info_card_bg"
             app:layout_constraintTop_toBottomOf="@id/tvExpiredNote"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -86,128 +204,124 @@
                 android:layout_height="wrap_content"
                 android:padding="16dp">
 
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/ivSalonPhoto"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:scaleType="centerCrop"
-                    android:contentDescription="@string/salon_photo_desc"
-                    android:background="@drawable/bg_circle_teal_light"
-                    android:src="@drawable/ic_salon_placeholder_teal"
-                    android:tint="@color/teal"
-                    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.HairGo_Circle_Small"
+                <ImageView
+                    android:id="@+id/ivDateIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_calendar"
+                    app:tint="@color/home_icon"
+                    android:importantForAccessibility="no"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"/>
+                    app:layout_constraintStart_toStartOf="parent"/>
 
                 <TextView
-                    android:id="@+id/tvSalonName"
+                    android:id="@+id/tvDateTimeLabel"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_marginEnd="12dp"
-                    android:textColor="@color/heading"
-                    android:textSize="22sp"
+                    android:layout_marginStart="10dp"
+                    android:text="@string/label_date_time"
+                    android:textColor="@color/salon_chip_duration_text"
+                    android:textSize="12sp"
                     android:textStyle="bold"
-                    app:layout_constraintTop_toTopOf="@id/ivSalonPhoto"
-                    app:layout_constraintStart_toEndOf="@id/ivSalonPhoto"
+                    app:layout_constraintTop_toTopOf="@id/ivDateIcon"
+                    app:layout_constraintStart_toEndOf="@id/ivDateIcon"
                     app:layout_constraintEnd_toEndOf="parent"/>
 
                 <TextView
-                    android:id="@+id/tvSalonLocation"
+                    android:id="@+id/tvDateTime"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
                     android:layout_marginTop="4dp"
-                    android:layout_marginStart="12dp"
-                    android:layout_marginEnd="12dp"
-                    android:visibility="gone"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackground"
-                    android:paddingHorizontal="4dp"
-                    android:paddingVertical="4dp"
-                    android:drawablePadding="6dp"
-                    android:drawableStart="@drawable/ic_location"
-                    android:drawableEnd="@drawable/ic_chevron_right"
-                    android:drawableTint="@color/teal_primary"
-                    android:contentDescription="@string/maps_open_location"
-                    android:textColor="@color/teal_primary"
-                    android:textSize="14sp"
-                    app:layout_constraintTop_toBottomOf="@id/tvSalonName"
-                    app:layout_constraintStart_toEndOf="@id/ivSalonPhoto"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    tools:text="Sandton, Johannesburg"/>
+                    android:textColor="@color/salon_section_title"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toBottomOf="@id/tvDateTimeLabel"
+                    app:layout_constraintStart_toEndOf="@id/ivDateIcon"
+                    app:layout_constraintEnd_toEndOf="parent"/>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Combined Booking Details Card (Gradient) -->
+        <!-- Services, total and payment card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardBookingDetails"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/transparent"
-            app:layout_constraintTop_toBottomOf="@id/cardSalonHeader"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="3dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/home_border"
+            app:cardBackgroundColor="@color/salon_info_card_bg"
+            app:layout_constraintTop_toBottomOf="@id/cardDateTime"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_card_gradient"
                 android:padding="16dp">
 
-                <!-- Service Section -->
                 <TextView
                     android:id="@+id/tvServiceLabel"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:text="@string/label_service"
-                    android:textColor="@color/white"
-                    android:textSize="15sp"
+                    android:textColor="@color/salon_chip_duration_text"
+                    android:textSize="12sp"
                     android:textStyle="bold"
+                    android:letterSpacing="0.06"
+                    android:textAllCaps="true"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"/>
+
+                <View
+                    android:id="@+id/dividerBooking1"
+                    android:layout_width="32dp"
+                    android:layout_height="2dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@color/home_icon"
+                    app:layout_constraintTop_toBottomOf="@id/tvServiceLabel"
+                    app:layout_constraintStart_toStartOf="parent"/>
 
                 <TextView
                     android:id="@+id/tvServiceName"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textColor="@color/white"
-                    android:textSize="14sp"
+                    android:layout_marginTop="12dp"
+                    android:lineSpacingExtra="6dp"
+                    android:textColor="@color/salon_section_title"
+                    android:textSize="15sp"
                     android:textStyle="bold"
-                    app:layout_constraintTop_toBottomOf="@id/tvServiceLabel"
+                    app:layout_constraintTop_toBottomOf="@id/dividerBooking1"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"/>
 
-                <!-- Divider 1 -->
                 <View
-                    android:id="@+id/dividerBooking1"
+                    android:id="@+id/dividerBooking2"
                     android:layout_width="0dp"
                     android:layout_height="1dp"
                     android:layout_marginTop="16dp"
-                    android:layout_marginHorizontal="16dp"
-                    android:background="#33FFFFFF"
+                    android:background="@color/home_border"
                     app:layout_constraintTop_toBottomOf="@id/tvServiceName"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"/>
 
-                <!-- Total Section -->
                 <TextView
                     android:id="@+id/tvTotalLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="@string/total"
-                    android:textColor="@color/white"
-                    android:textSize="15sp"
+                    android:textColor="@color/home_text_secondary"
+                    android:textSize="12sp"
                     android:textStyle="bold"
-                    app:layout_constraintTop_toBottomOf="@id/dividerBooking1"
+                    android:letterSpacing="0.06"
+                    android:textAllCaps="true"
+                    app:layout_constraintTop_toBottomOf="@id/dividerBooking2"
                     app:layout_constraintStart_toStartOf="parent"/>
 
                 <TextView
@@ -215,9 +329,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:layout_marginHorizontal="16dp"
                     android:visibility="gone"
-                    android:textColor="@color/white"
+                    android:textColor="@color/salon_date_text"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     app:layout_constraintTop_toBottomOf="@id/tvTotalLabel"
@@ -228,39 +341,40 @@
                     android:id="@+id/tvBookingNote"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="6dp"
                     android:visibility="gone"
                     android:text="@string/service_missing_price_note"
-                    android:textColor="#B3FFFFFF"
-                    android:textSize="13sp"
+                    android:textColor="@color/salon_chip_warning_text"
+                    android:textSize="12sp"
+                    android:drawableStart="@drawable/ic_warning"
+                    android:drawablePadding="5dp"
+                    android:drawableTint="@color/salon_chip_warning_text"
                     app:layout_constraintTop_toBottomOf="@id/tvBookingTotal"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"/>
 
-                <!-- Divider 2 -->
                 <View
-                    android:id="@+id/dividerBooking2"
+                    android:id="@+id/dividerBooking3"
                     android:layout_width="0dp"
                     android:layout_height="1dp"
                     android:layout_marginTop="16dp"
-                    android:layout_marginHorizontal="16dp"
-                    android:background="#33FFFFFF"
+                    android:background="@color/home_border"
                     app:layout_constraintTop_toBottomOf="@id/tvBookingNote"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"/>
 
-                <!-- Payment Section -->
                 <TextView
                     android:id="@+id/tvPaymentLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="@string/payment_summary_label"
-                    android:textColor="@color/white"
-                    android:textSize="15sp"
+                    android:textColor="@color/home_text_secondary"
+                    android:textSize="12sp"
                     android:textStyle="bold"
-                    app:layout_constraintTop_toBottomOf="@id/dividerBooking2"
+                    android:letterSpacing="0.06"
+                    android:textAllCaps="true"
+                    app:layout_constraintTop_toBottomOf="@id/dividerBooking3"
                     app:layout_constraintStart_toStartOf="parent"/>
 
                 <TextView
@@ -272,8 +386,8 @@
                     android:background="@drawable/bg_payment_badge"
                     android:paddingHorizontal="10dp"
                     android:paddingVertical="4dp"
-                    android:textColor="@color/teal_primary"
-                    android:textSize="12sp"
+                    android:textColor="@color/salon_chip_price_text"
+                    android:textSize="11sp"
                     android:textStyle="bold"
                     app:layout_constraintTop_toTopOf="@id/tvPaymentLabel"
                     app:layout_constraintBottom_toBottomOf="@id/tvPaymentLabel"
@@ -284,68 +398,29 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:layout_marginHorizontal="16dp"
-                    android:textColor="@color/white"
+                    android:textColor="@color/home_text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     app:layout_constraintTop_toBottomOf="@id/tvPaymentLabel"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"/>
 
-                <!-- Divider 3 -->
-                <View
-                    android:id="@+id/dividerBooking3"
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginHorizontal="16dp"
-                    android:background="#33FFFFFF"
-                    app:layout_constraintTop_toBottomOf="@id/tvPayment"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"/>
-
-                <!-- Date/Time Section -->
-                <TextView
-                    android:id="@+id/tvDateTimeLabel"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/label_date_time"
-                    android:textColor="@color/white"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    app:layout_constraintTop_toBottomOf="@id/dividerBooking3"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"/>
-
-                <TextView
-                    android:id="@+id/tvDateTime"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginHorizontal="16dp"
-                    android:textColor="@color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    app:layout_constraintTop_toBottomOf="@id/tvDateTimeLabel"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"/>
-
             </androidx.constraintlayout.widget.ConstraintLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Notes Card (Separate, Surface) -->
+        <!-- Notes card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardNotes"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
             android:layout_marginTop="12dp"
             android:visibility="gone"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="0dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="3dp"
             app:strokeWidth="1dp"
-            app:strokeColor="@color/grey_border"
-            app:cardBackgroundColor="@color/surface"
+            app:strokeColor="@color/home_border"
+            app:cardBackgroundColor="@color/salon_info_card_bg"
             app:layout_constraintTop_toBottomOf="@id/cardBookingDetails"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -360,9 +435,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:text="@string/label_notes"
-                    android:textColor="@color/heading"
-                    android:textSize="13sp"
+                    android:textColor="@color/salon_chip_duration_text"
+                    android:textSize="12sp"
                     android:textStyle="bold"
+                    android:letterSpacing="0.06"
+                    android:textAllCaps="true"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"/>
@@ -372,7 +449,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:textColor="@color/grey_dark"
+                    android:textColor="@color/salon_section_title"
                     android:textSize="15sp"
                     app:layout_constraintTop_toBottomOf="@id/tvNotesLabel"
                     app:layout_constraintStart_toStartOf="parent"
@@ -387,7 +464,8 @@
             style="@style/ButtonActionPrimary"
             android:layout_width="0dp"
             android:layout_height="56dp"
-            android:layout_marginTop="24dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="20dp"
             android:text="@string/btn_message_salon"
             app:layout_constraintTop_toBottomOf="@id/cardNotes"
             app:layout_constraintStart_toStartOf="parent"
@@ -398,7 +476,10 @@
             style="@style/ButtonActionDanger"
             android:layout_width="0dp"
             android:layout_height="56dp"
+            android:layout_marginHorizontal="16dp"
             android:text="@string/btn_cancel_booking"
+            android:background="@drawable/detail_btn_cancel_outline"
+            android:textColor="@color/salon_accent"
             app:layout_constraintTop_toBottomOf="@id/btnMessageSalon"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
@@ -408,19 +489,23 @@
             style="@style/ButtonActionOutline"
             android:layout_width="0dp"
             android:layout_height="56dp"
+            android:layout_marginHorizontal="16dp"
             android:visibility="gone"
             android:text="@string/btn_edit_booking"
+            android:textColor="@color/salon_chip_duration_text"
             app:layout_constraintTop_toBottomOf="@id/btnCancelBooking"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnLeaveReview"
-            style="@style/ButtonActionPrimary"
+            style="@style/ButtonActionOutline"
             android:layout_width="0dp"
             android:layout_height="56dp"
+            android:layout_marginHorizontal="16dp"
             android:visibility="gone"
             android:text="@string/leave_a_review"
+            android:textColor="@color/salon_chip_duration_text"
             app:layout_constraintTop_toBottomOf="@id/btnEditBooking"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
@@ -430,8 +515,10 @@
             style="@style/ButtonActionOutline"
             android:layout_width="0dp"
             android:layout_height="56dp"
+            android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="24dp"
             android:text="@string/report_salon_action"
+            android:textColor="@color/salon_chip_duration_text"
             app:layout_constraintTop_toBottomOf="@id/btnLeaveReview"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>

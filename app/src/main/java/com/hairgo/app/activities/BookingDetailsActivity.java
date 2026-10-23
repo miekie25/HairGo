@@ -1,8 +1,6 @@
 package com.hairgo.app.activities;
 
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -470,31 +468,34 @@ public class BookingDetailsActivity extends AppCompatActivity {
     private void updateStatusBadge(String status) {
         tvStatusBadge.setText(capitalize(status));
 
-        int colorRes;
+        int pillRes;
+        int textColorRes;
         switch (status == null ? "" : status) {
             case "confirmed":
-                colorRes = R.color.teal;
+                pillRes = R.drawable.bg_booking_status_confirmed;
+                textColorRes = R.color.booking_status_confirmed_text;
                 break;
             case "completed":
-                colorRes = R.color.success;
+                pillRes = R.drawable.bg_booking_status_completed;
+                textColorRes = R.color.booking_status_completed_text;
                 break;
             case "cancelled":
-                colorRes = R.color.error;
+                pillRes = R.drawable.bg_booking_status_cancelled;
+                textColorRes = R.color.booking_status_cancelled_text;
                 break;
             case "expired":
-                colorRes = R.color.grey_medium;
+                pillRes = R.drawable.bg_booking_status_expired;
+                textColorRes = R.color.booking_status_expired_text;
                 break;
             case "pending":
             default:
-                colorRes = R.color.warning;
+                pillRes = R.drawable.bg_booking_status_pending;
+                textColorRes = R.color.booking_status_pending_text;
                 break;
         }
 
-        Drawable background = tvStatusBadge.getBackground();
-        if (background instanceof GradientDrawable) {
-            ((GradientDrawable) background.mutate())
-                    .setColor(ContextCompat.getColor(this, colorRes));
-        }
+        tvStatusBadge.setBackgroundResource(pillRes);
+        tvStatusBadge.setTextColor(ContextCompat.getColor(this, textColorRes));
     }
 
     private void updateCancelButtonVisibility(String status) {
