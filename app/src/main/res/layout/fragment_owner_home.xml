@@ -3,7 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/home_bg">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,7 +17,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Good morning"
-            android:textColor="@color/heading"
+            android:textColor="@color/home_text_primary"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -26,7 +27,7 @@
             android:layout_marginTop="2dp"
             android:layout_marginBottom="16dp"
             android:text="Here's how your salon is doing"
-            android:textColor="@color/grey_medium"
+            android:textColor="@color/home_text_secondary"
             android:textSize="14sp" />
 
         <!-- Stat row 1 -->
@@ -37,7 +38,7 @@
             android:baselineAligned="false">
 
             <!-- Bookings today -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardTodayBookings"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -46,10 +47,11 @@
                 android:minHeight="92dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardUseCompatPadding="false">
+                app:cardBackgroundColor="@color/home_card_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="3dp"
+                app:rippleColor="@color/teal_light"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -65,7 +67,7 @@
                         android:padding="8dp"
                         android:scaleType="centerInside"
                         android:src="@drawable/ic_calendar"
-                        app:tint="@color/teal_primary"
+                        app:tint="@color/home_icon"
                         android:importantForAccessibility="no" />
 
                     <LinearLayout
@@ -80,7 +82,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
-                            android:textColor="@color/navy"
+                            android:textColor="@color/home_text_primary"
                             android:textSize="24sp"
                             android:textStyle="bold"
                             android:maxLines="1"
@@ -90,16 +92,16 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Bookings today"
-                            android:textColor="@color/grey_medium"
+                            android:textColor="@color/home_text_secondary"
                             android:textSize="12sp"
                             android:maxLines="2"
                             android:ellipsize="end" />
                     </LinearLayout>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Pending requests -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardPending"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -108,10 +110,11 @@
                 android:minHeight="92dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardUseCompatPadding="false">
+                app:cardBackgroundColor="@color/home_card_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="3dp"
+                app:rippleColor="@color/teal_light"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -127,7 +130,7 @@
                         android:padding="8dp"
                         android:scaleType="centerInside"
                         android:src="@drawable/ic_bell"
-                        app:tint="@color/coral_accent"
+                        app:tint="@color/home_accent"
                         android:importantForAccessibility="no" />
 
                     <LinearLayout
@@ -152,13 +155,13 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Pending requests"
-                            android:textColor="@color/grey_medium"
+                            android:textColor="@color/home_text_secondary"
                             android:textSize="12sp"
                             android:maxLines="2"
                             android:ellipsize="end" />
                     </LinearLayout>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
 
@@ -171,7 +174,7 @@
             android:baselineAligned="false">
 
             <!-- Upcoming confirmed -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardConfirmed"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -180,10 +183,11 @@
                 android:minHeight="92dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardUseCompatPadding="false">
+                app:cardBackgroundColor="@color/home_card_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="3dp"
+                app:rippleColor="@color/teal_light"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -199,7 +203,7 @@
                         android:padding="8dp"
                         android:scaleType="centerInside"
                         android:src="@drawable/ic_check"
-                        app:tint="@color/teal_primary"
+                        app:tint="@color/home_icon"
                         android:importantForAccessibility="no" />
 
                     <LinearLayout
@@ -224,16 +228,16 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Upcoming confirmed"
-                            android:textColor="@color/grey_medium"
+                            android:textColor="@color/home_text_secondary"
                             android:textSize="12sp"
                             android:maxLines="2"
                             android:ellipsize="end" />
                     </LinearLayout>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Completed -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardCompleted"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -242,10 +246,11 @@
                 android:minHeight="92dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardUseCompatPadding="false">
+                app:cardBackgroundColor="@color/home_card_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="3dp"
+                app:rippleColor="@color/teal_light"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -257,11 +262,11 @@
                     <ImageView
                         android:layout_width="36dp"
                         android:layout_height="36dp"
-                        android:background="@drawable/bg_icon_circle_green"
+                        android:background="@drawable/bg_icon_circle_teal"
                         android:padding="8dp"
                         android:scaleType="centerInside"
                         android:src="@drawable/ic_check"
-                        app:tint="@color/success"
+                        app:tint="@color/home_icon"
                         android:importantForAccessibility="no" />
 
                     <LinearLayout
@@ -276,7 +281,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
-                            android:textColor="@color/success"
+                            android:textColor="@color/teal"
                             android:textSize="24sp"
                             android:textStyle="bold"
                             android:maxLines="1"
@@ -286,13 +291,13 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Completed"
-                            android:textColor="@color/grey_medium"
+                            android:textColor="@color/home_text_secondary"
                             android:textSize="12sp"
                             android:maxLines="2"
                             android:ellipsize="end" />
                     </LinearLayout>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
 
@@ -305,16 +310,18 @@
             android:baselineAligned="false">
 
             <!-- Total booking value -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardTotalValue"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:layout_marginEnd="6dp"
                 android:minHeight="92dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardUseCompatPadding="false">
+                app:cardBackgroundColor="@color/home_card_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="3dp"
+                app:rippleColor="@color/teal_light"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -330,7 +337,7 @@
                         android:padding="8dp"
                         android:scaleType="centerInside"
                         android:src="@drawable/ic_nav_reports"
-                        app:tint="@color/teal_primary"
+                        app:tint="@color/home_icon"
                         android:importantForAccessibility="no" />
 
                     <LinearLayout
@@ -345,7 +352,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="R0"
-                            android:textColor="@color/navy"
+                            android:textColor="@color/home_text_primary"
                             android:textSize="24sp"
                             android:textStyle="bold"
                             android:maxLines="1"
@@ -355,25 +362,27 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/payment_summary_total_value"
-                            android:textColor="@color/grey_medium"
+                            android:textColor="@color/home_text_secondary"
                             android:textSize="12sp"
                             android:maxLines="2"
                             android:ellipsize="end" />
                     </LinearLayout>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Amount paid -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardAmountPaid"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:layout_marginStart="6dp"
                 android:minHeight="92dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardUseCompatPadding="false">
+                app:cardBackgroundColor="@color/home_card_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="3dp"
+                app:rippleColor="@color/teal_light"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -385,11 +394,11 @@
                     <ImageView
                         android:layout_width="36dp"
                         android:layout_height="36dp"
-                        android:background="@drawable/bg_icon_circle_green"
+                        android:background="@drawable/bg_icon_circle_teal"
                         android:padding="8dp"
                         android:scaleType="centerInside"
                         android:src="@drawable/ic_check"
-                        app:tint="@color/success"
+                        app:tint="@color/home_icon"
                         android:importantForAccessibility="no" />
 
                     <LinearLayout
@@ -414,13 +423,13 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/payment_summary_amount_paid"
-                            android:textColor="@color/grey_medium"
+                            android:textColor="@color/home_text_secondary"
                             android:textSize="12sp"
                             android:maxLines="2"
                             android:ellipsize="end" />
                     </LinearLayout>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
 
@@ -432,16 +441,18 @@
             android:baselineAligned="false">
 
             <!-- Outstanding balance -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardOutstandingBalance"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:layout_marginEnd="6dp"
                 android:minHeight="92dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardUseCompatPadding="false">
+                app:cardBackgroundColor="@color/home_card_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="3dp"
+                app:rippleColor="@color/teal_light"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -482,25 +493,27 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/payment_summary_outstanding"
-                            android:textColor="@color/grey_medium"
+                            android:textColor="@color/home_text_secondary"
                             android:textSize="12sp"
                             android:maxLines="2"
                             android:ellipsize="end" />
                     </LinearLayout>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Bookings with outstanding -->
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardBookingsWithOutstanding"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:layout_marginStart="6dp"
                 android:minHeight="92dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardUseCompatPadding="false">
+                app:cardBackgroundColor="@color/home_card_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="3dp"
+                app:rippleColor="@color/teal_light"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -541,34 +554,54 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/payment_summary_bookings_outstanding"
-                            android:textColor="@color/grey_medium"
+                            android:textColor="@color/home_text_secondary"
                             android:textSize="12sp"
                             android:maxLines="2"
                             android:ellipsize="end" />
                     </LinearLayout>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
 
         <!-- Quick actions -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Quick actions"
-            android:textColor="@color/heading"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <Button
-            android:id="@+id/btnViewAllBookings"
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="View all bookings"
-            android:textColor="@color/white"
-            android:backgroundTint="@color/navy" />
+            android:layout_marginTop="24dp"
+            app:cardBackgroundColor="@color/home_card_bg"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="3dp"
+            app:strokeWidth="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Quick actions"
+                    android:textColor="@color/home_text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnViewAllBookings"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="12dp"
+                    android:text="View all bookings"
+                    android:textColor="@color/white"
+                    android:textAllCaps="false"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/navy"
+                    app:cornerRadius="16dp" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 

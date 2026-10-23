@@ -47,6 +47,7 @@ public class OwnerDashboardActivity extends AppCompatActivity {
     // The durations an owner can choose from, in minutes.
     private static final int[] DURATION_MINUTES = {15, 30, 45, 60, 90, 120, 150, 180};
 
+    private View ownerHeader;
     private TextView tvGreeting;
     private TextView tvSalonPicker;
     private ProgressBar progress;
@@ -77,6 +78,7 @@ public class OwnerDashboardActivity extends AppCompatActivity {
         ownerId = user.getUid();
         ownerManager = new OwnerManager();
 
+        ownerHeader = findViewById(R.id.ownerHeader);
         tvGreeting = findViewById(R.id.tvOwnerGreeting);
         tvSalonPicker = findViewById(R.id.tvSalonPicker);
         progress = findViewById(R.id.progressOwner);
@@ -200,6 +202,11 @@ public class OwnerDashboardActivity extends AppCompatActivity {
     }
 
     private void loadTab(int tabId) {
+        // Messages brings its own gradient header, so hide the dashboard header
+        // there to avoid stacking two of them.
+        ownerHeader.setVisibility(tabId == R.id.nav_owner_messages
+                ? View.GONE : View.VISIBLE);
+
         Fragment fragment;
         if (tabId == R.id.nav_owner_bookings) {
             fragment = new OwnerBookingsFragment();

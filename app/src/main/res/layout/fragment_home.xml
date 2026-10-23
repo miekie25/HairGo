@@ -15,17 +15,16 @@
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
         android:paddingTop="18dp"
-        android:paddingBottom="46dp">
+        android:paddingBottom="28dp">
 
         <TextView
             android:id="@+id/tvHomeGreeting"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/home_greeting"
-            android:textColor="@color/home_header_subtext"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.02"/>
+            android:textColor="@color/home_header_text"
+            android:textSize="20sp"
+            android:textStyle="bold"/>
 
         <TextView
             android:id="@+id/tvHomeTitle"
@@ -44,7 +43,7 @@
             android:layout_marginTop="4dp"
             android:text="@string/home_subtitle"
             android:textColor="@color/home_header_subtext"
-            android:textSize="13sp"/>
+            android:textSize="14sp"/>
 
     </LinearLayout>
 
@@ -54,7 +53,7 @@
         android:layout_height="52dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginTop="-26dp"
+        android:layout_marginTop="-8dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="@drawable/bg_home_search"
