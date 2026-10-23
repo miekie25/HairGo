@@ -168,7 +168,11 @@
     <string name="btn_pay_amount">Pay %1$s</string>
     <string name="error_cardholder_required">Enter the name on the card.</string>
     <string name="error_card_number_invalid">Enter a 16-digit card number.</string>
+    <string name="error_card_number_incomplete">Enter all 16 digits.</string>
     <string name="error_card_expiry_invalid">Enter expiry as MM/YY.</string>
+    <string name="error_expiry_month_invalid">Month must be 01–12.</string>
+    <string name="error_expiry_expired">This date has passed.</string>
+    <string name="error_name_invalid">Name must be letters only, at least 2 characters.</string>
     <string name="error_card_cvv_invalid">Enter the 3-digit CVV.</string>
     <string name="title_payment_result">Payment</string>
     <string name="payment_processing_title">Processing payment…</string>

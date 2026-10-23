@@ -2,6 +2,8 @@ package com.hairgo.app.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -14,8 +16,8 @@ import androidx.appcompat.widget.AppCompatButton;
 
 import com.hairgo.app.R;
 import com.hairgo.app.models.PaymentDetails;
+import com.hairgo.app.utils.CardFormatter;
 
-import java.util.Calendar;
 import java.util.Locale;
 
 public class MockCardPaymentActivity extends AppCompatActivity {
@@ -28,10 +30,18 @@ public class MockCardPaymentActivity extends AppCompatActivity {
     private EditText etCardNumber;
     private EditText etExpiry;
     private EditText etCvv;
-    private TextView tvError;
+    private TextView tvNameError;
+    private TextView tvCardNumberError;
+    private TextView tvExpiryError;
+    private TextView tvCvvError;
     private AppCompatButton btnPay;
 
     private double amount;
+
+    private boolean nameValid = false;
+    private boolean cardNumberValid = false;
+    private boolean expiryValid = false;
+    private boolean cvvValid = false;
 
     private final ActivityResultLauncher<Intent> paymentResultLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -42,7 +52,7 @@ public class MockCardPaymentActivity extends AppCompatActivity {
                 }
 
                 btnPay.setEnabled(true);
-                showError(getString(R.string.payment_failed_no_booking));
+                showExpiryError(getString(R.string.payment_failed_no_booking));
             });
 
     @Override
@@ -83,12 +93,104 @@ public class MockCardPaymentActivity extends AppCompatActivity {
         etCardNumber = findViewById(R.id.etCardNumber);
         etExpiry = findViewById(R.id.etExpiry);
         etCvv = findViewById(R.id.etCvv);
-        tvError = findViewById(R.id.tvError);
+        tvNameError = findViewById(R.id.tvNameError);
+        tvCardNumberError = findViewById(R.id.tvCardNumberError);
+        tvExpiryError = findViewById(R.id.tvExpiryError);
+        tvCvvError = findViewById(R.id.tvCvvError);
         btnPay = findViewById(R.id.btnPay);
 
         btnPay.setText(getString(R.string.btn_pay_amount,
                 getString(R.string.service_price_rand, formatPrice(amount))));
+        btnPay.setEnabled(false);
         btnPay.setOnClickListener(v -> submitPayment());
+
+        setupFormatters();
+    }
+
+    private void setupFormatters() {
+        // Cardholder name: filter + capitalize
+        CardFormatter.attachNameFormatter(etCardholderName, (isComplete, errorKey) -> {
+            if (errorKey != null) {
+                nameValid = false;
+                showNameError(getString(R.string.error_name_invalid));
+            } else {
+                nameValid = true;
+                hideNameError();
+            }
+            updatePayButton();
+        });
+
+        // Card number: auto-space every 4 digits
+        CardFormatter.attachCardNumberFormatter(etCardNumber, (isComplete, errorKey) -> {
+            if (errorKey != null) {
+                cardNumberValid = false;
+            } else {
+                cardNumberValid = true;
+                hideCardNumberError();
+            }
+            updatePayButton();
+        });
+        // Show "incomplete" error on focus loss
+        etCardNumber.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus && !cardNumberValid) {
+                showCardNumberError(getString(R.string.error_card_number_incomplete));
+            }
+        });
+
+        // Expiry: auto-slash, validate month immediately, validate expiry when complete
+        CardFormatter.attachExpiryFormatter(etExpiry, (isComplete, errorKey) -> {
+            if (errorKey != null) {
+                expiryValid = false;
+                if ("month".equals(errorKey)) {
+                    showExpiryError(getString(R.string.error_expiry_month_invalid));
+                } else if ("expired".equals(errorKey)) {
+                    showExpiryError(getString(R.string.error_expiry_expired));
+                }
+            } else {
+                expiryValid = true;
+                hideExpiryError();
+            }
+            updatePayButton();
+        });
+        // Show "invalid format" error on focus loss if incomplete
+        etExpiry.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus && !expiryValid) {
+                String text = etExpiry.getText().toString();
+                if (!text.isEmpty()) {
+                    showExpiryError(getString(R.string.error_card_expiry_invalid));
+                }
+            }
+        });
+
+        // CVV: validate length
+        CardFormatter.attachCvvFormatter(etCvv, (isComplete, errorKey) -> {
+            if (errorKey != null) {
+                cvvValid = false;
+            } else {
+                cvvValid = true;
+                hideCvvError();
+            }
+            updatePayButton();
+        });
+        etCvv.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus && !cvvValid) {
+                showCvvError(getString(R.string.error_card_cvv_invalid));
+            }
+        });
+
+        // Also validate name on focus loss
+        etCardholderName.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus && !nameValid) {
+                String text = etCardholderName.getText().toString().trim();
+                if (!text.isEmpty()) {
+                    showNameError(getString(R.string.error_name_invalid));
+                }
+            }
+        });
+    }
+
+    private void updatePayButton() {
+        btnPay.setEnabled(nameValid && cardNumberValid && expiryValid && cvvValid);
     }
 
     private void submitPayment() {
@@ -97,27 +199,31 @@ public class MockCardPaymentActivity extends AppCompatActivity {
         String expiry = etExpiry.getText().toString().trim();
         String cvv = etCvv.getText().toString().trim();
 
-        if (name.isEmpty()) {
-            showError(getString(R.string.error_cardholder_required));
-            return;
+        // Final validation with inline errors
+        boolean allValid = true;
+
+        if (name.isEmpty() || name.length() < 2) {
+            showNameError(getString(R.string.error_name_invalid));
+            allValid = false;
         }
 
-        if (!cardNumber.matches("\\d{16}")) {
-            showError(getString(R.string.error_card_number_invalid));
-            return;
+        if (cardNumber.length() != 16) {
+            showCardNumberError(getString(R.string.error_card_number_incomplete));
+            allValid = false;
         }
 
-        if (!isValidExpiry(expiry)) {
-            showError(getString(R.string.error_card_expiry_invalid));
-            return;
+        if (!CardFormatter.isValidExpiry(expiry)) {
+            showExpiryError(getString(R.string.error_card_expiry_invalid));
+            allValid = false;
         }
 
-        if (!cvv.matches("\\d{3}")) {
-            showError(getString(R.string.error_card_cvv_invalid));
-            return;
+        if (cvv.length() != 3) {
+            showCvvError(getString(R.string.error_card_cvv_invalid));
+            allValid = false;
         }
 
-        tvError.setVisibility(View.GONE);
+        if (!allValid) return;
+
         btnPay.setEnabled(false);
 
         Intent intent = new Intent(this, PaymentResultActivity.class);
@@ -129,25 +235,40 @@ public class MockCardPaymentActivity extends AppCompatActivity {
         paymentResultLauncher.launch(intent);
     }
 
-    private boolean isValidExpiry(String expiry) {
-        if (!expiry.matches("^(0[1-9]|1[0-2])/\\d{2}$")) {
-            return false;
-        }
-
-        String[] parts = expiry.split("/");
-        int month = Integer.parseInt(parts[0]);
-        int year = 2000 + Integer.parseInt(parts[1]);
-
-        Calendar now = Calendar.getInstance();
-        int currentYear = now.get(Calendar.YEAR);
-        int currentMonth = now.get(Calendar.MONTH) + 1;
-
-        return year > currentYear || (year == currentYear && month >= currentMonth);
+    private void showNameError(String msg) {
+        tvNameError.setText(msg);
+        tvNameError.setVisibility(View.VISIBLE);
     }
 
-    private void showError(String message) {
-        tvError.setText(message);
-        tvError.setVisibility(View.VISIBLE);
+    private void hideNameError() {
+        tvNameError.setVisibility(View.GONE);
+    }
+
+    private void showCardNumberError(String msg) {
+        tvCardNumberError.setText(msg);
+        tvCardNumberError.setVisibility(View.VISIBLE);
+    }
+
+    private void hideCardNumberError() {
+        tvCardNumberError.setVisibility(View.GONE);
+    }
+
+    private void showExpiryError(String msg) {
+        tvExpiryError.setText(msg);
+        tvExpiryError.setVisibility(View.VISIBLE);
+    }
+
+    private void hideExpiryError() {
+        tvExpiryError.setVisibility(View.GONE);
+    }
+
+    private void showCvvError(String msg) {
+        tvCvvError.setText(msg);
+        tvCvvError.setVisibility(View.VISIBLE);
+    }
+
+    private void hideCvvError() {
+        tvCvvError.setVisibility(View.GONE);
     }
 
     private String formatPrice(double price) {
