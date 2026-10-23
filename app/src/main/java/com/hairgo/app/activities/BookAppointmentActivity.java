@@ -27,7 +27,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.Timestamp;
 import com.hairgo.app.R;
-import com.hairgo.app.adapters.ServicePickerAdapter;
+
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.Booking;
@@ -292,43 +292,47 @@ public class BookAppointmentActivity extends AppCompatActivity {
     private void showServicePicker() {
         if (availableServices.isEmpty()) return;
 
-        // Track checked state for each service
-        final List<Boolean> checkedStates = new ArrayList<>();
-        for (ServiceDetail detail : availableServices) {
-            checkedStates.add(isSelected(detail.getName()));
+        final int n = availableServices.size();
+        final CharSequence[] items = new CharSequence[n];
+        final boolean[] checked = new boolean[n];
+
+        for (int i = 0; i < n; i++) {
+            ServiceDetail s = availableServices.get(i);
+            String priceText = s.hasPrice()
+                    ? getString(R.string.service_price_rand, formatPrice(s.getPrice()))
+                    : getString(R.string.service_price_not_set);
+            String durationText = getString(R.string.service_duration_minutes, s.getDurationMinutes());
+            items[i] = getString(R.string.service_chip_text, s.getName(), priceText, durationText);
+            checked[i] = isSelected(s.getName());
         }
 
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_select_services, null);
-        RecyclerView rvServices = dialogView.findViewById(R.id.rvServices);
-        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
-        MaterialButton btnConfirm = dialogView.findViewById(R.id.btnConfirm);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.select_services_title)
+                .setMultiChoiceItems(items, checked, (dialog, which, isChecked) -> {
+                    checked[which] = isChecked;
+                });
 
-        rvServices.setLayoutManager(new LinearLayoutManager(this));
+        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
 
-        ServicePickerAdapter adapter = new ServicePickerAdapter(
-                availableServices,
-                checkedStates,
-                (position, isChecked) -> {
-                    // State is already updated in adapter via checkedStates list
+        builder.setPositiveButton(R.string.done, null);
+
+        AlertDialog dialog = builder.create();
+        dialog.setOnShowListener(d -> {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                int count = 0;
+                for (boolean b : checked) if (b) count++;
+                if (count == 0) {
+                    Snackbars.show(findViewById(android.R.id.content),
+                            R.string.please_choose_at_least_one_service);
+                    return;
                 }
-        );
-        rvServices.setAdapter(adapter);
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setView(dialogView)
-                .create();
-
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
-
-        btnConfirm.setOnClickListener(v -> {
-            selectedServices.clear();
-            for (int i = 0; i < availableServices.size(); i++) {
-                if (checkedStates.get(i)) {
-                    selectedServices.add(availableServices.get(i));
+                selectedServices.clear();
+                for (int i = 0; i < n; i++) {
+                    if (checked[i]) selectedServices.add(availableServices.get(i));
                 }
-            }
-            updateServiceSummary();
-            dialog.dismiss();
+                updateServiceSummary();
+                dialog.dismiss();
+            });
         });
 
         dialog.show();
@@ -376,6 +380,12 @@ public class BookAppointmentActivity extends AppCompatActivity {
         tvServicePriceNote.setVisibility(missingPrice ? View.VISIBLE : View.GONE);
         llServiceSummary.setVisibility(View.VISIBLE);
         updatePaymentOptions();
+
+        // When services change, the total duration changes, so any previously
+        // picked time may no longer fit. Clear the time selection.
+        timeChosen = false;
+        tvSelectedTime.setText(R.string.hint_choose_time);
+        tvSelectedTime.setTextColor(getColor(R.color.grey_medium));
     }
 
     private void updatePaymentOptions() {

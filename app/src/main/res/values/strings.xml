@@ -196,6 +196,9 @@
     <string name="please_select_date_first">Please select a date first</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="done">Done</string>
+    <string name="done_with_count">Done (%d)</string>
+    <string name="please_choose_at_least_one_service">Please choose at least one service</string>
     <string name="booking_created_success">Booking request sent</string>
     <string name="couldnt_load_times_title">Couldn\'t load available times</string>
 
