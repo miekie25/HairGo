@@ -13,6 +13,7 @@ final-year project on Firebase.
 - Book one or more services; only free times are offered (30-minute slots,
   60-minute minimum notice)
 - View bookings (Upcoming / Past), reschedule, cancel
+- Use the mock payment system to demonstrate the booking payment workflow
 - Chat with the salon about a booking
 - Leave a review on a completed booking
 - Report an app problem or report a salon; track or edit it while pending
@@ -117,6 +118,31 @@ Data model:
 - A booking has one chat conversation and may be the subject of a report
 - Bookings store the client name and salon name, so lists need no extra reads
 
-Payments are not implemented yet. Push messages can be received (the device
-token is stored), but sending them needs an external server, which is not in
-this repo.
+## Payments
+
+HairGo includes a **mock payment system** to demonstrate the booking payment
+workflow. Payments are simulated and do not process real financial
+transactions through a live payment gateway.
+
+## Notifications
+
+The application stores device tokens for messaging infrastructure. Sending
+push notifications requires a configured message-sending service; storing
+a device token alone does not send notifications.
+
+## Demonstration Video
+
+The HairGo demonstration video showcases the application's implemented
+features and client and salon-owner workflows.
+
+**Watch the HairGo demonstration:**
+[HairGo Application Demonstration](https://drive.google.com/file/d/1NaLTKK7TcePOhsIF6tFPdzChTrW827_b/view?usp=sharing)
+
+The video is hosted on Google Drive. Playback may be unavailable temporarily
+while Google Drive processes the uploaded video.
+
+## Screenshots and User Stories
+
+Screenshots of the running application and brief user stories will be included
+in the Deliverable 4 submission PDF. They will demonstrate key features and
+explain how clients, salon owners, and administrators interact with HairGo.
