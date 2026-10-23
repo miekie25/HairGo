@@ -57,4 +57,21 @@
     <color name="booking_status_cancelled_text">#FFB59F</color>
     <color name="booking_status_expired_bg">#1C2740</color>
     <color name="booking_status_expired_text">#B9C7E6</color>
+
+    <!-- Salon profile screen only. Deep navy surfaces, no grey. -->
+    <color name="salon_header_start">#115E59</color>
+    <color name="salon_header_end">#10182E</color>
+    <color name="salon_chip_price_bg">#143230</color>
+    <color name="salon_chip_price_text">#7FE7D8</color>
+    <color name="salon_chip_duration_bg">#123A36</color>
+    <color name="salon_chip_duration_text">#5EEAD4</color>
+    <color name="salon_chip_warning_bg">#3A3020</color>
+    <color name="salon_chip_warning_text">#FFD48A</color>
+    <color name="salon_info_card_bg">#16223A</color>
+    <color name="salon_date_bg">#143230</color>
+    <color name="salon_date_text">#7FE7D8</color>
+    <color name="salon_section_title">#E6FFFB</color>
+    <color name="salon_rating_bg">#3A2B22</color>
+    <color name="salon_rating_text">#FFC9A8</color>
+    <color name="salon_accent">#FFB38A</color>
 </resources>
