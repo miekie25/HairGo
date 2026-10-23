@@ -34,6 +34,7 @@ public class ClientDashboardActivity extends AppCompatActivity implements Notifi
     public static final String EXTRA_SELECTED_TAB = "selected_tab";
 
     private BottomNavigationView bottomNav;
+    private View header;
     private TextView tvGreeting;
     private View dotNotifications;
     private AuthManager authManager;
@@ -57,6 +58,7 @@ public class ClientDashboardActivity extends AppCompatActivity implements Notifi
             return;
         }
 
+        header = findViewById(R.id.header);
         tvGreeting = findViewById(R.id.tvGreeting);
         bottomNav = findViewById(R.id.bottomNav);
         dotNotifications = findViewById(R.id.dotNotifications);
@@ -143,6 +145,11 @@ public class ClientDashboardActivity extends AppCompatActivity implements Notifi
     }
 
     private void showTab(int itemId, Fragment fragment) {
+        // Messages brings its own gradient header, so hide the dashboard header
+        // there to avoid stacking two of them.
+        header.setVisibility(itemId == R.id.nav_messages
+                ? View.GONE : View.VISIBLE);
+
         String tag = TAG_PREFIX + getResources().getResourceEntryName(itemId);
         FragmentManager manager = getSupportFragmentManager();
         FragmentTransaction transaction = manager.beginTransaction();
