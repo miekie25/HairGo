@@ -3,7 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/home_bg">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,7 +16,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/reports_title"
-            android:textColor="@color/heading"
+            android:textColor="@color/home_text_primary"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -25,7 +26,7 @@
             android:layout_marginTop="2dp"
             android:layout_marginBottom="16dp"
             android:text="@string/reports_subtitle"
-            android:textColor="@color/grey_medium"
+            android:textColor="@color/home_text_secondary"
             android:textSize="14sp" />
 
         <!-- Period selector -->
@@ -34,29 +35,46 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:singleSelection="true"
-            app:selectionRequired="true">
+            app:chipSpacingHorizontal="8dp"
+            app:selectionRequired="true"
+            app:singleLine="true"
+            app:singleSelection="true">
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipToday"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/report_period_today"
-                style="@style/Widget.MaterialComponents.Chip.Choice" />
+                android:textColor="@color/report_chip_text"
+                android:textSize="14sp"
+                app:checkedIconVisible="false"
+                app:chipBackgroundColor="@color/report_chip_bg"
+                app:chipCornerRadius="20dp"
+                app:chipMinHeight="40dp"
+                app:chipStrokeWidth="0dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipThisMonth"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/report_period_this_month"
-                style="@style/Widget.MaterialComponents.Chip.Choice" />
+                android:textColor="@color/report_chip_text"
+                android:textSize="14sp"
+                app:checkedIconVisible="false"
+                app:chipBackgroundColor="@color/report_chip_bg"
+                app:chipCornerRadius="20dp"
+                app:chipMinHeight="40dp"
+                app:chipStrokeWidth="0dp" />
         </com.google.android.material.chip.ChipGroup>
 
         <ProgressBar
             android:id="@+id/progressReports"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="40dp"
+            android:layout_marginBottom="8dp"
             android:layout_gravity="center_horizontal"
             android:indeterminateTint="@color/teal"
             android:visibility="gone" />
@@ -66,9 +84,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
+            android:background="@drawable/bg_badge_teal"
+            android:drawableTop="@drawable/ic_booking_empty"
+            android:drawablePadding="12dp"
             android:gravity="center"
+            android:lineSpacingExtra="2dp"
+            android:padding="24dp"
             android:text="@string/reports_empty"
-            android:textColor="@color/grey_medium"
+            android:textColor="@color/home_text_primary"
             android:textSize="16sp"
             android:visibility="gone" />
 
@@ -77,9 +100,9 @@
             android:id="@+id/tvBookingSummaryLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:text="@string/reports_booking_summary"
-            android:textColor="@color/heading"
+            android:textColor="@color/home_text_primary"
             android:textSize="16sp"
             android:textStyle="bold"
             android:visibility="gone" />
@@ -89,6 +112,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:baselineAligned="false"
             android:orientation="horizontal"
             android:visibility="gone">
 
@@ -96,33 +120,56 @@
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardReportTotalValue"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="match_parent"
                 android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:minHeight="92dp"
+                app:cardBackgroundColor="@color/home_card_bg"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="false">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
+                    android:layout_height="match_parent"
+                    android:baselineAligned="false"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
                     android:padding="14dp">
 
-                    <TextView
-                        android:id="@+id/tvReportTotalValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="R0"
-                        android:textColor="@color/navy"
-                        android:textSize="24sp"
-                        android:textStyle="bold" />
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_circle_teal"
+                        android:importantForAccessibility="no"
+                        android:padding="8dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_nav_reports"
+                        app:tint="@color/teal_primary" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/reports_total_value"
-                        android:textColor="@color/grey_medium"
-                        android:textSize="12sp" />
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvReportTotalValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="R0"
+                            android:textColor="@color/home_text_primary"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/reports_total_value"
+                            android:textColor="@color/home_text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -130,33 +177,56 @@
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardReportBookingsOutstanding"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="match_parent"
                 android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:minHeight="92dp"
+                app:cardBackgroundColor="@color/home_card_bg"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="false">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
+                    android:layout_height="match_parent"
+                    android:baselineAligned="false"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
                     android:padding="14dp">
 
-                    <TextView
-                        android:id="@+id/tvReportBookingsOutstanding"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textColor="@color/warning"
-                        android:textSize="24sp"
-                        android:textStyle="bold" />
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_circle_orange"
+                        android:importantForAccessibility="no"
+                        android:padding="8dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_warning"
+                        app:tint="@color/warning" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/reports_bookings_outstanding"
-                        android:textColor="@color/grey_medium"
-                        android:textSize="12sp" />
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvReportBookingsOutstanding"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textColor="@color/warning"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/reports_bookings_outstanding"
+                            android:textColor="@color/home_text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
@@ -168,7 +238,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="@string/reports_payment_summary"
-            android:textColor="@color/heading"
+            android:textColor="@color/home_text_primary"
             android:textSize="16sp"
             android:textStyle="bold"
             android:visibility="gone" />
@@ -178,6 +248,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:baselineAligned="false"
             android:orientation="horizontal"
             android:visibility="gone">
 
@@ -185,33 +256,56 @@
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardReportAmountPaid"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="match_parent"
                 android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:minHeight="92dp"
+                app:cardBackgroundColor="@color/home_card_bg"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="false">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
+                    android:layout_height="match_parent"
+                    android:baselineAligned="false"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
                     android:padding="14dp">
 
-                    <TextView
-                        android:id="@+id/tvReportAmountPaid"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="R0"
-                        android:textColor="@color/teal"
-                        android:textSize="24sp"
-                        android:textStyle="bold" />
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_circle_green"
+                        android:importantForAccessibility="no"
+                        android:padding="8dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_check"
+                        app:tint="@color/success" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/reports_amount_paid"
-                        android:textColor="@color/grey_medium"
-                        android:textSize="12sp" />
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvReportAmountPaid"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="R0"
+                            android:textColor="@color/teal"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/reports_amount_paid"
+                            android:textColor="@color/home_text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -219,33 +313,56 @@
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardReportOutstandingBalance"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="match_parent"
                 android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:minHeight="92dp"
+                app:cardBackgroundColor="@color/home_card_bg"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="false">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
+                    android:layout_height="match_parent"
+                    android:baselineAligned="false"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
                     android:padding="14dp">
 
-                    <TextView
-                        android:id="@+id/tvReportOutstandingBalance"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="R0"
-                        android:textColor="@color/error"
-                        android:textSize="24sp"
-                        android:textStyle="bold" />
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_circle_coral"
+                        android:importantForAccessibility="no"
+                        android:padding="8dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_warning"
+                        app:tint="@color/error" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/reports_outstanding_balance"
-                        android:textColor="@color/grey_medium"
-                        android:textSize="12sp" />
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvReportOutstandingBalance"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="R0"
+                            android:textColor="@color/error"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/reports_outstanding_balance"
+                            android:textColor="@color/home_text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
@@ -257,7 +374,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="@string/reports_payment_breakdown"
-            android:textColor="@color/heading"
+            android:textColor="@color/home_text_primary"
             android:textSize="16sp"
             android:textStyle="bold"
             android:visibility="gone" />
@@ -267,6 +384,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:baselineAligned="false"
             android:orientation="horizontal"
             android:visibility="gone">
 
@@ -274,41 +392,64 @@
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardReportCardPayments"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="match_parent"
                 android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:minHeight="92dp"
+                app:cardBackgroundColor="@color/home_card_bg"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="false">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
+                    android:layout_height="match_parent"
+                    android:baselineAligned="false"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
                     android:padding="14dp">
 
-                    <TextView
-                        android:id="@+id/tvReportCardPayments"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="R0"
-                        android:textColor="@color/navy"
-                        android:textSize="24sp"
-                        android:textStyle="bold" />
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_circle_teal"
+                        android:importantForAccessibility="no"
+                        android:padding="8dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_nav_reports"
+                        app:tint="@color/teal_primary" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/reports_card_payments"
-                        android:textColor="@color/grey_medium"
-                        android:textSize="12sp" />
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/reports_card_payments_note"
-                        android:textColor="@color/grey_medium"
-                        android:textSize="10sp" />
+                        <TextView
+                            android:id="@+id/tvReportCardPayments"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="R0"
+                            android:textColor="@color/home_text_primary"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/reports_card_payments"
+                            android:textColor="@color/home_text_secondary"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/reports_card_payments_note"
+                            android:textColor="@color/home_text_secondary"
+                            android:textSize="10sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -316,41 +457,64 @@
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardReportCashPayments"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="match_parent"
                 android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:minHeight="92dp"
+                app:cardBackgroundColor="@color/home_card_bg"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="false">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
+                    android:layout_height="match_parent"
+                    android:baselineAligned="false"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
                     android:padding="14dp">
 
-                    <TextView
-                        android:id="@+id/tvReportCashPayments"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="R0"
-                        android:textColor="@color/teal"
-                        android:textSize="24sp"
-                        android:textStyle="bold" />
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_circle_green"
+                        android:importantForAccessibility="no"
+                        android:padding="8dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_check"
+                        app:tint="@color/success" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/reports_cash_payments"
-                        android:textColor="@color/grey_medium"
-                        android:textSize="12sp" />
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/reports_cash_payments_note"
-                        android:textColor="@color/grey_medium"
-                        android:textSize="10sp" />
+                        <TextView
+                            android:id="@+id/tvReportCashPayments"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="R0"
+                            android:textColor="@color/teal"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/reports_cash_payments"
+                            android:textColor="@color/home_text_secondary"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/reports_cash_payments_note"
+                            android:textColor="@color/home_text_secondary"
+                            android:textSize="10sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
@@ -361,10 +525,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:padding="12dp"
-            android:background="@color/grey_light"
+            android:background="@drawable/bg_salon_chip_warning"
+            android:lineSpacingExtra="2dp"
+            android:padding="14dp"
             android:text="@string/reports_data_completeness_note"
-            android:textColor="@color/grey_dark"
+            android:textColor="@color/salon_chip_warning_text"
             android:textSize="12sp"
             android:visibility="gone" />
     </LinearLayout>
