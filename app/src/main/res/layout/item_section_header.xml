@@ -5,27 +5,37 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingHorizontal="16dp"
-    android:paddingTop="18dp"
+    android:paddingTop="20dp"
     android:paddingBottom="6dp">
+
+    <View
+        android:id="@+id/viewSectionDot"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:background="@drawable/bg_circle_teal"
+        app:layout_constraintTop_toTopOf="@id/tvSectionTitle"
+        app:layout_constraintBottom_toBottomOf="@id/tvSectionTitle"
+        app:layout_constraintStart_toStartOf="parent"/>
 
     <TextView
         android:id="@+id/tvSectionTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:letterSpacing="0.08"
-        android:textAllCaps="true"
-        android:textColor="@color/heading"
-        android:textSize="12sp"
+        android:layout_marginStart="8dp"
+        android:letterSpacing="0.02"
+        android:textColor="@color/home_text_primary"
+        android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"/>
+        app:layout_constraintStart_toEndOf="@id/viewSectionDot"
+        app:layout_constraintEnd_toStartOf="@id/tvSectionCount"/>
 
     <TextView
         android:id="@+id/tvSectionCount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/grey_medium"
+        android:layout_marginStart="8dp"
+        android:textColor="@color/home_text_secondary"
         android:textSize="12sp"
         app:layout_constraintTop_toTopOf="@id/tvSectionTitle"
         app:layout_constraintBottom_toBottomOf="@id/tvSectionTitle"

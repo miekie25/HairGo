@@ -65,4 +65,16 @@
     <color name="home_rating_bg">#FFF0E6</color>
     <color name="home_rating_text">#B44A24</color>
     <color name="home_accent">#E8824F</color>
+
+    <!-- Bookings screen only. No grey tones. -->
+    <color name="booking_status_pending_bg">#FFF3D6</color>
+    <color name="booking_status_pending_text">#8A5A00</color>
+    <color name="booking_status_confirmed_bg">#E0F7F3</color>
+    <color name="booking_status_confirmed_text">#0F766E</color>
+    <color name="booking_status_completed_bg">#E6F7EC</color>
+    <color name="booking_status_completed_text">#1F6B44</color>
+    <color name="booking_status_cancelled_bg">#FDEAE4</color>
+    <color name="booking_status_cancelled_text">#B4442A</color>
+    <color name="booking_status_expired_bg">#E7EBF3</color>
+    <color name="booking_status_expired_text">#1B2A4A</color>
 </resources>

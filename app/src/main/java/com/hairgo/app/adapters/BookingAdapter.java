@@ -79,25 +79,25 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingV
         int textColorRes;
         switch (status == null ? "" : status) {
             case "confirmed":
-                pillRes = R.drawable.bg_pill_confirmed;
-                textColorRes = R.color.teal_dark;
+                pillRes = R.drawable.bg_booking_status_confirmed;
+                textColorRes = R.color.booking_status_confirmed_text;
                 break;
             case "completed":
-                pillRes = R.drawable.bg_pill_completed;
-                textColorRes = R.color.success_dark;
+                pillRes = R.drawable.bg_booking_status_completed;
+                textColorRes = R.color.booking_status_completed_text;
                 break;
             case "cancelled":
-                pillRes = R.drawable.bg_pill_cancelled;
-                textColorRes = R.color.error_dark;
+                pillRes = R.drawable.bg_booking_status_cancelled;
+                textColorRes = R.color.booking_status_cancelled_text;
                 break;
             case "expired":
-                pillRes = R.drawable.bg_pill_expired;
-                textColorRes = R.color.grey_medium;
+                pillRes = R.drawable.bg_booking_status_expired;
+                textColorRes = R.color.booking_status_expired_text;
                 break;
             case "pending":
             default:
-                pillRes = R.drawable.bg_pill_pending;
-                textColorRes = R.color.warning_dark;
+                pillRes = R.drawable.bg_booking_status_pending;
+                textColorRes = R.color.booking_status_pending_text;
                 break;
         }
 
