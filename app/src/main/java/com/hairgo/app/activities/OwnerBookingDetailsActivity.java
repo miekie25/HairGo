@@ -1,8 +1,6 @@
 package com.hairgo.app.activities;
 
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
@@ -50,6 +48,11 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
     private TextView tvNotes;
     private TextView tvPaymentLabel;
     private TextView tvPayment;
+    private TextView tvPaymentBadge;
+    private TextView tvTotalLabel;
+    private TextView tvBookingTotal;
+    private TextView tvBookingNote;
+    private com.google.android.material.card.MaterialCardView cardNotes;
 
     private androidx.appcompat.widget.AppCompatButton btnMessageClient;
     private androidx.appcompat.widget.AppCompatButton btnConfirm;
@@ -90,6 +93,11 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
         tvNotes = findViewById(R.id.tvNotes);
         tvPaymentLabel = findViewById(R.id.tvPaymentLabel);
         tvPayment = findViewById(R.id.tvPayment);
+        tvPaymentBadge = findViewById(R.id.tvPaymentBadge);
+        tvTotalLabel = findViewById(R.id.tvTotalLabel);
+        tvBookingTotal = findViewById(R.id.tvBookingTotal);
+        tvBookingNote = findViewById(R.id.tvBookingNote);
+        cardNotes = findViewById(R.id.cardNotes);
 
         btnMessageClient = findViewById(R.id.btnMessageClient);
         btnConfirm = findViewById(R.id.btnConfirm);
@@ -149,7 +157,7 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
         bindPayment(booking);
 
         if (booking.getDateTime() != null) {
-            SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy • HH:mm", Locale.getDefault());
+            SimpleDateFormat format = new SimpleDateFormat(getString(R.string.booking_date_format), Locale.getDefault());
             tvDateTime.setText(format.format(booking.getDateTime()));
         } else {
             tvDateTime.setText("");
@@ -276,21 +284,25 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
         if (notes == null || notes.trim().isEmpty()) {
             tvNotesLabel.setVisibility(View.GONE);
             tvNotes.setVisibility(View.GONE);
+            if (cardNotes != null) cardNotes.setVisibility(View.GONE);
             return;
         }
 
         tvNotes.setText(notes.trim());
         tvNotesLabel.setVisibility(View.VISIBLE);
         tvNotes.setVisibility(View.VISIBLE);
+        if (cardNotes != null) cardNotes.setVisibility(View.VISIBLE);
     }
 
     private void bindPayment(OwnerBooking booking) {
         PaymentDetails payment = booking.getPaymentDetails();
         String summary = paymentSummary(payment);
+        String badgeText = paymentBadgeText(payment);
 
         if (summary == null) {
             tvPaymentLabel.setVisibility(View.GONE);
             tvPayment.setVisibility(View.GONE);
+            tvPaymentBadge.setVisibility(View.GONE);
             btnRecordCashPayment.setVisibility(View.GONE);
             return;
         }
@@ -298,6 +310,15 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
         tvPayment.setText(summary);
         tvPaymentLabel.setVisibility(View.VISIBLE);
         tvPayment.setVisibility(View.VISIBLE);
+
+        if (tvPaymentBadge != null) {
+            if (badgeText != null && !badgeText.isEmpty()) {
+                tvPaymentBadge.setText(badgeText);
+                tvPaymentBadge.setVisibility(View.VISIBLE);
+            } else {
+                tvPaymentBadge.setVisibility(View.GONE);
+            }
+        }
 
         // Show Record Cash Payment button only for cash bookings with outstanding balance
         boolean canRecordCash = payment != null && payment.canRecordCashPayment();
@@ -339,6 +360,24 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
         }
 
         return getString(R.string.payment_status_unknown);
+    }
+
+    private String paymentBadgeText(PaymentDetails payment) {
+        if (payment == null) return null;
+
+        if (PaymentDetails.TYPE_CASH.equals(payment.getType())) {
+            return getString(R.string.payment_badge_cash);
+        }
+
+        if (PaymentDetails.TYPE_DEPOSIT.equals(payment.getType())) {
+            return getString(R.string.payment_badge_deposit);
+        }
+
+        if (PaymentDetails.TYPE_FULL.equals(payment.getType())) {
+            return getString(R.string.payment_badge_full);
+        }
+
+        return null;
     }
 
     private void showRecordCashPaymentDialog(PaymentDetails payment) {
@@ -418,6 +457,17 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
         btnConfirm.setVisibility(isPending ? View.VISIBLE : View.GONE);
         btnDecline.setVisibility(isPending ? View.VISIBLE : View.GONE);
         btnMarkCompleted.setVisibility(canComplete ? View.VISIBLE : View.GONE);
+
+        // Record Cash Payment: outline when primary action (Confirm/Complete) is visible,
+        // filled when it's the only action
+        boolean primaryVisible = isPending || canComplete;
+        if (btnRecordCashPayment.getVisibility() == View.VISIBLE) {
+            btnRecordCashPayment.setBackgroundResource(primaryVisible
+                    ? R.drawable.bg_button_outline_teal
+                    : R.drawable.bg_button_teal);
+            btnRecordCashPayment.setTextColor(ContextCompat.getColor(this,
+                    primaryVisible ? R.color.teal : R.color.white));
+        }
     }
 
     private void updateStatusBadge(String status) {
@@ -431,31 +481,34 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
         }
         tvStatusBadge.setText(label);
 
-        int colorRes;
+        int pillRes;
+        int textColorRes;
         switch (status == null ? "" : status) {
             case "confirmed":
-                colorRes = R.color.teal;
+                pillRes = R.drawable.bg_booking_status_confirmed;
+                textColorRes = R.color.booking_status_confirmed_text;
                 break;
             case "completed":
-                colorRes = R.color.success;
+                pillRes = R.drawable.bg_booking_status_completed;
+                textColorRes = R.color.booking_status_completed_text;
                 break;
             case "cancelled":
-                colorRes = R.color.error;
+                pillRes = R.drawable.bg_booking_status_cancelled;
+                textColorRes = R.color.booking_status_cancelled_text;
                 break;
             case "expired":
-                colorRes = R.color.grey_medium;
+                pillRes = R.drawable.bg_booking_status_expired;
+                textColorRes = R.color.booking_status_expired_text;
                 break;
             case "pending":
             default:
-                colorRes = R.color.warning;
+                pillRes = R.drawable.bg_booking_status_pending;
+                textColorRes = R.color.booking_status_pending_text;
                 break;
         }
 
-        Drawable background = tvStatusBadge.getBackground();
-        if (background instanceof GradientDrawable) {
-            ((GradientDrawable) background.mutate())
-                    .setColor(ContextCompat.getColor(this, colorRes));
-        }
+        tvStatusBadge.setBackgroundResource(pillRes);
+        tvStatusBadge.setTextColor(ContextCompat.getColor(this, textColorRes));
     }
 
     private void updateStatus(String newStatus) {
