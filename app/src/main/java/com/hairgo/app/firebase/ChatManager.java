@@ -90,8 +90,9 @@ public class ChatManager {
     /**
      * Resolves who may chat about this booking: reads the booking (client) and
      * its salon (owner), then checks the signed-in user is one of the two.
-     * Deliberately reads the raw booking document - a cancelled booking is
-     * soft-deleted, and people may still need to talk about it.
+     * Deliberately reads the raw booking document directly (not via a query) so
+     * that soft-deleted (cancelled) bookings are still accessible — conversations
+     * remain open permanently regardless of booking status.
      */
     public void loadContext(String bookingId, ContextCallback callback) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -107,6 +108,9 @@ public class ChatManager {
                         callback.onFailure("Booking not found.");
                         return;
                     }
+                    // Direct document read returns the booking even if isDeleted=true
+                    // (soft-deleted). We do NOT filter by isDeleted — conversations
+                    // must stay accessible permanently.
                     String clientId = bookingDoc.getString("clientID");
                     String salonId = bookingDoc.getString("salonID");
                     if (clientId == null || clientId.isEmpty()
