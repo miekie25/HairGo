@@ -27,4 +27,22 @@
     <color name="success_light">#1E3327</color>
     <color name="error_light">#3A2020</color>
     <color name="warning_light">#3A3020</color>
+
+    <!-- Home screen only. Deep navy surfaces and light teal text, no grey. -->
+    <color name="home_bg">#0D1828</color>
+    <color name="home_header_start">#115E59</color>
+    <color name="home_header_end">#10182E</color>
+    <color name="home_header_text">#E6FFFB</color>
+    <color name="home_header_subtext">#A7E8DF</color>
+    <color name="home_search_bg">#16223A</color>
+    <color name="home_search_text">#E6FFFB</color>
+    <color name="home_search_hint">#7FD8CC</color>
+    <color name="home_text_primary">#E6FFFB</color>
+    <color name="home_text_secondary">#8FE0D4</color>
+    <color name="home_border">#2A4A52</color>
+    <color name="home_icon">#5EEAD4</color>
+    <color name="home_card_bg">#16223A</color>
+    <color name="home_rating_bg">#3A2B22</color>
+    <color name="home_rating_text">#FFC9A8</color>
+    <color name="home_accent">#FFB38A</color>
 </resources>

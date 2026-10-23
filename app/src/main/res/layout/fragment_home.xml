@@ -1,101 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/grey_light">
+    android:orientation="vertical"
+    android:background="@color/home_bg">
 
-    <TextView
-        android:id="@+id/tvHomeTitle"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
-        android:layout_marginHorizontal="16dp"
-        android:text="@string/title_home"
-        android:textColor="@color/heading"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        android:orientation="vertical"
+        android:background="@drawable/bg_home_header"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="18dp"
+        android:paddingBottom="46dp">
 
-    <TextView
-        android:id="@+id/tvHomeSubtitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:layout_marginHorizontal="16dp"
-        android:text="@string/home_subtitle"
-        android:textColor="@color/grey_medium"
-        android:textSize="13sp"
-        app:layout_constraintTop_toBottomOf="@id/tvHomeTitle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        <TextView
+            android:id="@+id/tvHomeGreeting"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/home_greeting"
+            android:textColor="@color/home_header_subtext"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.02"/>
+
+        <TextView
+            android:id="@+id/tvHomeTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/title_home"
+            android:textColor="@color/home_header_text"
+            android:textSize="24sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/tvHomeSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/home_subtitle"
+            android:textColor="@color/home_header_subtext"
+            android:textSize="13sp"/>
+
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/llSearchBar"
-        android:layout_width="0dp"
-        android:layout_height="48dp"
-        android:layout_marginTop="14dp"
-        android:layout_marginHorizontal="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="-26dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/bg_search_field"
-        android:paddingHorizontal="14dp"
-        android:elevation="1dp"
-        app:layout_constraintTop_toBottomOf="@id/tvHomeSubtitle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:background="@drawable/bg_home_search"
+        android:addStatesFromChildren="true"
+        android:outlineProvider="background"
+        android:paddingHorizontal="16dp"
+        android:elevation="8dp">
 
         <ImageView
-            android:layout_width="18dp"
-            android:layout_height="18dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:src="@drawable/ic_search"
             android:importantForAccessibility="no"
-            app:tint="@color/grey_medium"/>
+            app:tint="@color/home_icon"/>
 
         <EditText
             android:id="@+id/etSearch"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="10dp"
             android:background="@android:color/transparent"
             android:hint="@string/hint_search_salons"
             android:inputType="text"
             android:imeOptions="actionSearch"
             android:importantForAutofill="no"
             android:singleLine="true"
-            android:textColor="@color/grey_dark"
-            android:textColorHint="@color/grey_medium"
-            android:textSize="14sp"/>
+            android:gravity="center_vertical"
+            android:paddingVertical="0dp"
+            android:includeFontPadding="false"
+            android:textColor="@color/home_search_text"
+            android:textColorHint="@color/home_search_hint"
+            android:textSize="15sp"/>
 
     </LinearLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvSalons"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:clipToPadding="false"
-        android:paddingBottom="16dp"
-        app:layout_constraintTop_toBottomOf="@id/llSearchBar"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
     <TextView
-        android:id="@+id/tvEmptyState"
-        android:layout_width="wrap_content"
+        android:id="@+id/tvHomeSectionTitle"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/no_salons_found"
-        android:textColor="@color/grey_medium"
-        android:textSize="14sp"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/llSearchBar"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="6dp"
+        android:text="@string/home_popular_salons"
+        android:textColor="@color/home_text_primary"
+        android:textSize="18sp"
+        android:textStyle="bold"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvSalons"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="16dp"/>
+
+        <TextView
+            android:id="@+id/tvEmptyState"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:padding="24dp"
+            android:text="@string/no_salons_found"
+            android:textColor="@color/home_text_secondary"
+            android:textSize="14sp"
+            android:visibility="gone"/>
+
+    </FrameLayout>
+
+</LinearLayout>

@@ -47,4 +47,22 @@
     <color name="text_hint">#8A8A8A</color>
     <color name="background_light">#F2F2F2</color>
     <color name="navy_primary">#1B2A4A</color>
+
+    <!-- Home screen only. No grey tones. -->
+    <color name="home_bg">#F2FBF9</color>
+    <color name="home_header_start">#14B8A6</color>
+    <color name="home_header_end">#1B2A4A</color>
+    <color name="home_header_text">#FFFFFF</color>
+    <color name="home_header_subtext">#D6F5F0</color>
+    <color name="home_search_bg">#FFFFFF</color>
+    <color name="home_search_text">#1B2A4A</color>
+    <color name="home_search_hint">#4F7A76</color>
+    <color name="home_text_primary">#1B2A4A</color>
+    <color name="home_text_secondary">#3E6F69</color>
+    <color name="home_border">#BDEAE4</color>
+    <color name="home_icon">#1C8C7C</color>
+    <color name="home_card_bg">#FFFFFF</color>
+    <color name="home_rating_bg">#FFF0E6</color>
+    <color name="home_rating_text">#B44A24</color>
+    <color name="home_accent">#E8824F</color>
 </resources>

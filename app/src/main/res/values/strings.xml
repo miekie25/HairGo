@@ -71,6 +71,8 @@
     <string name="nav_bookings">Bookings</string>
     <string name="nav_profile">Profile</string>
     <string name="dashboard_welcome_default">Welcome back</string>
+    <string name="home_greeting">Ready for a fresh look?</string>
+    <string name="home_popular_salons">Popular salons</string>
     <string name="title_home">Find a Salon</string>
     <string name="home_subtitle">Search for a salon and make a booking</string>
     <string name="hint_search_salons">Search salons or locations</string>
