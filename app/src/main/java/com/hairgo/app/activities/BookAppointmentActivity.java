@@ -324,8 +324,9 @@ public class BookAppointmentActivity extends AppCompatActivity {
                 int count = 0;
                 for (boolean b : checked) if (b) count++;
                 if (count == 0) {
-                    Snackbars.show(findViewById(android.R.id.content),
-                            R.string.please_choose_at_least_one_service);
+                    android.widget.Toast.makeText(BookAppointmentActivity.this,
+                            R.string.please_choose_at_least_one_service,
+                            android.widget.Toast.LENGTH_SHORT).show();
                     return;
                 }
                 selectedServices.clear();
