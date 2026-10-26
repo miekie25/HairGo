@@ -24,6 +24,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.Timestamp;
 import com.hairgo.app.R;
@@ -823,30 +825,15 @@ public class BookAppointmentActivity extends AppCompatActivity {
     private void showSavingDialog() {
         if (savingDialog != null && savingDialog.isShowing()) return;
 
-        int padding = Math.round(24 * getResources().getDisplayMetrics().density);
-        LinearLayout container = new LinearLayout(this);
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setGravity(Gravity.CENTER_HORIZONTAL);
-        container.setPadding(padding, padding, padding, padding);
-
-        ProgressBar progressBar = new ProgressBar(this);
-        container.addView(progressBar);
-
-        TextView label = new TextView(this);
-        label.setText(R.string.saving_booking);
-        label.setTextColor(getColor(R.color.heading));
-        label.setTextSize(15);
-        label.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        labelParams.topMargin = Math.round(12 * getResources().getDisplayMetrics().density);
-        container.addView(label, labelParams);
-
-        savingDialog = new AlertDialog.Builder(this)
-                .setView(container)
+        View view = getLayoutInflater().inflate(R.layout.dialog_saving_booking, null);
+        savingDialog = new MaterialAlertDialogBuilder(this)
+                .setView(view)
                 .setCancelable(false)
                 .create();
+
+        if (savingDialog.getWindow() != null) {
+            savingDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
         savingDialog.show();
     }
 
