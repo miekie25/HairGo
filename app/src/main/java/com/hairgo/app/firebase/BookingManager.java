@@ -373,9 +373,9 @@ public class BookingManager {
     /**
      * Reads one booking by id.
      *
-     * <p>A soft-deleted booking is reported as not found. Cancelling flips
-     * isDeleted rather than removing the document, so without this check a
-     * cancelled booking can still be opened from recents and cancelled again.
+     * <p>A soft-deleted booking is reported as not found. Use the overload below
+     * with includeDeleted when a screen needs to show a cancelled booking, since
+     * a cancellation is stored as status "cancelled" plus isDeleted true.
      */
     public void getBookingById(String bookingId, BookingDataCallback callback) {
         getBookingById(bookingId, false, callback);
@@ -384,10 +384,10 @@ public class BookingManager {
     /**
      * Reads one booking by id, optionally including soft-deleted ones.
      *
-     * <p>The owner's live booking list deliberately keeps client-cancelled
+     * <p>Both the owner's and the client's booking lists keep client-cancelled
      * bookings visible (a cancellation is status "cancelled" plus isDeleted
      * true). Without includeDeleted, tapping one of those would 404 on the
-     * detail screen, so the owner side passes true.
+     * detail screen, so those screens pass true.
      */
     public void getBookingById(String bookingId, boolean includeDeleted, BookingDataCallback callback) {
         db.collection("bookings").document(bookingId).get()
@@ -410,14 +410,26 @@ public class BookingManager {
     public void getBookingsForClient(String clientId, BookingListCallback callback) {
         db.collection("bookings")
                 .whereEqualTo("clientID", clientId)
-                .whereEqualTo("isDeleted", false)
                 .get()
                 .addOnSuccessListener(query -> {
                     List<Map<String, Object>> bookings = new ArrayList<>();
-                    for (QueryDocumentSnapshot doc : query) bookings.add(doc.getData());
+                    for (QueryDocumentSnapshot doc : query) {
+                        if (isHiddenFromClient(doc)) continue;
+                        bookings.add(doc.getData());
+                    }
                     callback.onSuccess(bookings);
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
+     * A client's own cancellation is stored as status "cancelled" plus isDeleted
+     * true. The client's list keeps those so the booking stays visible as
+     * cancelled, but hides any other soft-deleted booking.
+     */
+    private static boolean isHiddenFromClient(QueryDocumentSnapshot doc) {
+        boolean deleted = Boolean.TRUE.equals(doc.getBoolean("isDeleted"));
+        return deleted && !"cancelled".equals(doc.getString("status"));
     }
 
     /**
@@ -431,7 +443,6 @@ public class BookingManager {
     public ListenerRegistration listenToBookingsForClient(String clientId, BookingListCallback callback) {
         return db.collection("bookings")
                 .whereEqualTo("clientID", clientId)
-                .whereEqualTo("isDeleted", false)
                 .addSnapshotListener((snapshots, error) -> {
                     if (error != null) {
                         callback.onFailure(error.getMessage());
@@ -439,7 +450,10 @@ public class BookingManager {
                     }
                     List<Map<String, Object>> bookings = new ArrayList<>();
                     if (snapshots != null) {
-                        for (QueryDocumentSnapshot doc : snapshots) bookings.add(doc.getData());
+                        for (QueryDocumentSnapshot doc : snapshots) {
+                            if (isHiddenFromClient(doc)) continue;
+                            bookings.add(doc.getData());
+                        }
                     }
                     callback.onSuccess(bookings);
                 });
@@ -818,9 +832,10 @@ public class BookingManager {
      * Cancels a booking by writing the cancelled status and the soft-delete flag
      * in a single update.
      *
-     * <p>Both fields go in one write so a booking can never end up hidden from
-     * the client's list while still reading as pending to the owner, and so a
-     * failure part way through cannot leave it half cancelled.
+     * <p>Both fields go in one write so a booking can never end up half
+     * cancelled. The client's bookings list keeps status "cancelled" bookings
+     * even though they are soft-deleted, so the booking stays visible as
+     * cancelled under Past instead of disappearing.
      */
     public void cancelBooking(String bookingId, BookingCallback callback) {
         Map<String, Object> update = new HashMap<>();

@@ -12,7 +12,7 @@
         <item name="colorSurface">@color/surface</item>
         <item name="colorOnSurface">@color/text_primary</item>
         <item name="colorSurfaceVariant">@color/grey_light</item>
-        <item name="colorOnSurfaceVariant">@color/grey_medium</item>
+        <item name="colorOnSurfaceVariant">@color/text_primary</item>
         <item name="colorOutline">@color/grey_border</item>
         <item name="android:colorBackground">@color/grey_light</item>
     </style>

@@ -509,7 +509,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
             Calendar picked = Calendar.getInstance();
             picked.set(year, month, dayOfMonth);
             if (!salonHours.isOpenOn(picked.get(Calendar.DAY_OF_WEEK))) {
-                new AlertDialog.Builder(this)
+                new MaterialAlertDialogBuilder(this)
                         .setTitle(R.string.closed_day_title)
                         .setMessage(getString(R.string.closed_day_message,
                                 SalonHours.dayName(picked.get(Calendar.DAY_OF_WEEK))))

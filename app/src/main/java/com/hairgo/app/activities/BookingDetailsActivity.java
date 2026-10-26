@@ -94,7 +94,9 @@ public class BookingDetailsActivity extends AppCompatActivity {
         progress.setVisibility(View.VISIBLE);
         contentGroup.setVisibility(View.INVISIBLE);
 
-        bookingManager.getBookingById(bookingId, new BookingManager.BookingDataCallback() {
+        // Client cancellations are soft-deleted but still shown in the bookings
+        // list, so the detail screen must be able to open them too.
+        bookingManager.getBookingById(bookingId, true, new BookingManager.BookingDataCallback() {
             @Override
             public void onSuccess(Map<String, Object> rawBooking) {
                 Booking booking = toBooking(rawBooking);
@@ -551,7 +553,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
     }
 
     private void showCancelConfirmation() {
-        new AlertDialog.Builder(this)
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.cancel_booking_confirm_title)
                 .setMessage(R.string.cancel_booking_confirm_message)
                 .setPositiveButton(R.string.btn_cancel_booking, (dialog, which) -> cancelBooking())
