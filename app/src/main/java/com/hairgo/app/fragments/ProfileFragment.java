@@ -1,6 +1,8 @@
 package com.hairgo.app.fragments;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -17,6 +19,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -342,24 +345,34 @@ public class ProfileFragment extends Fragment {
         View dialogView = LayoutInflater.from(requireContext())
                 .inflate(R.layout.dialog_delete_account, null);
         EditText etPassword = dialogView.findViewById(R.id.etDeletePassword);
+        com.google.android.material.button.MaterialButton btnDeleteConfirm = dialogView.findViewById(R.id.btnDeleteConfirm);
+        com.google.android.material.button.MaterialButton btnDeleteCancel = dialogView.findViewById(R.id.btnDeleteCancel);
 
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.delete_account_title)
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
-                .setPositiveButton(R.string.btn_delete_account, null)
-                .setNegativeButton(R.string.cancel, null)
                 .create();
 
-        // Listener set after show() so an empty password keeps the dialog open.
-        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String password = etPassword.getText().toString();
-            if (password.isEmpty()) {
-                etPassword.setError(getString(R.string.hint_password_required));
-                return;
-            }
-            dialog.dismiss();
-            runDeleteAccountFlow(password);
-        }));
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            int width = (int) (requireContext().getResources().getDisplayMetrics().widthPixels * 0.92f);
+            dialog.getWindow().setLayout(width, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            dialog.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
+
+        if (btnDeleteCancel != null) {
+            btnDeleteCancel.setOnClickListener(v -> dialog.dismiss());
+        }
+        if (btnDeleteConfirm != null) {
+            btnDeleteConfirm.setOnClickListener(v -> {
+                String password = etPassword.getText().toString();
+                if (password.isEmpty()) {
+                    etPassword.setError(getString(R.string.hint_password_required));
+                    return;
+                }
+                dialog.dismiss();
+                runDeleteAccountFlow(password);
+            });
+        }
         dialog.show();
     }
 
