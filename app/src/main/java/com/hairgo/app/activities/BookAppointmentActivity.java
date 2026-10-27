@@ -346,6 +346,10 @@ public class BookAppointmentActivity extends AppCompatActivity {
             tvSelectedServices.setText(R.string.hint_choose_services);
             tvSelectedServices.setTextColor(getColor(R.color.grey_medium));
             llServiceSummary.setVisibility(View.GONE);
+            if (tvServicePriceNote != null) {
+                tvServicePriceNote.setVisibility(View.GONE);
+                tvServicePriceNote.setText(R.string.service_missing_price_note);
+            }
             updatePaymentOptions();
             return;
         }
@@ -355,6 +359,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
         boolean anyPrice = false;
         boolean missingPrice = false;
         int totalDuration = 0;
+        List<String> unpricedNames = new ArrayList<>();
 
         for (ServiceDetail detail : selectedServices) {
             names.add(detail.getName());
@@ -365,6 +370,11 @@ public class BookAppointmentActivity extends AppCompatActivity {
                 anyPrice = true;
             } else {
                 missingPrice = true;
+                if (detail.getName() != null && !detail.getName().trim().isEmpty()) {
+                    unpricedNames.add(detail.getName().trim());
+                } else {
+                    unpricedNames.add(detail.getName());
+                }
             }
         }
 
@@ -380,7 +390,27 @@ public class BookAppointmentActivity extends AppCompatActivity {
             tvServiceTotal.setText(getString(R.string.service_total_duration, totalDuration));
         }
 
-        tvServicePriceNote.setVisibility(missingPrice ? View.VISIBLE : View.GONE);
+        if (tvServicePriceNote != null) {
+            if (missingPrice && !unpricedNames.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(getString(R.string.service_missing_price_note)).append("\n");
+                for (String unpriced : unpricedNames) {
+                    sb.append("- ").append(unpriced).append("\n");
+                }
+                // Remove trailing newline if present
+                if (sb.length() > 0 && sb.charAt(sb.length() - 1) == '\n') {
+                    sb.setLength(sb.length() - 1);
+                }
+                tvServicePriceNote.setText(sb.toString());
+                tvServicePriceNote.setVisibility(View.VISIBLE);
+            } else if (missingPrice) {
+                tvServicePriceNote.setText(R.string.service_missing_price_note);
+                tvServicePriceNote.setVisibility(View.VISIBLE);
+            } else {
+                tvServicePriceNote.setText(R.string.service_missing_price_note);
+                tvServicePriceNote.setVisibility(View.GONE);
+            }
+        }
         llServiceSummary.setVisibility(View.VISIBLE);
         updatePaymentOptions();
 

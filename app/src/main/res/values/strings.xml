@@ -15,6 +15,7 @@
     <string name="hint_email_required">Enter your email address</string>
     <string name="hint_email_invalid">Enter a valid email address</string>
     <string name="hint_password_required">Enter your password</string>
+    <string name="incorrect_password">Incorrect password</string>
     <string name="btn_logging_in">Logging in…</string>
     <string name="login_error_invalid_credentials">Incorrect email or password</string>
     <string name="login_error_network">Could not reach the server. Check your connection and try again.</string>

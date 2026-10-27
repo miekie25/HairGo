@@ -45,7 +45,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:layout_marginBottom="16dp"
             app:boxCornerRadiusBottomEnd="16dp"
             app:boxCornerRadiusBottomStart="16dp"
             app:boxCornerRadiusTopEnd="16dp"
@@ -65,6 +64,17 @@
                 android:textColor="@color/text_primary"
                 android:textSize="15sp" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/tvDeletePasswordError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="10dp"
+            android:text=""
+            android:textColor="@color/error"
+            android:textSize="13sp"
+            android:visibility="gone" />
 
         <LinearLayout
             android:layout_width="match_parent"

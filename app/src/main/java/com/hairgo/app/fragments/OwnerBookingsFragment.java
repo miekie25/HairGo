@@ -2,6 +2,8 @@ package com.hairgo.app.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.hairgo.app.R;
 import com.hairgo.app.activities.ChatActivity;
@@ -25,7 +28,11 @@ import com.hairgo.app.adapters.OwnerBookingAdapter;
 import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.OwnerManager;
 import com.hairgo.app.models.OwnerBooking;
+import com.hairgo.app.utils.CompletionReminderManager;
 import com.hairgo.app.utils.OwnerSession;
+
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,6 +68,14 @@ public class OwnerBookingsFragment extends Fragment {
     private BookingManager bookingManager;
     private OwnerManager ownerManager;
     private ListenerRegistration bookingsListener;
+    private final Handler reminderHandler = new Handler(Looper.getMainLooper());
+    private final Runnable reminderCheckRunnable = new Runnable() {
+        @Override
+        public void run() {
+            checkForCompletionReminders();
+            reminderHandler.postDelayed(this, 60000);
+        }
+    };
 
     @Nullable
     @Override
@@ -161,12 +176,15 @@ public class OwnerBookingsFragment extends Fragment {
     public void onResume() {
         super.onResume();
         startListening();
+        reminderHandler.removeCallbacks(reminderCheckRunnable);
+        reminderHandler.postDelayed(reminderCheckRunnable, 1000);
     }
 
     @Override
     public void onPause() {
         super.onPause();
         stopListening();
+        reminderHandler.removeCallbacks(reminderCheckRunnable);
     }
 
     /**
@@ -181,6 +199,7 @@ public class OwnerBookingsFragment extends Fragment {
             allBookings.clear();
             swipeRefresh.setRefreshing(false);
             applyFilter();
+            checkForCompletionReminders();
             return;
         }
 
@@ -199,6 +218,7 @@ public class OwnerBookingsFragment extends Fragment {
                         swipeRefresh.setRefreshing(false);
                         resolveMissingClientNames();
                         refreshList();
+                        checkForCompletionReminders();
                     }
 
                     @Override
@@ -206,6 +226,7 @@ public class OwnerBookingsFragment extends Fragment {
                         if (!isAdded()) return;
                         swipeRefresh.setRefreshing(false);
                         Toast.makeText(getContext(), "Could not load bookings", Toast.LENGTH_SHORT).show();
+                        checkForCompletionReminders();
                     }
                 });
     }
@@ -264,6 +285,7 @@ public class OwnerBookingsFragment extends Fragment {
     private void refreshList() {
         sortBookings();
         applyFilter();
+        checkForCompletionReminders();
     }
 
     /**
@@ -345,7 +367,10 @@ public class OwnerBookingsFragment extends Fragment {
                     public void onSuccess() {
                         if (!isAdded()) return;
                         booking.setStatus(newStatus);
+                        CompletionReminderManager.getInstance().remove(booking.getBookingId());
+                        CompletionReminderManager.getInstance().clearCurrentlyShowing(booking.getBookingId());
                         refreshList();
+                        checkForCompletionReminders();
                     }
 
                     @Override
@@ -375,8 +400,177 @@ public class OwnerBookingsFragment extends Fragment {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Decline this booking?")
                 .setMessage("The client will see it as cancelled, and the time slot becomes available again.")
-                .setPositiveButton("Decline", (dialog, which) -> updateStatus(booking, "cancelled"))
+                .setPositiveButton("Decline", (dialog, which) -> {
+                    CompletionReminderManager.getInstance().remove(booking.getBookingId());
+                    CompletionReminderManager.getInstance().clearCurrentlyShowing(booking.getBookingId());
+                    updateStatus(booking, "cancelled");
+                })
                 .setNegativeButton("Keep", null)
                 .show();
+    }
+
+    private void checkForCompletionReminders() {
+        if (!isAdded()) {
+            return;
+        }
+        CompletionReminderManager manager = CompletionReminderManager.getInstance();
+        if (manager.isCurrentlyShowing(null) || (manager.peekNext() != null && findCurrentShowing() != null)) {
+            // avoid stacking
+        }
+        // Clean up removed/completed/cancelled
+        for (OwnerBooking booking : new ArrayList<OwnerBooking>(allBookings)) {
+            if (booking == null) {
+                continue;
+            }
+            if ("completed".equalsIgnoreCase(booking.getStatus())
+                    || "cancelled".equalsIgnoreCase(booking.getStatus())
+                    || booking.isCancelledByClient()) {
+                manager.remove(booking.getBookingId());
+                manager.clearCurrentlyShowing(booking.getBookingId());
+            }
+        }
+        manager.enqueueBookings(requireContext(), allBookings);
+        if (manager.isCurrentlyShowing(null)) {
+            // check if already showing
+        }
+        String nextId = manager.peekNext();
+        if (nextId == null) {
+            return;
+        }
+        if (manager.isCurrentlyShowing(nextId)) {
+            return;
+        }
+        OwnerBooking toShow = findBookingById(nextId);
+        if (toShow == null) {
+            manager.remove(nextId);
+            return;
+        }
+        if (!"confirmed".equalsIgnoreCase(toShow.getStatus())) {
+            manager.remove(nextId);
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (!toShow.isOverdueForCompletion(now)) {
+            manager.remove(nextId);
+            return;
+        }
+        if (manager.isDeferred(requireContext(), nextId, now)) {
+            manager.remove(nextId);
+            return;
+        }
+        showCompletionReminderDialog(toShow);
+    }
+
+    private OwnerBooking findBookingById(String bookingId) {
+        if (bookingId == null) {
+            return null;
+        }
+        for (OwnerBooking booking : allBookings) {
+            if (booking != null && bookingId.equals(booking.getBookingId())) {
+                return booking;
+            }
+        }
+        return null;
+    }
+
+    private AlertDialog findCurrentShowing() {
+        return null;
+    }
+
+    private void showCompletionReminderDialog(OwnerBooking booking) {
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+        CompletionReminderManager manager = CompletionReminderManager.getInstance();
+        if (manager.isCurrentlyShowing(booking.getBookingId())) {
+            return;
+        }
+        String nextId = manager.peekNext();
+        if (nextId == null || !nextId.equals(booking.getBookingId())) {
+            manager.remove(booking.getBookingId());
+            manager.enqueueIfEligible(requireContext(), booking);
+            nextId = manager.peekNext();
+            if (nextId == null || !nextId.equals(booking.getBookingId())) {
+                return;
+            }
+        }
+        manager.pollNext();
+        manager.setCurrentlyShowing(booking.getBookingId());
+        manager.markShown(requireContext(), booking.getBookingId());
+
+        String serviceName = booking.getServiceName();
+        if ((serviceName == null || serviceName.isEmpty()) && booking.hasServiceDetails() && !booking.getServiceDetails().isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < booking.getServiceDetails().size(); i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append(booking.getServiceDetails().get(i).getName());
+            }
+            serviceName = sb.toString();
+        }
+        if (serviceName == null || serviceName.isEmpty()) {
+            serviceName = "-";
+        }
+        String clientName = booking.getClientName();
+        if (clientName == null || clientName.isEmpty()) {
+            clientName = "Unknown client";
+        }
+        String start = "-";
+        String end = "-";
+        if (booking.getDateTime() != null) {
+            SimpleDateFormat fmt = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            start = fmt.format(booking.getDateTime());
+            end = fmt.format(new java.util.Date(booking.getEndTimeMillis()));
+        }
+        String message = "Service: " + serviceName + "\nClient: " + clientName + "\nScheduled time: " + start + " – " + end + "\n\nHas this appointment finished?";
+
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
+        builder.setTitle("Is this service complete?");
+        builder.setMessage(message);
+        builder.setCancelable(false);
+        builder.setPositiveButton("Yes, mark as complete", (dialog, which) -> {
+            manager.clearCurrentlyShowing(booking.getBookingId());
+            bookingManager.updateBookingStatus(booking.getBookingId(), "completed",
+                    new BookingManager.BookingCallback() {
+                        @Override
+                        public void onSuccess() {
+                            if (!isAdded()) {
+                                return;
+                            }
+                            booking.setStatus("completed");
+                            manager.remove(booking.getBookingId());
+                            refreshList();
+                            checkForCompletionReminders();
+                        }
+
+                        @Override
+                        public void onFailure(String errorMessage) {
+                            if (!isAdded()) {
+                                return;
+                            }
+                            Toast.makeText(getContext(), "Could not update booking", Toast.LENGTH_SHORT).show();
+                            // put back to queue to retry later
+                            manager.enqueueIfEligible(requireContext(), booking);
+                            checkForCompletionReminders();
+                        }
+                    });
+            dialog.dismiss();
+        });
+        builder.setNeutralButton("Not yet — service is still in progress", (dialog, which) -> {
+            manager.clearCurrentlyShowing(booking.getBookingId());
+            manager.deferNotYet(requireContext(), booking.getBookingId());
+            dialog.dismiss();
+            checkForCompletionReminders();
+        });
+        builder.setNegativeButton("Remind me later", (dialog, which) -> {
+            manager.clearCurrentlyShowing(booking.getBookingId());
+            manager.deferRemindLater(requireContext(), booking.getBookingId());
+            dialog.dismiss();
+            checkForCompletionReminders();
+        });
+        AlertDialog dialog = builder.create();
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.show();
     }
 }

@@ -58,6 +58,10 @@ public class ProfileFragment extends Fragment {
     private FirebaseAuth firebaseAuth;
     private FirebaseFirestore firestore;
 
+    private AlertDialog deleteAccountDialog;
+    private EditText deleteAccountPasswordField;
+    private TextView deleteAccountPasswordErrorView;
+
     @Nullable
     @Override
     public View onCreateView(
@@ -347,10 +351,15 @@ public class ProfileFragment extends Fragment {
         EditText etPassword = dialogView.findViewById(R.id.etDeletePassword);
         com.google.android.material.button.MaterialButton btnDeleteConfirm = dialogView.findViewById(R.id.btnDeleteConfirm);
         com.google.android.material.button.MaterialButton btnDeleteCancel = dialogView.findViewById(R.id.btnDeleteCancel);
+        TextView tvDeletePasswordError = dialogView.findViewById(R.id.tvDeletePasswordError);
+
+        deleteAccountPasswordField = etPassword;
+        deleteAccountPasswordErrorView = tvDeletePasswordError;
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
                 .create();
+        deleteAccountDialog = dialog;
 
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -359,17 +368,60 @@ public class ProfileFragment extends Fragment {
             dialog.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         }
 
+        if (tvDeletePasswordError != null) {
+            tvDeletePasswordError.setVisibility(View.GONE);
+            tvDeletePasswordError.setText("");
+        }
+        if (etPassword != null) {
+            etPassword.setError(null);
+            etPassword.addTextChangedListener(new android.text.TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    if (deleteAccountPasswordErrorView != null) {
+                        deleteAccountPasswordErrorView.setVisibility(View.GONE);
+                        deleteAccountPasswordErrorView.setText("");
+                    }
+                    if (deleteAccountPasswordField != null) {
+                        deleteAccountPasswordField.setError(null);
+                    }
+                }
+
+                @Override
+                public void afterTextChanged(android.text.Editable s) {
+                }
+            });
+        }
+
         if (btnDeleteCancel != null) {
-            btnDeleteCancel.setOnClickListener(v -> dialog.dismiss());
+            btnDeleteCancel.setOnClickListener(v -> {
+                if (deleteAccountDialog != null && deleteAccountDialog.isShowing()) {
+                    deleteAccountDialog.dismiss();
+                }
+                deleteAccountDialog = null;
+                deleteAccountPasswordField = null;
+                deleteAccountPasswordErrorView = null;
+            });
         }
         if (btnDeleteConfirm != null) {
             btnDeleteConfirm.setOnClickListener(v -> {
-                String password = etPassword.getText().toString();
+                if (deleteAccountPasswordErrorView != null) {
+                    deleteAccountPasswordErrorView.setVisibility(View.GONE);
+                    deleteAccountPasswordErrorView.setText("");
+                }
+                if (deleteAccountPasswordField != null) {
+                    deleteAccountPasswordField.setError(null);
+                }
+                String password = deleteAccountPasswordField == null ? "" : deleteAccountPasswordField.getText().toString();
                 if (password.isEmpty()) {
-                    etPassword.setError(getString(R.string.hint_password_required));
+                    if (deleteAccountPasswordField != null) {
+                        deleteAccountPasswordField.setError(getString(R.string.hint_password_required));
+                    }
                     return;
                 }
-                dialog.dismiss();
                 runDeleteAccountFlow(password);
             });
         }
@@ -480,6 +532,24 @@ public class ProfileFragment extends Fragment {
             errorMessage = getString(R.string.delete_account_error);
         }
         Log.w(TAG, "Could not delete account: " + errorMessage);
+        String lower = errorMessage.toLowerCase();
+        boolean isPasswordError = lower.contains("wrong") || lower.contains("incorrect") || lower.contains("invalid credential")
+                || (lower.contains("password") && (lower.contains("fail") || lower.contains("error") || lower.contains("match")));
+        if (!isPasswordError && lower.contains("password")) {
+            isPasswordError = true;
+        }
+        if (isPasswordError) {
+            if (deleteAccountDialog != null && deleteAccountDialog.isShowing() && deleteAccountPasswordErrorView != null) {
+                deleteAccountPasswordErrorView.setText(R.string.incorrect_password);
+                deleteAccountPasswordErrorView.setVisibility(View.VISIBLE);
+                if (deleteAccountPasswordField != null) {
+                    deleteAccountPasswordField.requestFocus();
+                }
+                return;
+            }
+            // Do not recreate dialog or show snackbar for incorrect password
+            return;
+        }
         Snackbars.show(requireView(), errorMessage);
     }
 

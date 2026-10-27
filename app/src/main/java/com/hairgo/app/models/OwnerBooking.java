@@ -129,6 +129,62 @@ public class OwnerBooking {
     // 0 means the total duration was not saved (old booking).
     public int getTotalDurationMinutes() { return totalDurationMinutes; }
 
+    public int getEffectiveDurationMinutes() {
+        if (totalDurationMinutes > 0) {
+            return totalDurationMinutes;
+        }
+        List<ServiceDetail> details = getServiceDetails();
+        if (details != null && !details.isEmpty()) {
+            int sum = 0;
+            for (ServiceDetail detail : details) {
+                if (detail != null) {
+                    sum += detail.getDurationMinutes() > 0 ? detail.getDurationMinutes() : ServiceDetail.DEFAULT_DURATION_MINUTES;
+                }
+            }
+            if (sum > 0) {
+                return sum;
+            }
+        }
+        return ServiceDetail.DEFAULT_DURATION_MINUTES;
+    }
+
+    public long getEndTimeMillis() {
+        if (dateTime == null) {
+            return 0L;
+        }
+        return dateTime.getTime() + (long) getEffectiveDurationMinutes() * 60L * 1000L;
+    }
+
+    public boolean isOverdueForCompletion(long nowMillis) {
+        if (dateTime == null) {
+            return false;
+        }
+        if ("completed".equalsIgnoreCase(status)) {
+            return false;
+        }
+        if ("cancelled".equalsIgnoreCase(status)) {
+            return false;
+        }
+        if (cancelledByClient) {
+            return false;
+        }
+        if (!("confirmed".equalsIgnoreCase(status))) {
+            return false;
+        }
+        if (isPast()) {
+            // isPast means dateTime before now; check if end time passed
+        }
+        long end = getEndTimeMillis();
+        if (end <= 0) {
+            return false;
+        }
+        // Must have started or be at start and end passed
+        if (dateTime.getTime() > nowMillis) {
+            return false;
+        }
+        return end <= nowMillis;
+    }
+
     // True if some of the booked services have no price, so the total is partial.
     public boolean hasUnpricedServices() {
         for (ServiceDetail detail : getServiceDetails()) {
