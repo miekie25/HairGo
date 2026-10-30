@@ -26,9 +26,13 @@ import com.hairgo.app.utils.Snackbars;
  */
 public class LeaveReviewBottomSheet extends BottomSheetDialogFragment {
 
+    public static final String RESULT_REVIEW_SUBMITTED = "review_submitted";
+
     private static final String ARG_BOOKING_ID = "bookingId";
     private static final String ARG_SALON_ID = "salonId";
     private static final String TAG = "LeaveReview";
+    private static final String MSG_ALREADY_REVIEWED =
+            "You have already reviewed this booking.";
 
     private BottomSheetLeaveReviewBinding binding;
 
@@ -93,6 +97,8 @@ public class LeaveReviewBottomSheet extends BottomSheetDialogFragment {
                     @Override
                     public void onSuccess() {
                         if (binding == null) return;
+                        getParentFragmentManager().setFragmentResult(
+                                RESULT_REVIEW_SUBMITTED, new Bundle());
                         // Anchor to the activity so the pill stays after the sheet closes.
                         Snackbars.show(requireActivity().findViewById(android.R.id.content),
                                 R.string.review_submitted);
@@ -106,6 +112,15 @@ public class LeaveReviewBottomSheet extends BottomSheetDialogFragment {
                         resetSubmitButton();
                         Snackbars.show(requireView(),
                                 getString(R.string.review_submit_failed, errorMessage));
+                    }
+
+                    @Override
+                    public void onAlreadyReviewed() {
+                        if (binding == null) return;
+                        resetSubmitButton();
+                        getParentFragmentManager().setFragmentResult(
+                                RESULT_REVIEW_SUBMITTED, new Bundle());
+                        Snackbars.show(requireView(), MSG_ALREADY_REVIEWED);
                     }
                 });
     }

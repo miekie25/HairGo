@@ -18,6 +18,7 @@ import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.Timestamp;
 import com.hairgo.app.R;
 import com.hairgo.app.firebase.BookingManager;
+import com.hairgo.app.firebase.ReviewManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.fragments.LeaveReviewBottomSheet;
 import com.hairgo.app.fragments.ReportProblemBottomSheet;
@@ -39,6 +40,8 @@ import java.util.Map;
 
 public class BookingDetailsActivity extends AppCompatActivity {
 
+    private static final String LABEL_REVIEWED = "Reviewed";
+
     private TextView tvStatusBadge;
     private TextView tvExpiredNote;
     private TextView tvSalonLocation;
@@ -50,6 +53,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
     private ProgressBar progress;
     private View contentGroup;
     private BookingManager bookingManager;
+    private ReviewManager reviewManager;
     private String currentStatus;
     private String bookingId;
     private String currentSalonId;
@@ -86,7 +90,12 @@ public class BookingDetailsActivity extends AppCompatActivity {
             return;
         }
 
+        getSupportFragmentManager().setFragmentResultListener(
+                LeaveReviewBottomSheet.RESULT_REVIEW_SUBMITTED, this,
+                (requestKey, result) -> refreshReviewButton());
+
         bookingManager = new BookingManager();
+        reviewManager = new ReviewManager();
         loadBooking();
     }
 
@@ -236,6 +245,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
         updateCancelButtonVisibility(currentStatus);
         updateExpiredNote(currentStatus);
         updateEditButton(currentStatus);
+        refreshReviewButton();
 
         btnCancelBooking.setOnClickListener(v -> showCancelConfirmation());
     }
@@ -513,6 +523,38 @@ public class BookingDetailsActivity extends AppCompatActivity {
         // that status. This is what enforces the rule, rather than a check inside
         // the review screen.
         btnLeaveReview.setVisibility("completed".equals(status) ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * Shows "Reviewed" instead of the review action once this booking has a
+     * review. The write path checks again before saving, so this is only the
+     * visible state; it is not what prevents duplicates.
+     */
+    private void refreshReviewButton() {
+        if (reviewManager == null || btnLeaveReview == null || bookingId == null
+                || !"completed".equals(currentStatus)) {
+            return;
+        }
+
+        reviewManager.isBookingReviewed(bookingId, new ReviewManager.ReviewExistsCallback() {
+            @Override
+            public void onResult(boolean reviewed) {
+                if (isFinishing() || isDestroyed() || btnLeaveReview == null
+                        || !"completed".equals(currentStatus)) {
+                    return;
+                }
+                btnLeaveReview.setVisibility(View.VISIBLE);
+                btnLeaveReview.setEnabled(!reviewed);
+                btnLeaveReview.setText(reviewed
+                        ? LABEL_REVIEWED
+                        : getString(R.string.leave_a_review));
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                // Leave the button as it is; the save path still blocks duplicates.
+            }
+        });
     }
 
     /**

@@ -24,6 +24,7 @@ public class ReviewManager {
     public interface ReviewCallback {
         void onSuccess();
         void onFailure(String errorMessage);
+        void onAlreadyReviewed();
     }
 
     public interface ReviewListCallback {
@@ -31,9 +32,56 @@ public class ReviewManager {
         void onFailure(String errorMessage);
     }
 
+    public interface ReviewExistsCallback {
+        void onResult(boolean reviewed);
+        void onFailure(String errorMessage);
+    }
+
     public void createReview(String bookingId, String clientId, String salonId,
                              int rating, String comment, ReviewCallback callback) {
-        DocumentReference ref = db.collection("reviews").document();
+        isBookingReviewed(bookingId, new ReviewExistsCallback() {
+            @Override
+            public void onResult(boolean reviewed) {
+                if (reviewed) {
+                    callback.onAlreadyReviewed();
+                    return;
+                }
+                writeReview(bookingId, clientId, salonId, rating, comment, callback);
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                callback.onFailure(errorMessage);
+            }
+        });
+    }
+
+    /**
+     * True when this booking already has a review that is not soft-deleted.
+     * The booking id doubles as the review document id, so a new review can
+     * never create a second document for the same booking.
+     */
+    public void isBookingReviewed(String bookingId, ReviewExistsCallback callback) {
+        db.collection("reviews")
+                .whereEqualTo("bookingID", bookingId)
+                .get()
+                .addOnSuccessListener(query -> {
+                    for (QueryDocumentSnapshot doc : query) {
+                        // Old reviews may be missing isDeleted; only an explicit
+                        // true counts as deleted.
+                        if (!Boolean.TRUE.equals(doc.get("isDeleted"))) {
+                            callback.onResult(true);
+                            return;
+                        }
+                    }
+                    callback.onResult(false);
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    private void writeReview(String bookingId, String clientId, String salonId,
+                             int rating, String comment, ReviewCallback callback) {
+        DocumentReference ref = db.collection("reviews").document(bookingId);
 
         Map<String, Object> review = new HashMap<>();
         review.put("reviewID", ref.getId());
