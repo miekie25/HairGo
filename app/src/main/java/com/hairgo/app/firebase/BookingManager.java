@@ -17,6 +17,7 @@ import com.hairgo.app.models.ServiceDetail;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,9 @@ public class BookingManager {
     public static final int SLOT_START_HOUR = 9;
     /** End of the bookable day, exclusive — the last slot is 17:30. */
     public static final int SLOT_END_HOUR = 18;
+
+    /** Length of one slot on the booking grid, in minutes. */
+    public static final int SLOT_MINUTES = 30;
 
     /** Collection of per-slot lock docs that serialise concurrent bookings. */
     private static final String SLOT_LOCKS = "slotLocks";
@@ -109,6 +113,54 @@ public class BookingManager {
         }
         Object value = bookingData.get("totalDuration");
         return value instanceof Number ? ((Number) value).intValue() : 0;
+    }
+
+    /**
+     * How long a saved booking holds its slot. Old bookings have no duration,
+     * so they fall back to the saved service copy, then to one grid slot.
+     */
+    public static int getEffectiveDurationMinutes(Map<String, Object> bookingData) {
+        int duration = getTotalDuration(bookingData);
+        if (duration <= 0) {
+            duration = Booking.sumDuration(getServiceDetails(bookingData));
+        }
+        return duration > 0 ? duration : SLOT_MINUTES;
+    }
+
+    /** Minutes past midnight for a booking time, so ranges can be compared. */
+    public static int minutesOfDay(Date time) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(time);
+        return calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE);
+    }
+
+    /** Minutes past midnight for an "HH:mm" slot label, or -1 when unusable. */
+    public static int minutesOfDay(String time24h) {
+        if (time24h == null) return -1;
+        String[] parts = time24h.split(":");
+        if (parts.length != 2) return -1;
+        try {
+            return Integer.parseInt(parts[0]) * 60 + Integer.parseInt(parts[1]);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    /**
+     * Half-open overlap test: a slot that starts exactly when another ends is
+     * free, so [start, end) ranges never overlap on the boundary.
+     */
+    public static boolean overlaps(int startA, int endA, int startB, int endB) {
+        return startA < endB && startB < endA;
+    }
+
+    /** True when the given half-open range overlaps any of the booked ranges. */
+    public static boolean overlapsAny(int start, int end, List<int[]> ranges) {
+        if (ranges == null) return false;
+        for (int[] range : ranges) {
+            if (range != null && overlaps(start, end, range[0], range[1])) return true;
+        }
+        return false;
     }
 
     public static PaymentDetails getPaymentDetails(Map<String, Object> bookingData) {

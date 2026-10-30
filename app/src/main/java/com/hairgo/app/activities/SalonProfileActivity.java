@@ -31,7 +31,6 @@ import com.hairgo.app.utils.SalonHours;
 import com.hairgo.app.utils.SalonPhotos;
 import com.hairgo.app.utils.Snackbars;
 
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -39,11 +38,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 public class SalonProfileActivity extends AppCompatActivity {
 
@@ -327,16 +325,15 @@ public class SalonProfileActivity extends AppCompatActivity {
     }
 
     /**
-     * Walks forward from today and returns the first slot that is not held by a
-     * booking and is at least BookingManager.MIN_NOTICE_MINUTES away — i.e. the
-     * first slot the booking screen would actually offer — or null if the
+     * Walks forward from today and returns the first slot that does not overlap
+     * a booking and is at least BookingManager.MIN_NOTICE_MINUTES away — i.e.
+     * the first slot the booking screen would actually offer — or null if the
      * lookahead window has nothing bookable left.
      */
     private LocalDateTime findNextFreeSlot(List<Map<String, Object>> bookings) {
-        Set<String> heldSlots = new HashSet<>();
+        Map<String, List<int[]>> bookedRanges = new HashMap<>();
 
         if (bookings != null) {
-            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
             for (Map<String, Object> booking : bookings) {
                 if (booking == null) continue;
                 Object dateTime = booking.get("dateTime");
@@ -345,7 +342,15 @@ public class SalonProfileActivity extends AppCompatActivity {
                 else if (dateTime instanceof Date) date = (Date) dateTime;
                 if (date == null) continue;
 
-                heldSlots.add(toDayKey(date) + " " + timeFormat.format(date));
+                int start = BookingManager.minutesOfDay(date);
+                int duration = BookingManager.getEffectiveDurationMinutes(booking);
+                String dayKey = toDayKey(date);
+                List<int[]> ranges = bookedRanges.get(dayKey);
+                if (ranges == null) {
+                    ranges = new ArrayList<>();
+                    bookedRanges.put(dayKey, ranges);
+                }
+                ranges.add(new int[]{start, start + duration});
             }
         }
 
@@ -359,12 +364,16 @@ public class SalonProfileActivity extends AppCompatActivity {
             // java.time counts Monday as 1; SalonHours uses Calendar numbering
             // where Sunday is 1. Closed days simply yield no slots.
             int calendarDay = day.getDayOfWeek().getValue() % 7 + 1;
+            List<int[]> ranges = bookedRanges.get(day.toString());
             for (String slot : salonHours.slotsFor(calendarDay)) {
                 String[] parts = slot.split(":");
                 LocalDateTime candidate = LocalDateTime.of(day,
                         LocalTime.of(Integer.parseInt(parts[0]), Integer.parseInt(parts[1])));
                 if (candidate.isBefore(cutoff)) continue;
-                if (!heldSlots.contains(day + " " + slot)) return candidate;
+                int slotStart = BookingManager.minutesOfDay(slot);
+                int slotEnd = slotStart + BookingManager.SLOT_MINUTES;
+                if (BookingManager.overlapsAny(slotStart, slotEnd, ranges)) continue;
+                return candidate;
             }
         }
         return null;

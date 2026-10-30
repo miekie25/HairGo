@@ -618,11 +618,10 @@ public class BookAppointmentActivity extends AppCompatActivity {
                 });
     }
 
-    /** Filters the already-booked times out of the day's 30-minute slots. */
+    /** Filters slots that overlap an existing booking or run past closing. */
     private void showAvailableTimes(List<Map<String, Object>> bookings) {
-        List<String> bookedSlots = new ArrayList<>();
+        List<int[]> bookedRanges = new ArrayList<>();
         if (bookings != null) {
-            SimpleDateFormat hourFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
             for (Map<String, Object> booking : bookings) {
                 // Ignore the booking being edited so its own slot stays selectable.
                 if (isEditing()) {
@@ -630,7 +629,10 @@ public class BookAppointmentActivity extends AppCompatActivity {
                     if (id != null && editingBookingId.equals(id.toString())) continue;
                 }
                 Date when = toDate(booking.get("dateTime"));
-                if (when != null) bookedSlots.add(hourFormat.format(when));
+                if (when == null) continue;
+                int start = BookingManager.minutesOfDay(when);
+                int duration = BookingManager.getEffectiveDurationMinutes(booking);
+                bookedRanges.add(new int[]{start, start + duration});
             }
         }
 
@@ -640,13 +642,21 @@ public class BookAppointmentActivity extends AppCompatActivity {
         Calendar cutoff = Calendar.getInstance();
         cutoff.add(Calendar.MINUTE, BookingManager.MIN_NOTICE_MINUTES);
 
+        // The new booking must fit before closing, not just its first 30 minutes.
+        int newDuration = Booking.sumDuration(selectedServices);
+        if (newDuration <= 0) newDuration = BookingManager.SLOT_MINUTES;
+        int dayOfWeek = selectedDateTime.get(Calendar.DAY_OF_WEEK);
+        int closeMinutes = salonHours.closeMinutes(dayOfWeek);
+
         boolean removedByNotice = false;
         List<String> availableSlots = new ArrayList<>();
         // The salon's grid for the selected weekday; empty when it is closed that day.
-        List<String> daySlots =
-                salonHours.slotsFor(selectedDateTime.get(Calendar.DAY_OF_WEEK));
+        List<String> daySlots = salonHours.slotsFor(dayOfWeek);
         for (String slot : daySlots) {
-            if (bookedSlots.contains(slot)) continue;
+            int slotStart = BookingManager.minutesOfDay(slot);
+            int slotEnd = slotStart + newDuration;
+            if (slotEnd > closeMinutes) continue;
+            if (BookingManager.overlapsAny(slotStart, slotEnd, bookedRanges)) continue;
             if (slotBefore(slot, cutoff)) {
                 removedByNotice = true;
                 continue;
@@ -750,9 +760,11 @@ public class BookAppointmentActivity extends AppCompatActivity {
         int dayOfWeek = selectedDateTime.get(Calendar.DAY_OF_WEEK);
         int startMinutes = selectedDateTime.get(Calendar.HOUR_OF_DAY) * 60
                 + selectedDateTime.get(Calendar.MINUTE);
+        int newDuration = Booking.sumDuration(selectedServices);
+        if (newDuration <= 0) newDuration = BookingManager.SLOT_MINUTES;
         if (!salonHours.isOpenOn(dayOfWeek)
                 || startMinutes < salonHours.openMinutes(dayOfWeek)
-                || startMinutes + 30 > salonHours.closeMinutes(dayOfWeek)) {
+                || startMinutes + newDuration > salonHours.closeMinutes(dayOfWeek)) {
             showError(getString(R.string.error_outside_hours));
             return;
         }
