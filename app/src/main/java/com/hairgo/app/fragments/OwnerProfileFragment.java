@@ -42,6 +42,7 @@ import com.hairgo.app.R;
 import com.hairgo.app.activities.MyReportsActivity;
 import com.hairgo.app.activities.WelcomeActivity;
 import com.hairgo.app.firebase.AuthManager;
+import com.hairgo.app.firebase.OwnerAccountManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.OwnerSalon;
 import com.hairgo.app.models.ServiceDetail;
@@ -88,6 +89,8 @@ public class OwnerProfileFragment extends Fragment {
     private SalonHours currentHours = SalonHours.defaults();
 
     private View btnEditPhoto;
+
+    private View btnCloseSalon;
     private ShapeableImageView ivSalonPhotoThumb;
     private boolean hasPhoto;
 
@@ -145,6 +148,8 @@ public class OwnerProfileFragment extends Fragment {
         btnEditPhoto = view.findViewById(R.id.btnEditPhoto);
         ivSalonPhotoThumb = view.findViewById(R.id.ivSalonPhotoThumb);
         btnEditPhoto.setOnClickListener(v -> onPhotoRowClicked());
+        btnCloseSalon = view.findViewById(R.id.btnCloseSalon);
+        btnCloseSalon.setOnClickListener(v -> showCloseSalonDialog());
 
         firebaseAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
@@ -159,6 +164,8 @@ public class OwnerProfileFragment extends Fragment {
         View btnMyReports = view.findViewById(R.id.btnMyReports);
         btnMyReports.setOnClickListener(v ->
                 startActivity(new Intent(requireContext(), MyReportsActivity.class)));
+
+        view.findViewById(R.id.rowDeleteAccount).setOnClickListener(v ->showDeleteAccountDialog());
 
         // Dark mode toggle. Set the initial position before attaching the
         // listener so restoring the switch does not re-trigger a theme change.
@@ -397,8 +404,234 @@ public class OwnerProfileFragment extends Fragment {
 
         return firstInitial + lastInitial;
     }
-
     /** Reads the selected salon's current services so they can be shown and edited. */
+    // --- close one salon -----------------------------------------------------
+
+    /**
+     * Checks what closing the selected salon would affect, then asks before doing it.
+     * The owner's other salons and the account itself are left alone.
+     */
+    private void showCloseSalonDialog() {
+        String salonId = OwnerSession.getSelectedSalonId();
+        OwnerSalon salon = OwnerSession.getSelectedSalon();
+        if (salonId == null || salon == null) return;
+
+        btnCloseSalon.setEnabled(false);
+        new OwnerAccountManager().loadSalonImpact(salonId, new OwnerAccountManager.ImpactCallback() {
+            @Override
+            public void onSuccess(OwnerAccountManager.Impact impact) {
+                if (!isAdded()) return;
+                btnCloseSalon.setEnabled(true);
+                confirmCloseSalon(salonId, salon.getName(), impact.bookingIds.size());
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (!isAdded()) return;
+                btnCloseSalon.setEnabled(true);
+                Log.w(TAG, "Could not check salon before closing: " + errorMessage);
+                Snackbars.show(requireView(), "Could not check this salon. Please try again.");
+            }
+        });
+    }
+
+    private void confirmCloseSalon(String salonId, String salonName, int upcomingBookings) {
+        boolean onlySalon = OwnerSession.getSalons().size() <= 1;
+
+        StringBuilder message = new StringBuilder("Closing this salon will:");
+        message.append("\n\u2022 cancel ").append(upcomingBookings)
+                .append(upcomingBookings == 1 ? " upcoming booking" : " upcoming bookings")
+                .append(" (clients will see them as cancelled)");
+        message.append("\n\u2022 remove it from HairGo, so clients can no longer find or book it");
+        if (onlySalon) {
+            message.append("\n\nThis is your only salon. Until you add another one, "
+                    + "clients will not be able to book you.");
+        } else {
+            message.append("\n\nYour other salons and your account are not affected.");
+        }
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Close " + salonName + "?")
+                .setMessage(message.toString())
+                .setPositiveButton("Close salon", (dialog, which) -> runCloseSalon(salonId))
+                .setNegativeButton("Keep it", null)
+                .show();
+    }
+
+    private void runCloseSalon(String salonId) {
+        // The work is asynchronous and this fragment could be detached before it ends.
+        FragmentActivity activity = requireActivity();
+        btnCloseSalon.setEnabled(false);
+        Toast.makeText(activity, "Closing salon\u2026", Toast.LENGTH_SHORT).show();
+
+        new OwnerAccountManager().closeSalon(salonId, new OwnerAccountManager.CloseCallback() {
+            @Override
+            public void onSuccess() {
+                Toast.makeText(activity, "Salon closed", Toast.LENGTH_SHORT).show();
+                // Reload the dashboard: it re-reads the owner's salons, picks another one to
+                // show, and refreshes the header, bookings and alerts in one go.
+                activity.recreate();
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (!isAdded()) return;
+                btnCloseSalon.setEnabled(true);
+                Log.w(TAG, "Could not close salon: " + errorMessage);
+                Snackbars.show(requireView(), "Could not close the salon. Please try again.");
+            }
+        });
+    }
+
+    /**
+     * Explains exactly what will happen, then asks for the password so an unlocked
+     * phone cannot delete the account with a single tap.
+     */
+    private void showDeleteAccountDialog() {
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_owner_delete_account, null);
+        TextView tvImpact = dialogView.findViewById(R.id.tvOwnerDeleteImpact);
+        EditText etPassword = dialogView.findViewById(R.id.etOwnerDeletePassword);
+        TextView tvError = dialogView.findViewById(R.id.tvOwnerDeleteError);
+        MaterialButton btnConfirm = dialogView.findViewById(R.id.btnOwnerDeleteConfirm);
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btnOwnerDeleteCancel);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(dialogView)
+                .create();
+
+        // Typing again clears an old "incorrect password" message.
+        etPassword.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                tvError.setVisibility(View.GONE);
+                etPassword.setError(null);
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+            }
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnConfirm.setOnClickListener(v -> {
+            String password = etPassword.getText().toString();
+            if (password.isEmpty()) {
+                etPassword.setError(getString(R.string.hint_password_required));
+                return;
+            }
+            tvError.setVisibility(View.GONE);
+            runDeleteAccount(password, dialog, btnConfirm, btnCancel, tvError);
+        });
+        dialog.show();
+
+        // Show the owner what this will touch: their salons and upcoming bookings.
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            new OwnerAccountManager().loadImpact(user.getUid(),
+                    new OwnerAccountManager.ImpactCallback() {
+                        @Override
+                        public void onSuccess(OwnerAccountManager.Impact impact) {
+                            if (!isAdded() || !dialog.isShowing()) return;
+                            tvImpact.setText(describeImpact(impact));
+                        }
+
+                        @Override
+                        public void onFailure(String errorMessage) {
+                            if (!isAdded() || !dialog.isShowing()) return;
+                            tvImpact.setText("This will cancel your upcoming bookings, "
+                                    + "deactivate your salons and remove your login.");
+                        }
+                    });
+        }
+    }
+
+    private String describeImpact(OwnerAccountManager.Impact impact) {
+        int bookings = impact.bookingIds.size();
+        int salons = impact.salonIds.size();
+
+        StringBuilder text = new StringBuilder("Deleting your account will:");
+        text.append("\n\u2022 cancel ").append(bookings)
+                .append(bookings == 1 ? " upcoming booking" : " upcoming bookings")
+                .append(" (clients will see them as cancelled)");
+        text.append("\n\u2022 deactivate ").append(salons)
+                .append(salons == 1 ? " salon" : " salons")
+                .append(", so clients can no longer find or book ")
+                .append(salons == 1 ? "it" : "them");
+        text.append("\n\u2022 remove your login");
+        return text.toString();
+    }
+
+    private void runDeleteAccount(String password, AlertDialog dialog, MaterialButton btnConfirm,
+                                  MaterialButton btnCancel, TextView tvError) {
+        // Grab the activity now: the flow below is asynchronous and this fragment could be
+        // detached (for example by a rotation) before it finishes.
+        FragmentActivity activity = requireActivity();
+
+        setDeleteLoading(true, dialog, btnConfirm, btnCancel);
+
+        new OwnerAccountManager().deleteAccount(password, new OwnerAccountManager.DeleteCallback() {
+            @Override
+            public void onSuccess(boolean loginRemoved) {
+                if (dialog.isShowing()) dialog.dismiss();
+                finishDeletion(activity,
+                        loginRemoved ? R.string.account_deleted : R.string.account_deactivated);
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (!isAdded()) return;
+
+                setDeleteLoading(false, dialog, btnConfirm, btnCancel);
+
+                // A wrong password is shown inside the dialog so the owner can retry.
+                if (OwnerAccountManager.INCORRECT_PASSWORD.equals(errorMessage) && dialog.isShowing()) {
+                    tvError.setText(R.string.incorrect_password);
+                    tvError.setVisibility(View.VISIBLE);
+                    return;
+                }
+
+                Log.w(TAG, "Could not delete owner account: " + errorMessage);
+                Snackbars.show(requireView(),
+                        (errorMessage == null || errorMessage.isEmpty())
+                                ? getString(R.string.delete_account_error)
+                                : errorMessage);
+            }
+        });
+    }
+
+    /** Disables the dialog while the delete runs, so a double tap cannot start it twice. */
+    private void setDeleteLoading(boolean loading, AlertDialog dialog, MaterialButton btnConfirm,
+                                  MaterialButton btnCancel) {
+        btnConfirm.setEnabled(!loading);
+        btnCancel.setEnabled(!loading);
+        btnConfirm.setText(loading ? R.string.deleting_account : R.string.delete_account);
+        dialog.setCancelable(!loading);
+    }
+
+    /** Success: say so, then sign out and wipe the stack, exactly like logout does. */
+    private void finishDeletion(FragmentActivity activity, int messageRes) {
+        Intent intent = new Intent(activity, WelcomeActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        if (isAdded() && getView() != null) {
+            Snackbars.showThen(requireView(), messageRes, () -> leaveApp(activity, intent));
+        } else {
+            leaveApp(activity, intent);
+        }
+    }
+
+    private void leaveApp(FragmentActivity activity, Intent intent) {
+        new AuthManager().signOut();
+        OwnerSession.clear();
+        activity.startActivity(intent);
+        activity.finish();
+    }
+
     private void loadServices() {
         String salonId = OwnerSession.getSelectedSalonId();
         if (salonId == null) return; // no salon yet: the services row stays hidden
@@ -436,6 +669,7 @@ public class OwnerProfileFragment extends Fragment {
         btnEditServices.setVisibility(View.VISIBLE);
         btnEditHours.setVisibility(View.VISIBLE);
         btnEditPhoto.setVisibility(View.VISIBLE);
+        btnCloseSalon.setVisibility(View.VISIBLE);
         if (dividerAfterServices != null) dividerAfterServices.setVisibility(View.VISIBLE);
         tvServices.setText(currentServices.isEmpty()
                 ? "Services: none listed yet"
