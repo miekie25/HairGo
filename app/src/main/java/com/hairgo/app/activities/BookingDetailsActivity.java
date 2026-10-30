@@ -40,7 +40,7 @@ import java.util.Map;
 
 public class BookingDetailsActivity extends AppCompatActivity {
 
-    private static final String LABEL_REVIEWED = "Reviewed";
+    private static final String LABEL_EDIT_REVIEW = "View / Edit Review";
 
     private TextView tvStatusBadge;
     private TextView tvExpiredNote;
@@ -526,9 +526,8 @@ public class BookingDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Shows "Reviewed" instead of the review action once this booking has a
-     * review. The write path checks again before saving, so this is only the
-     * visible state; it is not what prevents duplicates.
+     * Shows "View / Edit Review" once this booking has a review. The save path
+     * updates the existing review instead of adding another one.
      */
     private void refreshReviewButton() {
         if (reviewManager == null || btnLeaveReview == null || bookingId == null
@@ -544,9 +543,9 @@ public class BookingDetailsActivity extends AppCompatActivity {
                     return;
                 }
                 btnLeaveReview.setVisibility(View.VISIBLE);
-                btnLeaveReview.setEnabled(!reviewed);
+                btnLeaveReview.setEnabled(true);
                 btnLeaveReview.setText(reviewed
-                        ? LABEL_REVIEWED
+                        ? LABEL_EDIT_REVIEW
                         : getString(R.string.leave_a_review));
             }
 

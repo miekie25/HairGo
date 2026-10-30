@@ -24,7 +24,6 @@ public class ReviewManager {
     public interface ReviewCallback {
         void onSuccess();
         void onFailure(String errorMessage);
-        void onAlreadyReviewed();
     }
 
     public interface ReviewListCallback {
@@ -37,16 +36,38 @@ public class ReviewManager {
         void onFailure(String errorMessage);
     }
 
-    public void createReview(String bookingId, String clientId, String salonId,
-                             int rating, String comment, ReviewCallback callback) {
-        isBookingReviewed(bookingId, new ReviewExistsCallback() {
+    public interface ReviewDataCallback {
+        void onSuccess(ReviewData review);
+        void onFailure(String errorMessage);
+    }
+
+    /** One active review as stored, with the id needed to update it. */
+    public static class ReviewData {
+        public final String documentId;
+        public final int rating;
+        public final String comment;
+
+        ReviewData(String documentId, int rating, String comment) {
+            this.documentId = documentId;
+            this.rating = rating;
+            this.comment = comment;
+        }
+    }
+
+    /**
+     * Saves the client's review for a booking. An existing active review is
+     * updated in place, so a booking can never end up with two reviews.
+     */
+    public void saveReview(String bookingId, String clientId, String salonId,
+                           int rating, String comment, ReviewCallback callback) {
+        getReviewForBooking(bookingId, new ReviewDataCallback() {
             @Override
-            public void onResult(boolean reviewed) {
-                if (reviewed) {
-                    callback.onAlreadyReviewed();
-                    return;
+            public void onSuccess(ReviewData existing) {
+                if (existing == null) {
+                    writeReview(bookingId, clientId, salonId, rating, comment, callback);
+                } else {
+                    updateReview(existing.documentId, salonId, rating, comment, callback);
                 }
-                writeReview(bookingId, clientId, salonId, rating, comment, callback);
             }
 
             @Override
@@ -56,12 +77,8 @@ public class ReviewManager {
         });
     }
 
-    /**
-     * True when this booking already has a review that is not soft-deleted.
-     * The booking id doubles as the review document id, so a new review can
-     * never create a second document for the same booking.
-     */
-    public void isBookingReviewed(String bookingId, ReviewExistsCallback callback) {
+    /** Returns the booking's active review, or null when it has none. */
+    public void getReviewForBooking(String bookingId, ReviewDataCallback callback) {
         db.collection("reviews")
                 .whereEqualTo("bookingID", bookingId)
                 .get()
@@ -69,12 +86,47 @@ public class ReviewManager {
                     for (QueryDocumentSnapshot doc : query) {
                         // Old reviews may be missing isDeleted; only an explicit
                         // true counts as deleted.
-                        if (!Boolean.TRUE.equals(doc.get("isDeleted"))) {
-                            callback.onResult(true);
-                            return;
-                        }
+                        if (Boolean.TRUE.equals(doc.get("isDeleted"))) continue;
+
+                        Object ratingValue = doc.get("rating");
+                        int rating = ratingValue instanceof Number
+                                ? ((Number) ratingValue).intValue() : 0;
+                        String comment = doc.getString("comment");
+                        callback.onSuccess(new ReviewData(
+                                doc.getId(), rating, comment == null ? "" : comment));
+                        return;
                     }
-                    callback.onResult(false);
+                    callback.onSuccess(null);
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    public void isBookingReviewed(String bookingId, ReviewExistsCallback callback) {
+        getReviewForBooking(bookingId, new ReviewDataCallback() {
+            @Override
+            public void onSuccess(ReviewData review) {
+                callback.onResult(review != null);
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                callback.onFailure(errorMessage);
+            }
+        });
+    }
+
+    private void updateReview(String documentId, String salonId, int rating,
+                              String comment, ReviewCallback callback) {
+        Map<String, Object> update = new HashMap<>();
+        update.put("rating", rating);
+        update.put("comment", comment);
+        update.put("edited", true);
+        update.put("updatedAt", FieldValue.serverTimestamp());
+
+        db.collection("reviews").document(documentId).update(update)
+                .addOnSuccessListener(unused -> {
+                    recalculateSalonRating(salonId);
+                    callback.onSuccess();
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
