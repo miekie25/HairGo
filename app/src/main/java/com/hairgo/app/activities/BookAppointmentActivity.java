@@ -1,7 +1,10 @@
 package com.hairgo.app.activities;
 
 import android.app.DatePickerDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -51,6 +54,11 @@ import java.util.Locale;
 import java.util.Map;
 
 public class BookAppointmentActivity extends AppCompatActivity {
+
+    private static final String NO_INTERNET_MESSAGE =
+            "No internet connection. Please check your connection and try again.";
+    private static final String GENERIC_ERROR_MESSAGE =
+            "Something went wrong. Please try again.";
 
     private TextView tvSelectedServices, tvSelectedDate, tvSelectedTime, tvError;
     private TextView tvServiceTotal, tvServicePriceNote;
@@ -777,6 +785,11 @@ public class BookAppointmentActivity extends AppCompatActivity {
             return;
         }
 
+        if (!hasInternetConnection()) {
+            showError(NO_INTERNET_MESSAGE);
+            return;
+        }
+
         tvError.setVisibility(android.view.View.GONE);
         findViewById(R.id.btnConfirmBooking).setEnabled(false);
 
@@ -816,6 +829,12 @@ public class BookAppointmentActivity extends AppCompatActivity {
     }
 
     private void createBooking(Salon salon, String clientId, PaymentDetails payment) {
+        if (!hasInternetConnection()) {
+            enableConfirmButton();
+            showError(NO_INTERNET_MESSAGE);
+            return;
+        }
+
         showSavingDialog();
         new BookingManager().createBookingWithDetails(
                 clientId,
@@ -848,7 +867,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
                         Log.w("BookAppointment", "createBooking failed: " + errorMessage);
                         dismissSavingDialog();
                         enableConfirmButton();
-                        showError(errorMessage);
+                        showError(bookingFailureMessage(errorMessage));
                     }
                 });
     }
@@ -959,6 +978,13 @@ public class BookAppointmentActivity extends AppCompatActivity {
     }
 
     private void completeEditWithPayment(Salon salon, PaymentDetails payment) {
+        if (!hasInternetConnection()) {
+            enableConfirmButton();
+            pendingEditPayment = false;
+            showError(NO_INTERNET_MESSAGE);
+            return;
+        }
+
         new BookingManager().updateBookingWithDetails(
                 editingBookingId,
                 new ArrayList<>(selectedServices),
@@ -983,7 +1009,7 @@ public class BookAppointmentActivity extends AppCompatActivity {
                         Log.w("BookAppointment", "updateBookingWithDetails failed: " + errorMessage);
                         enableConfirmButton();
                         pendingEditPayment = false;
-                        showError(errorMessage);
+                        showError(bookingFailureMessage(errorMessage));
                     }
                 });
     }
@@ -1010,6 +1036,41 @@ public class BookAppointmentActivity extends AppCompatActivity {
                         ? Double.NaN : payment.getAmountOutstanding());
         startActivity(intent);
         finish();
+    }
+
+    private boolean hasInternetConnection() {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager == null) return false;
+
+        NetworkCapabilities capabilities =
+                connectivityManager.getNetworkCapabilities(connectivityManager.getActiveNetwork());
+        return capabilities != null
+                && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+    }
+
+    private String bookingFailureMessage(String errorMessage) {
+        if (isNetworkError(errorMessage)) return NO_INTERNET_MESSAGE;
+        if (errorMessage != null && (errorMessage.contains("just booked")
+                || errorMessage.contains("minutes in advance"))) {
+            return errorMessage;
+        }
+        return GENERIC_ERROR_MESSAGE;
+    }
+
+    private boolean isNetworkError(String errorMessage) {
+        if (errorMessage == null) return false;
+
+        String message = errorMessage.toLowerCase(Locale.US);
+        return message.contains("network")
+                || message.contains("offline")
+                || message.contains("unavailable")
+                || message.contains("unable to resolve")
+                || message.contains("failed to connect")
+                || message.contains("connection")
+                || message.contains("timeout")
+                || message.contains("timed out");
     }
 
     private void showError(String message) {

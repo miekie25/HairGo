@@ -51,7 +51,7 @@ public class MockCardPaymentActivity extends AppCompatActivity {
                     return;
                 }
 
-                btnPay.setEnabled(true);
+                updatePayButton();
                 showExpiryError(getString(R.string.payment_failed_no_booking));
             });
 
@@ -101,7 +101,7 @@ public class MockCardPaymentActivity extends AppCompatActivity {
 
         btnPay.setText(getString(R.string.btn_pay_amount,
                 getString(R.string.service_price_rand, formatPrice(amount))));
-        btnPay.setEnabled(false);
+        updatePayButton();
         btnPay.setOnClickListener(v -> submitPayment());
 
         setupFormatters();
@@ -147,7 +147,7 @@ public class MockCardPaymentActivity extends AppCompatActivity {
                     showExpiryError(getString(R.string.error_expiry_expired));
                 }
             } else {
-                expiryValid = true;
+                expiryValid = CardFormatter.isValidExpiry(etExpiry.getText().toString().trim());
                 hideExpiryError();
             }
             updatePayButton();
@@ -190,7 +190,9 @@ public class MockCardPaymentActivity extends AppCompatActivity {
     }
 
     private void updatePayButton() {
-        btnPay.setEnabled(nameValid && cardNumberValid && expiryValid && cvvValid);
+        boolean enabled = nameValid && cardNumberValid && expiryValid && cvvValid;
+        btnPay.setEnabled(enabled);
+        btnPay.setAlpha(enabled ? 1f : 0.45f);
     }
 
     private void submitPayment() {
@@ -225,6 +227,7 @@ public class MockCardPaymentActivity extends AppCompatActivity {
         if (!allValid) return;
 
         btnPay.setEnabled(false);
+        btnPay.setAlpha(0.45f);
 
         Intent intent = new Intent(this, PaymentResultActivity.class);
         intent.putExtra(PaymentResultActivity.EXTRA_AMOUNT, amount);
