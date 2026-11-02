@@ -103,7 +103,7 @@ public class BookingSections {
         return isExpired(booking) ? STATUS_EXPIRED : booking.getStatus();
     }
 
-    private static boolean isDateBeforeToday(Booking booking) {
+    public static boolean isDateBeforeToday(Booking booking) {
         if (booking.getDateTime() == null) return false;
 
         LocalDate bookingDate = booking.getDateTime()
@@ -111,6 +111,16 @@ public class BookingSections {
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();
         return bookingDate.isBefore(LocalDate.now());
+    }
+
+    public static boolean isToday(Booking booking) {
+        if (booking == null || booking.getDateTime() == null) return false;
+
+        LocalDate bookingDate = booking.getDateTime()
+                .toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+        return bookingDate.isEqual(LocalDate.now());
     }
 
     public static boolean isEmpty(List<BookingSection> sections) {

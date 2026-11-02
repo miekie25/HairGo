@@ -8,6 +8,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.android.material.chip.ChipGroup;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -39,6 +41,14 @@ public class BookingsFragment extends Fragment {
 
     private static final String TAG = "BookingsFragment";
 
+    public static final int FILTER_ALL = 0;
+    public static final int FILTER_TODAY = 1;
+    public static final int FILTER_UPCOMING = 2;
+    public static final int FILTER_PAST = 3;
+
+    private final List<Booking> allBookings = new ArrayList<>();
+
+    private int currentFilter = FILTER_ALL;
     private RecyclerView rvBookings;
     private TextView tvEmptyState;
     private BookingSectionAdapter adapter;
@@ -70,6 +80,13 @@ public class BookingsFragment extends Fragment {
         });
         rvBookings.setAdapter(adapter);
 
+        ChipGroup chipGroup = view.findViewById(R.id.chipGroupBookingsFilter);
+        chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) return;
+            currentFilter = filterForChip(checkedIds.get(0));
+            showBookings();
+        });
+
         authManager = new AuthManager();
         bookingManager = new BookingManager();
     }
@@ -94,7 +111,8 @@ public class BookingsFragment extends Fragment {
     private void startListening() {
         FirebaseUser currentUser = authManager.getCurrentUser();
         if (currentUser == null) {
-            showBookings(Collections.emptyList());
+            allBookings.clear();
+            showBookings();
             return;
         }
 
@@ -105,12 +123,15 @@ public class BookingsFragment extends Fragment {
                         receivedData = true;
                         if (rawBookings == null || rawBookings.isEmpty()) {
                             // Nothing booked yet, so the empty state is the honest thing to show.
-                            showBookings(Collections.emptyList());
+                            allBookings.clear();
+                            showBookings();
                             return;
                         }
                         List<Booking> bookings = parseBookings(rawBookings);
-                        expireStaleBookings(bookings);
-                        showBookings(bookings);
+                        allBookings.clear();
+                        allBookings.addAll(bookings);
+                        expireStaleBookings(allBookings);
+                        showBookings();
                     }
 
                     @Override
@@ -119,7 +140,8 @@ public class BookingsFragment extends Fragment {
                         // wipe the list; only fall back for the very first load.
                         Log.w(TAG, "Could not load bookings: " + errorMessage);
                         if (!receivedData) {
-                            showBookings(Collections.emptyList());
+                            allBookings.clear();
+                            showBookings();
                         }
                     }
                 });
@@ -214,11 +236,11 @@ public class BookingsFragment extends Fragment {
         });
     }
 
-    private void showBookings(List<Booking> bookings) {
+    private void showBookings() {
         if (!isAdded()) return;
 
         // Announce any status change since the list was last seen here.
-        BookingStatusNotifier.notifyChanges(getContext(), bookings);
+        BookingStatusNotifier.notifyChanges(getContext(), new ArrayList<>(allBookings));
 
         // Let the dashboard light its bell dot straight away, without waiting
         // for the user to leave and come back.
@@ -226,10 +248,12 @@ public class BookingsFragment extends Fragment {
             ((NotificationDotHost) getActivity()).refreshNotificationDot();
         }
 
-        List<BookingSections.BookingSection> sections = BookingSections.partition(bookings);
+        List<Booking> filtered = filteredBookings();
+        List<BookingSections.BookingSection> sections = BookingSections.partition(filtered);
 
         if (BookingSections.isEmpty(sections)) {
             rvBookings.setVisibility(View.GONE);
+            tvEmptyState.setText(emptyMessage());
             tvEmptyState.setVisibility(View.VISIBLE);
             return;
         }
@@ -242,6 +266,48 @@ public class BookingsFragment extends Fragment {
 
         // Fetch salon photos for the bookings
         fetchSalonPhotos(sections);
+    }
+
+    private List<Booking> filteredBookings() {
+        List<Booking> filtered = new ArrayList<>();
+        for (Booking booking : allBookings) {
+            if (booking == null) continue;
+            if (currentFilter == FILTER_TODAY
+                    && !BookingSections.isToday(booking)) {
+                continue;
+            }
+            if (currentFilter == FILTER_UPCOMING
+                    && BookingSections.isDateBeforeToday(booking)) {
+                continue;
+            }
+            if (currentFilter == FILTER_PAST
+                    && !BookingSections.isDateBeforeToday(booking)) {
+                continue;
+            }
+            filtered.add(booking);
+        }
+        return filtered;
+    }
+
+    private int filterForChip(int chipId) {
+        if (chipId == R.id.chipBookingsToday) return FILTER_TODAY;
+        if (chipId == R.id.chipBookingsUpcoming) return FILTER_UPCOMING;
+        if (chipId == R.id.chipBookingsPast) return FILTER_PAST;
+        return FILTER_ALL;
+    }
+
+    private String emptyMessage() {
+        switch (currentFilter) {
+            case FILTER_TODAY:
+                return getString(R.string.no_today_bookings);
+            case FILTER_UPCOMING:
+                return getString(R.string.no_upcoming_bookings);
+            case FILTER_PAST:
+                return getString(R.string.no_past_bookings);
+            case FILTER_ALL:
+            default:
+                return getString(R.string.no_bookings_found);
+        }
     }
 
     private void fetchSalonPhotos(List<BookingSections.BookingSection> sections) {

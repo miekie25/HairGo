@@ -105,6 +105,13 @@
     <string name="section_upcoming">Upcoming</string>
     <string name="section_past">Past</string>
     <string name="no_bookings_found">No bookings yet</string>
+    <string name="filter_bookings_all">All</string>
+    <string name="filter_bookings_today">Today</string>
+    <string name="filter_bookings_upcoming">Upcoming</string>
+    <string name="filter_bookings_past">Past</string>
+    <string name="no_today_bookings">No bookings today</string>
+    <string name="no_upcoming_bookings">No upcoming bookings</string>
+    <string name="no_past_bookings">No past bookings</string>
     <string name="title_booking_details">Booking Details</string>
 <string name="label_service">Service</string>
     <string name="label_date_time">Date &amp; Time</string>
