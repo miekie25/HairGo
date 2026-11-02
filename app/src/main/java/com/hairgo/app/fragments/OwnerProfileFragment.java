@@ -3,6 +3,7 @@ package com.hairgo.app.fragments;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -10,11 +11,16 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,12 +30,11 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.materialswitch.MaterialSwitch;
@@ -46,9 +51,11 @@ import com.hairgo.app.firebase.OwnerAccountManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.models.OwnerSalon;
 import com.hairgo.app.models.ServiceDetail;
+import com.hairgo.app.utils.ImageCompressor;
 import com.hairgo.app.utils.OwnerSession;
 import com.hairgo.app.utils.SalonHours;
 import com.hairgo.app.utils.SalonPhotos;
+import com.hairgo.app.utils.ServiceImages;
 import com.hairgo.app.utils.Snackbars;
 import com.hairgo.app.utils.ThemeManager;
 
@@ -56,9 +63,12 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 public class OwnerProfileFragment extends Fragment {
 
@@ -95,6 +105,8 @@ public class OwnerProfileFragment extends Fragment {
     private boolean hasPhoto;
 
     private ActivityResultLauncher<PickVisualMediaRequest> photoPicker;
+    private ActivityResultLauncher<PickVisualMediaRequest> serviceImagePicker;
+    private ServiceEditor activeServiceEditor;
 
     private FirebaseAuth firebaseAuth;
     private FirebaseFirestore firestore;
@@ -108,6 +120,14 @@ public class OwnerProfileFragment extends Fragment {
                 new ActivityResultContracts.PickVisualMedia(), uri -> {
                     if (uri == null || !isAdded()) return;
                     savePhoto(uri);
+                });
+        serviceImagePicker = registerForActivityResult(
+                new ActivityResultContracts.PickVisualMedia(), uri -> {
+                    if (uri == null || !isAdded()) return;
+                    ServiceEditor editor = activeServiceEditor;
+                    if (editor != null) {
+                        editor.applyPickedImage(uri);
+                    }
                 });
     }
 
@@ -685,6 +705,9 @@ public class OwnerProfileFragment extends Fragment {
 
         ServiceEditor editor = new ServiceEditor(dialogView);
         editor.setServices(currentServiceDetails);
+        editor.setAddEnabled(false);
+        editor.setListEnabled(false);
+        activeServiceEditor = editor;
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.title_edit_services)
@@ -692,9 +715,14 @@ public class OwnerProfileFragment extends Fragment {
                 .setPositiveButton(R.string.btn_save, null)
                 .setNegativeButton(R.string.cancel, null)
                 .create();
+        dialog.setOnDismissListener(d -> {
+            if (activeServiceEditor == editor) {
+                activeServiceEditor = null;
+            }
+        });
 
-        // The services are reloaded below. Keep Save off until they are in,
-        // so an empty list cannot overwrite the saved services by mistake.
+        // The services are reloaded below. Keep editing and Save off until they
+        // are in, so an empty list cannot overwrite the saved services by mistake.
         final boolean[] servicesLoaded = {false};
 
         // Listener set after show() so a validation error keeps the dialog open.
@@ -702,6 +730,10 @@ public class OwnerProfileFragment extends Fragment {
             Button saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
             saveButton.setEnabled(servicesLoaded[0]);
             saveButton.setOnClickListener(v -> {
+                if (editor.isImageBusy()) {
+                    editor.showImageError(R.string.service_image_preparing);
+                    return;
+                }
                 // Anything still sitting in the service fields counts too.
                 if (!editor.commitPendingService()) {
                     return;
@@ -713,20 +745,35 @@ public class OwnerProfileFragment extends Fragment {
                     return;
                 }
 
+                List<ServiceImages.PendingImage> pendingImages = editor.getPendingImages();
+                Set<String> imageIdsToDelete = editor.getImageIdsToDelete();
+                if (pendingImages.size() + imageIdsToDelete.size()
+                        > ServiceImages.MAX_IMAGE_OPS_PER_SAVE) {
+                    editor.showImageError(R.string.error_too_many_service_images);
+                    return;
+                }
+
+                editor.setSaving(true);
                 saveButton.setEnabled(false);
                 saveButton.setText(R.string.saving_services);
                 dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(false);
                 editor.setAddEnabled(false);
-                saveServices(salonId, services, dialog, editor);
+                editor.setImageControlsEnabled(false);
+                saveServices(salonId, services, pendingImages, imageIdsToDelete, dialog, editor);
             });
         });
         dialog.show();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
 
         salonManager.getSalonById(salonId, new SalonManager.SalonDataCallback() {
             @Override
             public void onSuccess(Map<String, Object> salon) {
                 if (!isAdded()) return;
                 editor.setServices(SalonManager.getServiceDetails(salon));
+                editor.setAddEnabled(true);
+                editor.setListEnabled(true);
                 servicesLoaded[0] = true;
                 if (dialog.isShowing()) {
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
@@ -737,6 +784,8 @@ public class OwnerProfileFragment extends Fragment {
             public void onFailure(String errorMessage) {
                 if (!isAdded()) return;
                 // Keep the services that were loaded with the profile earlier.
+                editor.setAddEnabled(true);
+                editor.setListEnabled(true);
                 servicesLoaded[0] = true;
                 if (dialog.isShowing()) {
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
@@ -746,40 +795,47 @@ public class OwnerProfileFragment extends Fragment {
     }
 
     private void saveServices(String salonId, List<ServiceDetail> services,
+                              List<ServiceImages.PendingImage> pendingImages,
+                              Set<String> imageIdsToDelete,
                               AlertDialog dialog, ServiceEditor editor) {
-        salonManager.updateServices(salonId, services, new SalonManager.SalonCallback() {
-            @Override
-            public void onSuccess() {
-                if (!isAdded()) return;
+        ServiceImages.saveServiceEdits(salonId, services, pendingImages, imageIdsToDelete,
+                new ServiceImages.SaveCallback() {
+                    @Override
+                    public void onSuccess() {
+                        if (!isAdded()) return;
 
-                currentServiceDetails.clear();
-                currentServiceDetails.addAll(services);
-                currentServices.clear();
-                for (ServiceDetail detail : services) {
-                    currentServices.add(detail.getName());
-                }
-                showServices();
+                        currentServiceDetails.clear();
+                        currentServiceDetails.addAll(services);
+                        currentServices.clear();
+                        for (ServiceDetail detail : services) {
+                            currentServices.add(detail.getName());
+                        }
+                        showServices();
 
-                if (dialog.isShowing()) {
-                    dialog.dismiss();
-                }
-                Toast.makeText(getContext(), R.string.services_saved, Toast.LENGTH_SHORT).show();
-            }
+                        if (dialog.isShowing()) {
+                            dialog.dismiss();
+                        }
+                        Toast.makeText(getContext(), R.string.services_saved,
+                                Toast.LENGTH_SHORT).show();
+                    }
 
-            @Override
-            public void onFailure(String errorMessage) {
-                if (!isAdded()) return;
+                    @Override
+                    public void onFailure(String errorMessage) {
+                        if (!isAdded()) return;
 
-                if (dialog.isShowing()) {
-                    Button saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-                    saveButton.setEnabled(true);
-                    saveButton.setText(R.string.btn_save);
-                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(true);
-                }
-                editor.setAddEnabled(true);
-                Toast.makeText(getContext(), R.string.services_save_failed, Toast.LENGTH_SHORT).show();
-            }
-        });
+                        if (dialog.isShowing()) {
+                            Button saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                            saveButton.setEnabled(true);
+                            saveButton.setText(R.string.btn_save);
+                            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(true);
+                        }
+                        editor.setSaving(false);
+                        editor.setAddEnabled(true);
+                        editor.setImageControlsEnabled(true);
+                        Toast.makeText(getContext(), R.string.services_save_failed,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     /** Opens the per-day operating-hours editor for the selected salon. */
@@ -1061,17 +1117,23 @@ public class OwnerProfileFragment extends Fragment {
         Context context = getContext();
         if (context == null) return;
         InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null) {
+        if (imm != null && view.getWindowToken() != null) {
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
     }
 
     /**
-     * Runs the service editor inside the edit-services dialog. It holds the
-     * three fields, the chips and the list of services shown for this salon.
+     * Runs the service editor inside the manage-services dialog. Services are
+     * shown as compact cards, and adding or changing one opens a focused form.
      */
     private class ServiceEditor {
 
+        private final ScrollView dialogScroll;
+        private final LinearLayout listPanel;
+        private final LinearLayout editorPanel;
+        private final LinearLayout cardsContainer;
+        private final TextView emptyView;
+        private final TextView editorTitleView;
         private final TextInputLayout tilName;
         private final TextInputLayout tilPrice;
         private final TextInputLayout tilDuration;
@@ -1079,15 +1141,39 @@ public class OwnerProfileFragment extends Fragment {
         private final TextInputEditText etPrice;
         private final AutoCompleteTextView durationDropdown;
         private final MaterialButton addButton;
+        private final MaterialButton applyButton;
+        private final MaterialButton cancelEditButton;
+        private final MaterialButton deleteButton;
         private final TextView hintView;
-        private final ChipGroup chipGroup;
         private final TextView listErrorView;
+        private final ShapeableImageView imagePreview;
+        private final MaterialButton chooseImageButton;
+        private final MaterialButton removeImageButton;
+        private final ProgressBar imageProgress;
+        private final TextView imageStatus;
 
-        private final List<ServiceDetail> services = new ArrayList<>();
+        private final List<ServiceDraft> services = new ArrayList<>();
+        private final Set<String> initialImageIds = new HashSet<>();
         // The position of the service being changed, or -1 when adding a new one.
         private int editingIndex = -1;
 
+        private String editorImageId;
+        private long editorImageVersion;
+        private String editorPendingBase64;
+        private Bitmap editorPreview;
+        private int imageToken;
+        private boolean imageControlsEnabled = true;
+        private boolean imageBusy;
+        private boolean listEnabled = true;
+        private boolean saving;
+
         ServiceEditor(View dialogView) {
+            dialogScroll = dialogView.findViewById(R.id.editServicesScroll);
+            listPanel = dialogView.findViewById(R.id.serviceListPanel);
+            editorPanel = dialogView.findViewById(R.id.serviceEditorPanel);
+            cardsContainer = dialogView.findViewById(R.id.serviceCardsContainer);
+            emptyView = dialogView.findViewById(R.id.tvNoServices);
+            editorTitleView = dialogView.findViewById(R.id.tvEditServiceEditorTitle);
             tilName = dialogView.findViewById(R.id.tilEditServiceName);
             tilPrice = dialogView.findViewById(R.id.tilEditServicePrice);
             tilDuration = dialogView.findViewById(R.id.tilEditServiceDuration);
@@ -1095,9 +1181,16 @@ public class OwnerProfileFragment extends Fragment {
             etPrice = dialogView.findViewById(R.id.etEditServicePrice);
             durationDropdown = dialogView.findViewById(R.id.actvEditServiceDuration);
             addButton = dialogView.findViewById(R.id.btnEditAddService);
+            applyButton = dialogView.findViewById(R.id.btnEditApplyService);
+            cancelEditButton = dialogView.findViewById(R.id.btnEditCancelService);
+            deleteButton = dialogView.findViewById(R.id.btnEditDeleteService);
             hintView = dialogView.findViewById(R.id.tvEditServiceEditorHint);
-            chipGroup = dialogView.findViewById(R.id.chipGroupServices);
             listErrorView = dialogView.findViewById(R.id.tvServiceListError);
+            imagePreview = dialogView.findViewById(R.id.ivEditServiceImage);
+            chooseImageButton = dialogView.findViewById(R.id.btnChooseServiceImage);
+            removeImageButton = dialogView.findViewById(R.id.btnRemoveServiceImage);
+            imageProgress = dialogView.findViewById(R.id.pbEditServiceImage);
+            imageStatus = dialogView.findViewById(R.id.tvEditServiceImageStatus);
 
             String[] options = getResources().getStringArray(R.array.service_duration_options);
             durationDropdown.setAdapter(new ArrayAdapter<>(requireContext(),
@@ -1105,33 +1198,116 @@ public class OwnerProfileFragment extends Fragment {
             // The owner picks a duration from the list instead of typing one.
             durationDropdown.setKeyListener(null);
 
-            addButton.setOnClickListener(v -> commitService());
+            addButton.setOnClickListener(v -> startAdding());
+            applyButton.setOnClickListener(v -> commitService());
+            cancelEditButton.setOnClickListener(v -> cancelEditing());
+            deleteButton.setOnClickListener(v -> deleteCurrentService());
+            chooseImageButton.setOnClickListener(v -> launchServiceImagePicker());
+            removeImageButton.setOnClickListener(v -> removeEditorImage());
+            showImagePlaceholder();
+            updateImageButtons();
+            showListPanel();
         }
 
         /** Replaces the shown services, for example after they are loaded per salon. */
         void setServices(List<ServiceDetail> list) {
             services.clear();
+            initialImageIds.clear();
             if (list != null) {
-                services.addAll(list);
+                for (ServiceDetail detail : list) {
+                    if (detail == null) continue;
+                    ServiceDraft draft = new ServiceDraft(detail);
+                    services.add(draft);
+                    if (draft.imageId != null) {
+                        initialImageIds.add(draft.imageId);
+                    }
+                }
             }
-            stopEditing();
-            refreshChips();
+            listErrorView.setVisibility(View.GONE);
+            resetEditor();
+            showListPanel();
+            refreshServiceCards();
         }
 
-        /** The services in the editor, in the same order as the chips. */
+        /** The services in the editor, in the same order as the cards. */
         List<ServiceDetail> getServices() {
-            return new ArrayList<>(services);
+            List<ServiceDetail> result = new ArrayList<>();
+            for (ServiceDraft draft : services) {
+                result.add(draft.toServiceDetail());
+            }
+            return result;
+        }
+
+        /** Images that need to be written when the changes are saved. */
+        List<ServiceImages.PendingImage> getPendingImages() {
+            List<ServiceImages.PendingImage> result = new ArrayList<>();
+            for (ServiceDraft draft : services) {
+                if (draft.imageId != null && draft.pendingBase64 != null) {
+                    result.add(new ServiceImages.PendingImage(
+                            draft.imageId, draft.imageVersion,
+                            draft.pendingBase64, draft.pendingPreview));
+                }
+            }
+            return result;
+        }
+
+        /** Image documents that are no longer used by any service. */
+        Set<String> getImageIdsToDelete() {
+            Set<String> stillUsed = new HashSet<>();
+            for (ServiceDraft draft : services) {
+                if (draft.imageId != null) {
+                    stillUsed.add(draft.imageId);
+                }
+            }
+            Set<String> deletes = new HashSet<>(initialImageIds);
+            deletes.removeAll(stillUsed);
+            return deletes;
         }
 
         /** Shows the error that belongs to the whole list, not to one field. */
         void showListError() {
+            showListPanel();
             listErrorView.setText(R.string.error_no_services);
             listErrorView.setVisibility(View.VISIBLE);
+            scrollToTop();
+        }
+
+        /** Shows an image error that stops the save. */
+        void showImageError(int messageRes) {
+            if (editorPanel.getVisibility() == View.VISIBLE) {
+                setImageStatus(messageRes, true);
+            } else {
+                showListPanel();
+                listErrorView.setText(messageRes);
+                listErrorView.setVisibility(View.VISIBLE);
+                scrollToTop();
+            }
         }
 
         /** Used to lock the add button while the save is running. */
         void setAddEnabled(boolean enabled) {
             addButton.setEnabled(enabled);
+        }
+
+        /** Keeps the list read-only until the latest services have loaded. */
+        void setListEnabled(boolean enabled) {
+            listEnabled = enabled;
+        }
+
+        /** Prevents card edits from changing the drafts while a save is running. */
+        void setSaving(boolean saving) {
+            this.saving = saving;
+        }
+
+        /** Used to lock the image controls while saving or compressing. */
+        void setImageControlsEnabled(boolean enabled) {
+            imageControlsEnabled = enabled;
+            updateImageButtons();
+        }
+
+        /** True while a picked image is still being compressed. */
+        boolean isImageBusy() {
+            return imageBusy;
         }
 
         /**
@@ -1141,15 +1317,22 @@ public class OwnerProfileFragment extends Fragment {
          */
         boolean commitPendingService() {
             listErrorView.setVisibility(View.GONE);
+            if (editorPanel.getVisibility() != View.VISIBLE) {
+                return true;
+            }
             if (isEditorEmpty()) {
                 // Nothing is being typed, so any half-done edit is simply dropped.
-                stopEditing();
+                resetEditor();
+                showListPanel();
                 return true;
             }
             return commitService();
         }
 
         private boolean isEditorEmpty() {
+            if (editingIndex >= 0) {
+                return false;
+            }
             return text(etName).isEmpty()
                     && text(etPrice).isEmpty()
                     && text(durationDropdown).isEmpty();
@@ -1157,6 +1340,14 @@ public class OwnerProfileFragment extends Fragment {
 
         /** Checks the fields and adds the service, or saves the one being edited. */
         private boolean commitService() {
+            if (saving) {
+                return false;
+            }
+            if (imageBusy) {
+                setImageStatus(R.string.service_image_preparing, false);
+                return false;
+            }
+
             tilName.setError(null);
             tilPrice.setError(null);
             tilDuration.setError(null);
@@ -1172,9 +1363,9 @@ public class OwnerProfileFragment extends Fragment {
             // or extra spaces. The service being edited does not count.
             String key = normalizeKey(name);
             for (int i = 0; i < services.size(); i++) {
-                if (i != editingIndex && normalizeKey(services.get(i).getName()).equals(key)) {
+                if (i != editingIndex && normalizeKey(services.get(i).name).equals(key)) {
                     tilName.setError(getString(R.string.error_service_duplicate,
-                            services.get(i).getName()));
+                            services.get(i).name));
                     return false;
                 }
             }
@@ -1207,74 +1398,330 @@ public class OwnerProfileFragment extends Fragment {
                 return false;
             }
 
-            ServiceDetail service = new ServiceDetail(name, price, duration);
+            ServiceDraft service = new ServiceDraft(name, price, duration,
+                    editorImageId, editorImageVersion, editorPendingBase64, editorPreview);
             if (isNew) {
                 services.add(service);
             } else {
                 services.set(editingIndex, service);
             }
 
-            stopEditing();
-            refreshChips();
-            hideKeyboard(etName);
+            closeEditorAndRefresh();
             return true;
         }
 
-        /** Draws one chip per service. A chip can be tapped to edit it or closed to remove it. */
-        private void refreshChips() {
-            chipGroup.removeAllViews();
+        /** Draws one card per service, with its image, price and duration. */
+        private void refreshServiceCards() {
+            cardsContainer.removeAllViews();
+            emptyView.setVisibility(services.isEmpty() ? View.VISIBLE : View.GONE);
+
+            LayoutInflater inflater = LayoutInflater.from(requireContext());
             for (int i = 0; i < services.size(); i++) {
                 final int index = i;
-                ServiceDetail service = services.get(i);
+                ServiceDraft service = services.get(i);
 
-                Chip chip = new Chip(requireContext());
-                chip.setText(chipText(service));
-                chip.setCloseIconResource(R.drawable.ic_dismiss);
-                chip.setCloseIconVisible(true);
-                chip.setOnClickListener(v -> startEditing(index));
-                chip.setOnCloseIconClickListener(v -> removeService(index));
-                chipGroup.addView(chip);
+                View card = inflater.inflate(R.layout.item_edit_service, cardsContainer, false);
+                TextView nameView = card.findViewById(R.id.tvManagedServiceName);
+                TextView priceView = card.findViewById(R.id.tvManagedServicePrice);
+                TextView durationView = card.findViewById(R.id.tvManagedServiceDuration);
+                ShapeableImageView imageView = card.findViewById(R.id.ivManagedServiceImage);
+
+                nameView.setText(service.name);
+                priceView.setText(service.hasPrice()
+                        ? getString(R.string.service_price_rand, formatPrice(service.price))
+                        : getString(R.string.service_price_missing_short));
+                durationView.setText(getString(R.string.service_duration_minutes,
+                        service.durationMinutes));
+                bindCardImage(imageView, service);
+
+                card.setOnClickListener(v -> startEditing(index));
+                cardsContainer.addView(card);
             }
         }
 
-        /** Builds the chip text, for example "Haircut - R150 - 45min". */
-        private String chipText(ServiceDetail service) {
-            String price = service.hasPrice()
-                    ? getString(R.string.service_price_rand, formatPrice(service.getPrice()))
-                    : getString(R.string.service_price_not_set);
-            String duration = getString(R.string.service_duration_minutes,
-                    service.getDurationMinutes());
-            return getString(R.string.service_chip_text, service.getName(), price, duration);
+        private void bindCardImage(ShapeableImageView view, ServiceDraft service) {
+            if (service.pendingPreview != null && !service.pendingPreview.isRecycled()) {
+                view.setTag(R.id.ivManagedServiceImage, null);
+                showCardBitmap(view, service.pendingPreview);
+                return;
+            }
+            if (service.imageId == null) {
+                view.setTag(R.id.ivManagedServiceImage, null);
+                showCardPlaceholder(view);
+                return;
+            }
+
+            String salonId = OwnerSession.getSelectedSalonId();
+            if (salonId == null) {
+                view.setTag(R.id.ivManagedServiceImage, null);
+                showCardPlaceholder(view);
+                return;
+            }
+
+            String key = salonId + "/" + service.imageId + "@" + service.imageVersion;
+            view.setTag(R.id.ivManagedServiceImage, key);
+            showCardPlaceholder(view);
+            ServiceImages.load(salonId, service.imageId, service.imageVersion, bitmap -> {
+                if (!key.equals(view.getTag(R.id.ivManagedServiceImage))) return;
+                if (bitmap == null) {
+                    showCardPlaceholder(view);
+                } else {
+                    showCardBitmap(view, bitmap);
+                }
+            });
+        }
+
+        private void showCardBitmap(ShapeableImageView view, Bitmap bitmap) {
+            view.setPadding(0, 0, 0, 0);
+            view.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            view.setImageBitmap(bitmap);
+        }
+
+        private void showCardPlaceholder(ShapeableImageView view) {
+            view.setImageBitmap(null);
+            view.setBackgroundResource(R.drawable.bg_thumb_placeholder);
+            int padding = dp(12);
+            view.setPadding(padding, padding, padding, padding);
+            view.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            view.setImageResource(R.drawable.ic_image_placeholder);
+        }
+
+        private void confirmRemoveService(int index) {
+            if (saving || !listEnabled || index < 0 || index >= services.size()) return;
+            ServiceDraft service = services.get(index);
+            new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.title_delete_service)
+                    .setMessage(getString(R.string.message_delete_service, service.name))
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.btn_remove_service,
+                            (dialog, which) -> removeService(index))
+                    .show();
+        }
+
+        private void deleteCurrentService() {
+            if (saving || editingIndex < 0) return;
+            confirmRemoveService(editingIndex);
         }
 
         private void removeService(int index) {
+            if (saving || index < 0 || index >= services.size()) return;
+            listErrorView.setVisibility(View.GONE);
             services.remove(index);
             if (editingIndex == index) {
-                stopEditing();
+                resetEditor();
+                showListPanel();
             } else if (editingIndex > index) {
                 editingIndex = editingIndex - 1;
             }
-            refreshChips();
+            refreshServiceCards();
         }
 
-        /** Puts an existing service into the fields so its price or duration can change. */
+        /** Opens an empty form for a new service. */
+        private void startAdding() {
+            if (saving || !listEnabled) return;
+            resetEditor();
+            listErrorView.setVisibility(View.GONE);
+            editorTitleView.setText(R.string.title_new_service);
+            hintView.setText(R.string.helper_new_service);
+            applyButton.setText(R.string.btn_add_service);
+            deleteButton.setVisibility(View.GONE);
+            showEditorPanel();
+            etName.requestFocus();
+        }
+
+        /** Opens the form for an existing service so it can be changed or removed. */
         private void startEditing(int index) {
+            if (saving || !listEnabled || index < 0 || index >= services.size()) return;
             editingIndex = index;
-            ServiceDetail service = services.get(index);
+            imageBusy = false;
+            imageControlsEnabled = true;
+            ServiceDraft service = services.get(index);
 
             tilName.setError(null);
             tilPrice.setError(null);
             tilDuration.setError(null);
+            listErrorView.setVisibility(View.GONE);
 
-            etName.setText(service.getName());
-            etPrice.setText(service.hasPrice() ? formatPrice(service.getPrice()) : "");
-            durationDropdown.setText(durationOptionText(service.getDurationMinutes()), false);
-            addButton.setText(R.string.btn_update_service);
-            hintView.setText(getString(R.string.helper_editing_service, service.getName()));
+            etName.setText(service.name);
+            etPrice.setText(service.hasPrice() ? formatPrice(service.price) : "");
+            durationDropdown.setText(durationOptionText(service.durationMinutes), false);
+            editorTitleView.setText(R.string.title_edit_service);
+            hintView.setText(R.string.helper_edit_service_form);
+            applyButton.setText(R.string.btn_done);
+            deleteButton.setVisibility(View.VISIBLE);
+
+            int token = ++imageToken;
+            editorImageId = service.imageId;
+            editorImageVersion = service.imageVersion;
+            editorPendingBase64 = service.pendingBase64;
+            editorPreview = service.pendingPreview;
+            imageProgress.setVisibility(View.GONE);
+            hideImageStatus();
+
+            if (editorPreview != null) {
+                showEditorBitmap(editorPreview);
+                setImageStatus(R.string.service_image_ready, false);
+            } else if (editorImageId != null) {
+                showImagePlaceholder();
+                loadEditorImage(index, token);
+            } else {
+                showImagePlaceholder();
+            }
+            updateImageButtons();
+            showEditorPanel();
         }
 
-        /** Goes back to adding a new service, with empty fields. */
-        private void stopEditing() {
+        private void cancelEditing() {
+            if (saving) return;
+            closeEditorAndRefresh();
+        }
+
+        private void loadEditorImage(int index, int token) {
+            String salonId = OwnerSession.getSelectedSalonId();
+            if (salonId == null) {
+                setImageStatus(R.string.service_image_load_failed, true);
+                return;
+            }
+            imageProgress.setVisibility(View.VISIBLE);
+            setImageStatus(R.string.service_image_loading, false);
+            ServiceImages.load(salonId, editorImageId, editorImageVersion, bitmap -> {
+                if (!isAdded() || editingIndex != index || token != imageToken) return;
+                imageProgress.setVisibility(View.GONE);
+                if (bitmap != null) {
+                    editorPreview = bitmap;
+                    showEditorBitmap(bitmap);
+                    hideImageStatus();
+                } else {
+                    showImagePlaceholder();
+                    setImageStatus(R.string.service_image_load_failed, true);
+                }
+                updateImageButtons();
+            });
+        }
+
+        /** Starts the system photo picker for the image of the service being edited. */
+        private void launchServiceImagePicker() {
+            serviceImagePicker.launch(new PickVisualMediaRequest.Builder()
+                    .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                    .build());
+        }
+
+        /** Compresses and previews the image the owner picked. */
+        void applyPickedImage(Uri uri) {
+            if (uri == null || saving || imageBusy
+                    || editorPanel.getVisibility() != View.VISIBLE) return;
+            final int token = ++imageToken;
+            imageBusy = true;
+            imageProgress.setVisibility(View.VISIBLE);
+            setImageStatus(R.string.service_image_preparing, false);
+            setImageControlsEnabled(false);
+
+            ServiceImages.encodeAsync(requireContext(), uri,
+                    new ServiceImages.EncodeCallback() {
+                        @Override
+                        public void onEncoded(ImageCompressor.EncodedImage image) {
+                            if (!isAdded() || token != imageToken) return;
+                            if (editorImageId == null) {
+                                editorImageId = UUID.randomUUID().toString();
+                            }
+                            editorImageVersion = Math.max(
+                                    System.currentTimeMillis(), editorImageVersion + 1);
+                            editorPendingBase64 = image.base64;
+                            editorPreview = image.preview;
+
+                            imageBusy = false;
+                            imageProgress.setVisibility(View.GONE);
+                            showEditorBitmap(image.preview);
+                            setImageStatus(R.string.service_image_ready, false);
+                            setImageControlsEnabled(true);
+                        }
+
+                        @Override
+                        public void onError(String message) {
+                            if (!isAdded() || token != imageToken) return;
+                            imageBusy = false;
+                            imageProgress.setVisibility(View.GONE);
+                            if (editorPreview != null) {
+                                showEditorBitmap(editorPreview);
+                            } else {
+                                showImagePlaceholder();
+                            }
+                            int messageRes = "IMAGE_TOO_LARGE".equals(message)
+                                    ? R.string.service_image_too_large
+                                    : R.string.service_image_read_failed;
+                            setImageStatus(messageRes, true);
+                            setImageControlsEnabled(true);
+                        }
+                    });
+        }
+
+        private void removeEditorImage() {
+            if (saving) return;
+            imageToken++;
+            imageBusy = false;
+            editorImageId = null;
+            editorImageVersion = 0;
+            editorPendingBase64 = null;
+            editorPreview = null;
+            imageProgress.setVisibility(View.GONE);
+            hideImageStatus();
+            showImagePlaceholder();
+            updateImageButtons();
+        }
+
+        private boolean hasEditorImage() {
+            return editorImageId != null;
+        }
+
+        private void showEditorBitmap(Bitmap bitmap) {
+            imagePreview.setPadding(0, 0, 0, 0);
+            imagePreview.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imagePreview.setImageBitmap(bitmap);
+        }
+
+        private void showImagePlaceholder() {
+            imagePreview.setImageBitmap(null);
+            imagePreview.setBackgroundResource(R.drawable.bg_thumb_placeholder);
+            int padding = dp(16);
+            imagePreview.setPadding(padding, padding, padding, padding);
+            imagePreview.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            imagePreview.setImageResource(R.drawable.ic_image_placeholder);
+        }
+
+        private void updateImageButtons() {
+            boolean hasImage = hasEditorImage();
+            chooseImageButton.setText(hasImage
+                    ? R.string.btn_change_service_image
+                    : R.string.btn_choose_service_image);
+            chooseImageButton.setEnabled(imageControlsEnabled);
+            removeImageButton.setVisibility(hasImage ? View.VISIBLE : View.GONE);
+            removeImageButton.setEnabled(imageControlsEnabled && hasImage);
+        }
+
+        private void setImageStatus(int messageRes, boolean error) {
+            if (!isAdded()) return;
+            imageStatus.setText(messageRes);
+            imageStatus.setTextColor(ContextCompat.getColor(requireContext(),
+                    error ? R.color.error : R.color.grey_medium));
+            imageStatus.setVisibility(View.VISIBLE);
+        }
+
+        private void hideImageStatus() {
+            imageStatus.setVisibility(View.GONE);
+        }
+
+        private int dp(int value) {
+            return Math.round(value * getResources().getDisplayMetrics().density);
+        }
+
+        private void closeEditorAndRefresh() {
+            resetEditor();
+            showListPanel();
+            refreshServiceCards();
+        }
+
+        /** Clears the form and any image that had not been applied yet. */
+        private void resetEditor() {
             editingIndex = -1;
             etName.setText("");
             etPrice.setText("");
@@ -1282,8 +1729,75 @@ public class OwnerProfileFragment extends Fragment {
             tilName.setError(null);
             tilPrice.setError(null);
             tilDuration.setError(null);
-            addButton.setText(R.string.btn_add_service);
-            hintView.setText(R.string.helper_service_editor);
+            hintView.setText(R.string.helper_new_service);
+            applyButton.setText(R.string.btn_add_service);
+            deleteButton.setVisibility(View.GONE);
+
+            imageToken++;
+            imageBusy = false;
+            imageControlsEnabled = true;
+            editorImageId = null;
+            editorImageVersion = 0;
+            editorPendingBase64 = null;
+            editorPreview = null;
+            imageProgress.setVisibility(View.GONE);
+            hideImageStatus();
+            showImagePlaceholder();
+            updateImageButtons();
+        }
+
+        private void showListPanel() {
+            editorPanel.setVisibility(View.GONE);
+            listPanel.setVisibility(View.VISIBLE);
+            hideKeyboard(etName);
+        }
+
+        private void showEditorPanel() {
+            listPanel.setVisibility(View.GONE);
+            editorPanel.setVisibility(View.VISIBLE);
+            scrollToTop();
+        }
+
+        private void scrollToTop() {
+            if (dialogScroll == null) return;
+            dialogScroll.post(() -> dialogScroll.smoothScrollTo(0, 0));
+        }
+    }
+
+    /** One service in the dialog, including any image changes not saved yet. */
+    private static class ServiceDraft {
+        private final String name;
+        private final Double price;
+        private final int durationMinutes;
+        private final String imageId;
+        private final long imageVersion;
+        private final String pendingBase64;
+        private final Bitmap pendingPreview;
+
+        ServiceDraft(ServiceDetail detail) {
+            this(detail.getName(), detail.hasPrice() ? detail.getPrice() : null,
+                    detail.getDurationMinutes(), detail.getImageId(),
+                    detail.getImageVersion(), null, null);
+        }
+
+        ServiceDraft(String name, Double price, int durationMinutes,
+                     String imageId, long imageVersion,
+                     String pendingBase64, Bitmap pendingPreview) {
+            this.name = name;
+            this.price = price;
+            this.durationMinutes = durationMinutes;
+            this.imageId = imageId;
+            this.imageVersion = imageVersion;
+            this.pendingBase64 = pendingBase64;
+            this.pendingPreview = pendingPreview;
+        }
+
+        boolean hasPrice() {
+            return price != null;
+        }
+
+        ServiceDetail toServiceDetail() {
+            return new ServiceDetail(name, price, durationMinutes, imageId, imageVersion);
         }
     }
 }

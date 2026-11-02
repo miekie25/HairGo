@@ -17,23 +17,43 @@ public class ServiceDetail {
     private final String name;
     private final Double price;      // null means "price not set"
     private final int durationMinutes;
+    // Optional image metadata. Old services have neither field.
+    private final String imageId;
+    private final long imageVersion;
 
     public ServiceDetail(String name, Double price, int durationMinutes) {
+        this(name, price, durationMinutes, null, 0L);
+    }
+
+    public ServiceDetail(String name, Double price, int durationMinutes,
+                         String imageId, long imageVersion) {
         this.name = name != null ? name.trim() : "";
         this.price = price;
         // Use the default if the duration is missing or not a positive number.
         this.durationMinutes = durationMinutes > 0 ? durationMinutes : DEFAULT_DURATION_MINUTES;
+        this.imageId = imageId != null && !imageId.trim().isEmpty()
+                ? imageId.trim() : null;
+        this.imageVersion = this.imageId != null ? imageVersion : 0L;
     }
 
     public String getName() { return name; }
     public Double getPrice() { return price; }
     public int getDurationMinutes() { return durationMinutes; }
+    public String getImageId() { return imageId; }
+    public long getImageVersion() { return imageVersion; }
 
     // True when the owner has saved a price for this service.
     public boolean hasPrice() { return price != null; }
 
+    // True when this service has an image document saved separately.
+    public boolean hasImage() { return imageId != null; }
+
     // Turns this service into a map that can be saved in Firestore.
     public Map<String, Object> toMap() {
+        return toMap(true);
+    }
+
+    private Map<String, Object> toMap(boolean includeImage) {
         Map<String, Object> map = new HashMap<>();
         map.put("name", name);
         // Only save the price if there is one, so "not set" stays empty.
@@ -41,6 +61,10 @@ public class ServiceDetail {
             map.put("price", price);
         }
         map.put("duration", durationMinutes);
+        if (includeImage && imageId != null) {
+            map.put("imageId", imageId);
+            map.put("imageVersion", imageVersion);
+        }
         return map;
     }
 
@@ -66,7 +90,23 @@ public class ServiceDetail {
             duration = ((Number) durationValue).intValue();
         }
 
-        return new ServiceDetail(String.valueOf(nameValue), price, duration);
+        String imageId = null;
+        Object imageIdValue = map.get("imageId");
+        if (imageIdValue instanceof String) {
+            String text = ((String) imageIdValue).trim();
+            if (!text.isEmpty()) {
+                imageId = text;
+            }
+        }
+
+        long imageVersion = 0L;
+        Object imageVersionValue = map.get("imageVersion");
+        if (imageVersionValue instanceof Number) {
+            imageVersion = ((Number) imageVersionValue).longValue();
+        }
+
+        return new ServiceDetail(String.valueOf(nameValue), price, duration,
+                imageId, imageVersion);
     }
 
     // Reads a list of services from a raw Firestore value. Never returns null.
@@ -124,6 +164,18 @@ public class ServiceDetail {
         if (details != null) {
             for (ServiceDetail detail : details) {
                 maps.add(detail.toMap());
+            }
+        }
+        return maps;
+    }
+
+    // Booking copies only need the name, price and duration. Image metadata is
+    // deliberately left out so bookings never hold stale image references.
+    public static List<Map<String, Object>> toBookingMapList(List<ServiceDetail> details) {
+        List<Map<String, Object>> maps = new ArrayList<>();
+        if (details != null) {
+            for (ServiceDetail detail : details) {
+                maps.add(detail.toMap(false));
             }
         }
         return maps;

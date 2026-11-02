@@ -59,6 +59,29 @@ service cloud.firestore {
       );
       // Nobody can permanently delete a salon.
       allow delete: if false;
+
+      // ---------------------------------------------------------------
+      // SERVICE IMAGES — one document per service image, kept out of the
+      // salon document so the salon list never downloads image data.
+      // ---------------------------------------------------------------
+      match /serviceImages/{imageId} {
+        // Any logged-in client can view a salon's service images.
+        allow read: if isSignedIn();
+
+        // Only the owner of this salon may add or replace an image, and the
+        // Base64 string must stay well below the 1 MiB document limit.
+        allow create, update: if isSignedIn()
+          && get(/databases/$(database)/documents/salons/$(salonId)).data.ownerID
+               == request.auth.uid
+          && request.resource.data.photo is string
+          && request.resource.data.photo.size() < 300000
+          && request.resource.data.version is number;
+
+        // Removing an image uses the same ownership check.
+        allow delete: if isSignedIn()
+          && get(/databases/$(database)/documents/salons/$(salonId)).data.ownerID
+               == request.auth.uid;
+      }
     }
 
     // ---------------------------------------------------------------

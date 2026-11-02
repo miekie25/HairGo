@@ -162,7 +162,7 @@ public class SalonProfileActivity extends AppCompatActivity {
 
         RecyclerView rvServices = findViewById(R.id.rvServices);
         rvServices.setLayoutManager(new LinearLayoutManager(this));
-        rvServices.setAdapter(new ServiceAdapter(serviceDetails));
+        rvServices.setAdapter(new ServiceAdapter(salon.getSalonId(), serviceDetails));
 
         setupReviewPreview(salon.getSalonId(), salon.getAvgRating());
 

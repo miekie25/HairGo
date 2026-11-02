@@ -388,7 +388,7 @@ public class BookingManager {
 
         // Save a copy of the chosen services and the totals, if we have them.
         if (serviceDetails != null && !serviceDetails.isEmpty()) {
-            booking.put("serviceDetails", ServiceDetail.toMapList(serviceDetails));
+            booking.put("serviceDetails", ServiceDetail.toBookingMapList(serviceDetails));
             // Only save a total price if at least one service has a price.
             Double totalPrice = Booking.sumPrice(serviceDetails);
             if (totalPrice != null) {
@@ -690,7 +690,7 @@ public class BookingManager {
 
                     if (serviceDetails != null) {
                         // We have the new services, so save the fresh copy and totals.
-                        update.put("serviceDetails", ServiceDetail.toMapList(serviceDetails));
+                        update.put("serviceDetails", ServiceDetail.toBookingMapList(serviceDetails));
                         Double totalPrice = Booking.sumPrice(serviceDetails);
                         update.put("totalPrice", totalPrice != null ? totalPrice : FieldValue.delete());
                         update.put("totalDuration", Booking.sumDuration(serviceDetails));

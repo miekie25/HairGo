@@ -435,7 +435,17 @@
 
     <!-- Owner: salon services with price and duration -->
     <string name="title_add_salon">Add a salon</string>
-    <string name="title_edit_services">Edit services</string>
+    <string name="title_edit_services">Manage services</string>
+    <string name="helper_manage_services">Tap a service to edit or remove it.</string>
+    <string name="services_empty">No services yet.\nAdd your first service to get started.</string>
+    <string name="title_new_service">New service</string>
+    <string name="title_edit_service">Edit service</string>
+    <string name="helper_new_service">Add a service clients can book.</string>
+    <string name="helper_edit_service_form">Update the details, then tap Done.</string>
+    <string name="btn_delete_service">Delete</string>
+    <string name="title_delete_service">Delete service?</string>
+    <string name="message_delete_service">Remove &quot;%1$s&quot; from your services?</string>
+    <string name="btn_remove_service">Remove</string>
     <string name="btn_add">Add</string>
     <string name="btn_save">Save</string>
 
@@ -456,6 +466,19 @@
     <string name="helper_service_editor">Fill in the name, price and duration, then tap Add service</string>
     <string name="helper_service_chips">Tap a chip to change its price or duration</string>
     <string name="helper_editing_service">Editing: %1$s</string>
+    <string name="label_service_image">Service image (optional)</string>
+    <string name="helper_service_image">Shown to clients on your salon page</string>
+    <string name="service_image_preview_desc">Service image preview</string>
+    <string name="btn_choose_service_image">Choose image</string>
+    <string name="btn_change_service_image">Change image</string>
+    <string name="btn_remove_service_image">Remove</string>
+    <string name="service_image_preparing">Preparing image…</string>
+    <string name="service_image_ready">Image ready to save</string>
+    <string name="service_image_loading">Loading image…</string>
+    <string name="service_image_load_failed">Could not load the current image</string>
+    <string name="service_image_read_failed">Could not read the chosen image</string>
+    <string name="service_image_too_large">This image is too large. Please choose a smaller photo.</string>
+    <string name="error_too_many_service_images">Please save fewer image changes at a time</string>
 
     <string name="error_service_name_required">Enter a service name</string>
     <string name="error_service_price_required">Enter a price</string>
@@ -466,6 +489,7 @@
     <string name="error_no_services">Add at least one service</string>
 
     <string name="service_price_not_set">Price not set</string>
+    <string name="service_price_missing_short">No price</string>
     <string name="service_price_rand">R%1$s</string>
     <string name="service_duration_minutes">%1$dmin</string>
     <string name="service_chip_text">%1$s - %2$s - %3$s</string>
