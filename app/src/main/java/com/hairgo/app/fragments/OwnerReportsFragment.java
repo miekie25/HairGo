@@ -4,9 +4,17 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.hairgo.app.adapters.ReviewAdapter;
+import com.hairgo.app.utils.ReviewLoader;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
@@ -19,6 +27,7 @@ import com.hairgo.app.models.PaymentDetails;
 import com.hairgo.app.utils.OwnerSession;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -29,6 +38,17 @@ public class OwnerReportsFragment extends Fragment {
     private BookingManager bookingManager;
     private String salonId;
     private int currentPeriod = PERIOD_TODAY;
+
+    private ReviewAdapter reviewAdapter;
+    private RecyclerView rvReviews;
+    private ProgressBar progressReviews;
+    private TextView tvReviewsEmpty;
+    private LinearLayout layoutReviewSummary;
+    private LinearLayout layoutRatingDistribution;
+    private TextView tvReviewsAverage;
+    private RatingBar rbReviewsAverage;
+    private TextView tvReviewsCount;
+    private final List<ReviewLoader.Item> loadedReviews = new ArrayList<>();
 
     public static final int PERIOD_TODAY = 0;
     public static final int PERIOD_THIS_MONTH = 1;
@@ -45,6 +65,21 @@ public class OwnerReportsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         bookingManager = new BookingManager();
         setupPeriodSelector(view);
+
+        rvReviews = view.findViewById(R.id.rvReviews);
+        progressReviews = view.findViewById(R.id.progressReviews);
+        tvReviewsEmpty = view.findViewById(R.id.tvReviewsEmpty);
+        layoutReviewSummary = view.findViewById(R.id.layoutReviewSummary);
+        layoutRatingDistribution = view.findViewById(R.id.layoutRatingDistribution);
+        tvReviewsAverage = view.findViewById(R.id.tvReviewsAverage);
+        rbReviewsAverage = view.findViewById(R.id.rbReviewsAverage);
+        tvReviewsCount = view.findViewById(R.id.tvReviewsCount);
+
+        reviewAdapter = new ReviewAdapter(false);
+        rvReviews.setLayoutManager(new LinearLayoutManager(requireContext()));
+        rvReviews.setAdapter(reviewAdapter);
+        rvReviews.setNestedScrollingEnabled(false);
+
         refreshReports();
     }
 
@@ -77,6 +112,13 @@ public class OwnerReportsFragment extends Fragment {
         salonId = OwnerSession.getSelectedSalonId();
         if (salonId == null) {
             showEmptyState();
+            if (progressReviews != null) progressReviews.setVisibility(View.GONE);
+            if (tvReviewsEmpty != null) {
+                tvReviewsEmpty.setText(R.string.no_reviews_yet);
+                tvReviewsEmpty.setVisibility(View.VISIBLE);
+            }
+            if (rvReviews != null) rvReviews.setVisibility(View.GONE);
+            if (layoutReviewSummary != null) layoutReviewSummary.setVisibility(View.GONE);
             return;
         }
 
@@ -86,6 +128,8 @@ public class OwnerReportsFragment extends Fragment {
         view.findViewById(R.id.progressReports).setVisibility(View.VISIBLE);
         view.findViewById(R.id.tvEmptyReports).setVisibility(View.GONE);
         hideAllReportSections(view);
+
+        loadReviews(salonId);
 
         bookingManager.getBookingsForSalon(salonId, new BookingManager.BookingListCallback() {
             @Override
@@ -195,6 +239,135 @@ public class OwnerReportsFragment extends Fragment {
         }
 
         return data;
+    }
+
+    private void loadReviews(String selectedSalonId) {
+        if (progressReviews == null) return;
+
+        progressReviews.setVisibility(View.VISIBLE);
+        tvReviewsEmpty.setVisibility(View.GONE);
+        rvReviews.setVisibility(View.GONE);
+        layoutReviewSummary.setVisibility(View.GONE);
+        layoutRatingDistribution.removeAllViews();
+
+        ReviewLoader.load(selectedSalonId, new ReviewLoader.Callback() {
+            @Override
+            public void onLoaded(List<ReviewLoader.Item> reviews, boolean fromCache) {
+                if (!isAdded() || getView() == null) return;
+
+                progressReviews.setVisibility(View.GONE);
+                loadedReviews.clear();
+                if (reviews != null) loadedReviews.addAll(reviews);
+                reviewAdapter.setReviews(loadedReviews);
+
+                if (loadedReviews.isEmpty()) {
+                    tvReviewsEmpty.setText(R.string.no_reviews_yet);
+                    tvReviewsEmpty.setVisibility(View.VISIBLE);
+                    rvReviews.setVisibility(View.GONE);
+                    layoutReviewSummary.setVisibility(View.GONE);
+                    return;
+                }
+
+                tvReviewsEmpty.setVisibility(View.GONE);
+                rvReviews.setVisibility(View.VISIBLE);
+                layoutReviewSummary.setVisibility(View.VISIBLE);
+                displayReviewSummary();
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (!isAdded() || getView() == null) return;
+                progressReviews.setVisibility(View.GONE);
+                tvReviewsEmpty.setText(R.string.reviews_load_failed);
+                tvReviewsEmpty.setVisibility(View.VISIBLE);
+                rvReviews.setVisibility(View.GONE);
+                layoutReviewSummary.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void displayReviewSummary() {
+        int ratedCount = 0;
+        double total = 0;
+        int[] buckets = new int[6];
+        int maxBucket = 0;
+        for (ReviewLoader.Item review : loadedReviews) {
+            if (review.hasRating()) {
+                ratedCount++;
+                total += review.getRating();
+                int star = Math.round(review.getRating());
+                if (star < 1) star = 1;
+                if (star > 5) star = 5;
+                buckets[star]++;
+                if (buckets[star] > maxBucket) maxBucket = buckets[star];
+            }
+        }
+
+        if (ratedCount > 0) {
+            double avg = total / ratedCount;
+            tvReviewsAverage.setText(String.format(java.util.Locale.getDefault(), "%.1f", avg));
+            rbReviewsAverage.setVisibility(View.VISIBLE);
+            rbReviewsAverage.setRating((float) avg);
+        } else {
+            tvReviewsAverage.setText("—");
+            rbReviewsAverage.setVisibility(View.GONE);
+        }
+
+        int count = loadedReviews.size();
+        android.content.res.Resources res = getResources();
+        tvReviewsCount.setText(res.getQuantityString(R.plurals.reviews_count, count, count));
+
+        layoutRatingDistribution.removeAllViews();
+        if (maxBucket == 0) maxBucket = 1;
+
+        android.content.Context context = requireContext();
+        for (int star = 5; star >= 1; star--) {
+            android.widget.LinearLayout row = new android.widget.LinearLayout(context);
+            row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            android.widget.LinearLayout.LayoutParams rowParams =
+                    new android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+            rowParams.topMargin = 4;
+            row.setLayoutParams(rowParams);
+
+            android.widget.TextView label = new android.widget.TextView(context);
+            label.setText(star + " ★");
+            label.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.home_text_secondary));
+            label.setTextSize(12f);
+            android.widget.LinearLayout.LayoutParams labelParams =
+                    new android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+            labelParams.setMarginEnd(8);
+            label.setLayoutParams(labelParams);
+            row.addView(label);
+
+            android.widget.ProgressBar bar = new android.widget.ProgressBar(
+                    context, null, android.R.attr.progressBarStyleHorizontal);
+            bar.setMax(maxBucket);
+            bar.setProgress(buckets[star]);
+            android.widget.LinearLayout.LayoutParams barParams =
+                    new android.widget.LinearLayout.LayoutParams(0,
+                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            bar.setLayoutParams(barParams);
+            row.addView(bar);
+
+            android.widget.TextView countView = new android.widget.TextView(context);
+            countView.setText(String.valueOf(buckets[star]));
+            countView.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.home_text_secondary));
+            countView.setTextSize(12f);
+            android.widget.LinearLayout.LayoutParams countParams =
+                    new android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+            countParams.setMarginStart(8);
+            countView.setLayoutParams(countParams);
+            row.addView(countView);
+
+            layoutRatingDistribution.addView(row);
+        }
     }
 
     private void displayReport(ReportData data) {
