@@ -49,6 +49,7 @@ public class OwnerReportsFragment extends Fragment {
     private RatingBar rbReviewsAverage;
     private TextView tvReviewsCount;
     private final List<ReviewLoader.Item> loadedReviews = new ArrayList<>();
+    private final List<com.hairgo.app.models.PaymentRecord> loadedPayments = new ArrayList<>();
 
     public static final int PERIOD_TODAY = 0;
     public static final int PERIOD_THIS_MONTH = 1;
@@ -144,8 +145,24 @@ public class OwnerReportsFragment extends Fragment {
                     return;
                 }
 
-                ReportData data = calculateReport(raw);
-                displayReport(data);
+                bookingManager.getPaymentsForSalon(salonId, new BookingManager.PaymentListCallback() {
+                    @Override
+                    public void onSuccess(List<com.hairgo.app.models.PaymentRecord> paymentRecords) {
+                        if (!isAdded() || getView() == null) return;
+                        loadedPayments.clear();
+                        if (paymentRecords != null) loadedPayments.addAll(paymentRecords);
+                        ReportData data = calculateReport(raw, loadedPayments);
+                        displayReport(data);
+                    }
+
+                    @Override
+                    public void onFailure(String errorMessage) {
+                        if (!isAdded() || getView() == null) return;
+                        loadedPayments.clear();
+                        ReportData data = calculateReport(raw, loadedPayments);
+                        displayReport(data);
+                    }
+                });
             }
 
             @Override
@@ -160,12 +177,22 @@ public class OwnerReportsFragment extends Fragment {
         });
     }
 
-    private ReportData calculateReport(List<Map<String, Object>> rawBookings) {
+    private ReportData calculateReport(List<Map<String, Object>> rawBookings,
+                                     List<com.hairgo.app.models.PaymentRecord> paymentRecords) {
         ReportData data = new ReportData();
         Calendar cal = Calendar.getInstance();
         int currentYear = cal.get(Calendar.YEAR);
         int currentMonth = cal.get(Calendar.MONTH);
         int currentDay = cal.get(Calendar.DAY_OF_MONTH);
+
+        java.util.Set<String> bookingsWithHistory = new java.util.HashSet<>();
+        if (paymentRecords != null) {
+            for (com.hairgo.app.models.PaymentRecord record : paymentRecords) {
+                if (record != null && record.getBookingId() != null && !record.getBookingId().isEmpty()) {
+                    bookingsWithHistory.add(record.getBookingId());
+                }
+            }
+        }
 
         for (Map<String, Object> map : rawBookings) {
             OwnerBooking booking = OwnerBooking.fromMap(map);
@@ -198,7 +225,10 @@ public class OwnerReportsFragment extends Fragment {
             }
 
             PaymentDetails payment = booking.getPaymentDetails();
-            if (payment != null) {
+            boolean hasHistory = bookingsWithHistory.contains(booking.getBookingId());
+
+            // Only use booking-level cumulative values for pre-history bookings.
+            if (payment != null && !hasHistory) {
                 Double paid = payment.getAmountPaid();
                 if (paid != null && paid > 0) {
                     data.totalAmountPaid = data.totalAmountPaid.add(BigDecimal.valueOf(paid));
@@ -229,11 +259,48 @@ public class OwnerReportsFragment extends Fragment {
                         data.paymentsWithoutTimestamp += paid;
                     }
                 }
+            }
 
-                Double outstanding = payment != null ? payment.getAmountOutstanding() : null;
+            Double outstanding = payment != null ? payment.getAmountOutstanding() : null;
                 if (outstanding != null && outstanding > 0) {
                     data.totalOutstandingBalance = data.totalOutstandingBalance.add(BigDecimal.valueOf(outstanding));
                     data.bookingsWithOutstanding++;
+                }
+        }
+
+        // Count individual payment transactions once, including card and cash
+        // payments created in the new payment history.
+        if (paymentRecords != null) {
+            for (com.hairgo.app.models.PaymentRecord record : paymentRecords) {
+                if (record == null) continue;
+                double amount = record.getPaymentAmount();
+                if (amount <= 0) continue;
+
+                data.totalAmountPaid = data.totalAmountPaid.add(BigDecimal.valueOf(amount));
+
+                Date paymentDate = record.getPaymentTimestampAsDate();
+                if (paymentDate != null) {
+                    Calendar pc = Calendar.getInstance();
+                    pc.setTime(paymentDate);
+                    boolean paymentInPeriod;
+                    if (currentPeriod == PERIOD_TODAY) {
+                        paymentInPeriod = pc.get(Calendar.YEAR) == currentYear
+                                && pc.get(Calendar.DAY_OF_YEAR) == cal.get(Calendar.DAY_OF_YEAR);
+                    } else {
+                        paymentInPeriod = pc.get(Calendar.YEAR) == currentYear
+                                && pc.get(Calendar.MONTH) == currentMonth;
+                    }
+
+                    if (paymentInPeriod) {
+                        String method = record.getPaymentMethod();
+                        if ("card".equals(method)) {
+                            data.cardPaymentsReceived = data.cardPaymentsReceived.add(BigDecimal.valueOf(amount));
+                        } else if ("cash".equals(method)) {
+                            data.cashPaymentsRecorded = data.cashPaymentsRecorded.add(BigDecimal.valueOf(amount));
+                        }
+                    }
+                } else {
+                    data.paymentsWithoutTimestamp += amount;
                 }
             }
         }

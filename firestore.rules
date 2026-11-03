@@ -123,6 +123,22 @@ service cloud.firestore {
       );
       // Nobody can permanently delete a booking (cancelling is a soft delete).
       allow delete: if false;
+
+      // Individual payment transactions for a booking. These are immutable and
+      // are written in the same Firestore transaction as the booking update.
+      match /payments/{paymentId} {
+        allow read: if isSignedIn() && (
+          get(/databases/$(database)/documents/bookings/$(bookingId)).data.clientID == request.auth.uid ||
+          get(/databases/$(database)/documents/salons/$(get(/databases/$(database)/documents/bookings/$(bookingId)).data.salonID)).data.ownerID == request.auth.uid ||
+          isAdmin()
+        );
+
+        allow create: if isSignedIn()
+          && get(/databases/$(database)/documents/salons/$(get(/databases/$(database)/documents/bookings/$(bookingId)).data.salonID)).data.ownerID == request.auth.uid
+          && request.resource.data.bookingID == bookingId;
+
+        allow update, delete: if false;
+      }
     }
 
     // ---------------------------------------------------------------

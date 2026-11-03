@@ -15,6 +15,7 @@ public class PaymentDetails {
     public static final String TYPE_CASH = "cash";
 
     public static final String STATUS_PARTIAL = "partial";
+    public static final String STATUS_PARTIALLY_PAID = "partially_paid";
     public static final String STATUS_PAID = "paid";
     public static final String STATUS_DUE = "due";
 
@@ -178,7 +179,7 @@ public class PaymentDetails {
         BigDecimal outstandingAfter = outstandingBefore.subtract(payment);
         if (outstandingAfter.signum() < 0) outstandingAfter = BigDecimal.ZERO;
 
-        String newStatus = outstandingAfter.signum() == 0 ? STATUS_PAID : STATUS_DUE;
+        String newStatus = outstandingAfter.signum() == 0 ? STATUS_PAID : STATUS_PARTIALLY_PAID;
         return new PaymentDetails(TYPE_CASH, newStatus, paidAfter.doubleValue(), outstandingAfter.doubleValue(), timestamp);
     }
 

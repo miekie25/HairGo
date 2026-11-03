@@ -408,12 +408,37 @@ public class BookingManager {
         String lockKey = slotLockKey(salonId, dateTime);
         AtomicBoolean slotTaken = new AtomicBoolean(false);
 
+        boolean createsCardPaymentRecord = payment != null && payment.isCardPayment()
+                && payment.getAmountPaid() != null && payment.getAmountPaid() > 0;
+        DocumentReference paymentRef = createsCardPaymentRecord
+                ? ref.collection("payments").document() : null;
+
         db.runTransaction(tx -> {
                     if (slotLockedByOther(tx, lockKey, dateTime, ref.getId())) {
                         slotTaken.set(true);
                         throw new IllegalStateException("Slot already taken");
                     }
                     tx.set(ref, booking);
+                    if (createsCardPaymentRecord && paymentRef != null) {
+                        com.google.firebase.Timestamp cardTimestamp =
+                                payment.getPaymentTimestamp() == null
+                                        ? com.google.firebase.Timestamp.now()
+                                        : payment.getPaymentTimestamp();
+                        com.hairgo.app.models.PaymentRecord cardRecord =
+                                new com.hairgo.app.models.PaymentRecord(
+                                        paymentRef.getId(),
+                                        ref.getId(),
+                                        salonId == null ? "" : salonId,
+                                        clientId == null ? "" : clientId,
+                                        com.hairgo.app.models.PaymentRecord.METHOD_CARD,
+                                        payment.getType(),
+                                        payment.getAmountPaid(),
+                                        cardTimestamp,
+                                        "Card payment completed during booking",
+                                        clientId == null ? "" : clientId
+                                );
+                        tx.set(paymentRef, cardRecord.toMap());
+                    }
                     tx.set(db.collection(SLOT_LOCKS).document(lockKey), lockData(ref.getId()));
                     return null;
                 })
@@ -735,6 +760,53 @@ public class BookingManager {
      * @param amount The cash amount to record. Must be > 0 and <= outstanding.
      * @param callback Success or failure callback.
      */
+    public interface PaymentListCallback {
+        void onSuccess(List<com.hairgo.app.models.PaymentRecord> payments);
+        void onFailure(String errorMessage);
+    }
+
+    public void getPaymentsForBooking(String bookingId, PaymentListCallback callback) {
+        db.collection("bookings").document(bookingId)
+                .collection("payments")
+                .get()
+                .addOnSuccessListener(query -> {
+                    List<com.hairgo.app.models.PaymentRecord> payments = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : query) {
+                        com.hairgo.app.models.PaymentRecord record =
+                                com.hairgo.app.models.PaymentRecord.fromMap(doc.getData());
+                        if (record != null) payments.add(record);
+                    }
+                    // Newest first.
+                    payments.sort((a, b) -> Long.compare(
+                            b.getPaymentTimestampAsDate() == null ? Long.MIN_VALUE
+                                    : b.getPaymentTimestampAsDate().getTime(),
+                            a.getPaymentTimestampAsDate() == null ? Long.MIN_VALUE
+                                    : a.getPaymentTimestampAsDate().getTime()));
+                    callback.onSuccess(payments);
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
+     * Loads every payment record belonging to a salon via a collection-group
+     * query so income reporting can attribute revenue to individual payment dates.
+     */
+    public void getPaymentsForSalon(String salonId, PaymentListCallback callback) {
+        db.collectionGroup("payments")
+                .whereEqualTo("salonID", salonId)
+                .get()
+                .addOnSuccessListener(query -> {
+                    List<com.hairgo.app.models.PaymentRecord> payments = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : query) {
+                        com.hairgo.app.models.PaymentRecord record =
+                                com.hairgo.app.models.PaymentRecord.fromMap(doc.getData());
+                        if (record != null) payments.add(record);
+                    }
+                    callback.onSuccess(payments);
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
     public void recordCashPayment(String bookingId, double amount, BookingCallback callback) {
         if (amount <= 0) {
             callback.onFailure("Payment amount must be greater than zero.");
@@ -742,11 +814,21 @@ public class BookingManager {
         }
 
         DocumentReference bookingRef = db.collection("bookings").document(bookingId);
+        DocumentReference paymentRef = bookingRef.collection("payments").document();
 
         db.runTransaction(tx -> {
                     DocumentSnapshot current = tx.get(bookingRef);
                     if (!current.exists()) {
                         throw new IllegalStateException("Booking not found.");
+                    }
+
+                    if (Boolean.TRUE.equals(current.get("isDeleted"))) {
+                        throw new IllegalStateException("This booking has been deleted.");
+                    }
+
+                    String bookingStatus = (String) current.get("status");
+                    if ("cancelled".equals(bookingStatus)) {
+                        throw new IllegalStateException("Cancelled bookings cannot accept payments.");
                     }
 
                     PaymentDetails currentPayment = PaymentDetails.fromMap(current.getData());
@@ -761,6 +843,28 @@ public class BookingManager {
 
                     Map<String, Object> paymentFields = updatedPayment.toMap();
                     tx.update(bookingRef, paymentFields);
+
+                    String salonId = (String) current.get("salonID");
+                    String clientId = (String) current.get("clientID");
+                    String firebaseUid = null;
+                    com.google.firebase.auth.FirebaseUser firebaseUser =
+                            com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+                    if (firebaseUser != null) firebaseUid = firebaseUser.getUid();
+
+                    com.hairgo.app.models.PaymentRecord paymentRecord =
+                            new com.hairgo.app.models.PaymentRecord(
+                                    paymentRef.getId(),
+                                    bookingId,
+                                    salonId == null ? "" : salonId,
+                                    clientId == null ? "" : clientId,
+                                    com.hairgo.app.models.PaymentRecord.METHOD_CASH,
+                                    com.hairgo.app.models.PaymentDetails.TYPE_CASH,
+                                    amount,
+                                    updatedPayment.getPaymentTimestamp(),
+                                    "Cash payment recorded by owner",
+                                    firebaseUid == null ? "" : firebaseUid
+                            );
+                    tx.set(paymentRef, paymentRecord.toMap());
                     return null;
                 })
                 .addOnSuccessListener(unused -> callback.onSuccess())

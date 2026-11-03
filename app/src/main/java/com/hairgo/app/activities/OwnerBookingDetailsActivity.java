@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -13,6 +14,8 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.core.content.ContextCompat;
 
 import com.hairgo.app.R;
@@ -20,6 +23,7 @@ import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.firebase.OwnerManager;
 import com.hairgo.app.models.OwnerBooking;
 import com.hairgo.app.models.PaymentDetails;
+import com.hairgo.app.adapters.PaymentHistoryAdapter;
 import com.hairgo.app.models.ServiceDetail;
 import com.hairgo.app.utils.Snackbars;
 
@@ -65,7 +69,9 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
 
     private String bookingId;
     private String currentStatus;
-    private String clientId;
+    private Double currentBookingTotal = null;
+    private androidx.recyclerview.widget.RecyclerView rvPaymentHistory;
+    private PaymentHistoryAdapter paymentHistoryAdapter;    private String clientId;
     private boolean cancelledByClient;
 
     @Override
@@ -144,6 +150,7 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
         currentStatus = booking.getStatus();
         clientId = booking.getClientId();
         cancelledByClient = booking.isCancelledByClient();
+        currentBookingTotal = booking.getTotalPrice();
 
         progress.setVisibility(View.GONE);
         contentGroup.setVisibility(View.VISIBLE);
@@ -155,6 +162,8 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
         TextView tvBookingNote = findViewById(R.id.tvBookingNote);
         bindServices(booking, tvServiceName, tvBookingTotal, tvBookingNote);
         bindPayment(booking);
+        bindPaymentSummary(booking);
+        bindPaymentHistory();
 
         if (booking.getDateTime() != null) {
             SimpleDateFormat format = new SimpleDateFormat(getString(R.string.booking_date_format), Locale.getDefault());
@@ -294,6 +303,73 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
         if (cardNotes != null) cardNotes.setVisibility(View.VISIBLE);
     }
 
+    private void bindPaymentSummary(OwnerBooking booking) {
+        TextView tvPaymentSummary = findViewById(R.id.tvPaymentSummary);
+        PaymentDetails payment = booking.getPaymentDetails();
+
+        if (payment == null) {
+            tvPaymentSummary.setVisibility(View.GONE);
+            return;
+        }
+
+        double paid = payment.getAmountPaid() == null ? 0.0 : payment.getAmountPaid();
+        double outstanding = payment.getAmountOutstanding() == null ? 0.0 : payment.getAmountOutstanding();
+        double total = currentBookingTotal != null ? currentBookingTotal : paid + outstanding;
+
+        String status = payment.getStatus() == null ? "" : payment.getStatus();
+        String statusLabel = "Due";
+        if (PaymentDetails.STATUS_PAID.equals(status)) statusLabel = "Paid";
+        else if (PaymentDetails.STATUS_PARTIAL.equals(status)
+                || PaymentDetails.STATUS_PARTIALLY_PAID.equals(status)) statusLabel = "Partially Paid";
+
+        tvPaymentSummary.setText(
+                getString(R.string.payment_cash_summary, formatPriceValue(outstanding))
+        );
+
+        // Generic summary for any booking payment state.
+        tvPaymentSummary.setText(
+                "Total: " + formatPriceValue(total) +
+                        "\nReceived: " + formatPriceValue(paid) +
+                        "\nOutstanding: " + formatPriceValue(outstanding) +
+                        "\nStatus: " + statusLabel
+        );
+        tvPaymentSummary.setVisibility(View.VISIBLE);
+    }
+
+    private void bindPaymentHistory() {
+        if (paymentHistoryAdapter == null) {
+            rvPaymentHistory = findViewById(R.id.rvPaymentHistory);
+            paymentHistoryAdapter = new PaymentHistoryAdapter();
+            rvPaymentHistory.setLayoutManager(new LinearLayoutManager(this));
+            rvPaymentHistory.setAdapter(paymentHistoryAdapter);
+        }
+
+        bookingManager.getPaymentsForBooking(bookingId, new BookingManager.PaymentListCallback() {
+            @Override
+            public void onSuccess(java.util.List<com.hairgo.app.models.PaymentRecord> payments) {
+                if (isFinishing() || isDestroyed()) return;
+                paymentHistoryAdapter.setPayments(payments);
+
+                TextView tvNoPaymentHistory = findViewById(R.id.tvNoPaymentHistory);
+                if (payments == null || payments.isEmpty()) {
+                    tvNoPaymentHistory.setVisibility(View.VISIBLE);
+                    rvPaymentHistory.setVisibility(View.GONE);
+                } else {
+                    tvNoPaymentHistory.setVisibility(View.GONE);
+                    rvPaymentHistory.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (isFinishing() || isDestroyed()) return;
+                TextView tvNoPaymentHistory = findViewById(R.id.tvNoPaymentHistory);
+                tvNoPaymentHistory.setVisibility(View.VISIBLE);
+                rvPaymentHistory.setVisibility(View.GONE);
+            }
+        });
+    }
+
     private void bindPayment(OwnerBooking booking) {
         PaymentDetails payment = booking.getPaymentDetails();
         String summary = paymentSummary(payment);
@@ -381,23 +457,62 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
     }
 
     private void showRecordCashPaymentDialog(PaymentDetails payment) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.title_record_cash_payment);
-
         double outstanding = payment.getAmountOutstanding() == null ? 0.0 : payment.getAmountOutstanding();
-        String message = getString(R.string.message_record_cash_payment, formatPriceValue(outstanding));
-        builder.setMessage(message);
+        double paid = payment.getAmountPaid() == null ? 0.0 : payment.getAmountPaid();
+        double total = currentBookingTotal != null ? currentBookingTotal : paid + outstanding;
 
-        final EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED);
-        input.setHint(R.string.hint_cash_amount);
-        input.setPadding(48, 24, 48, 24);
-        builder.setView(input);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_record_cash_payment, null);
+        TextView subtitle = dialogView.findViewById(R.id.tvRecordCashSubtitle);
+        subtitle.setText(getString(R.string.message_record_cash_payment, formatPriceValue(outstanding)));
 
-        builder.setPositiveButton(R.string.ok, (dialog, which) -> {
+        TextView summaryView = dialogView.findViewById(R.id.tvRecordCashSummary);
+
+        EditText input = dialogView.findViewById(R.id.etRecordCashAmount);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        TextView errorView = dialogView.findViewById(R.id.tvRecordCashError);
+
+        final android.text.Editable[] currentText = new android.text.Editable[1];
+        Runnable refreshSummary = () -> {
+            String typed = input.getText() == null ? "" : input.getText().toString().trim();
+            StringBuilder builder = new StringBuilder();
+            builder.append("Booking total: ").append(formatPriceValue(total)).append('\n');
+            builder.append("Already paid: ").append(formatPriceValue(paid)).append('\n');
+            builder.append("Outstanding now: ").append(formatPriceValue(outstanding)).append('\n');
+            if (!typed.isEmpty()) {
+                try {
+                    double amount = Double.parseDouble(typed);
+                    if (amount > 0 && amount <= outstanding) {
+                        builder.append("After this payment: ")
+                                .append(formatPriceValue(outstanding - amount))
+                                .append(" outstanding");
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            summaryView.setText(builder.toString());
+        };
+        refreshSummary.run();
+
+        input.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { }
+            @Override public void afterTextChanged(android.text.Editable s) {
+                refreshSummary.run();
+            }
+        });
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+
+        dialogView.findViewById(R.id.btnRecordCashCancel).setOnClickListener(v -> dialog.dismiss());
+        dialogView.findViewById(R.id.btnRecordCashConfirm).setOnClickListener(v -> {
+            errorView.setVisibility(View.GONE);
+
             String amountStr = input.getText().toString().trim();
             if (amountStr.isEmpty()) {
-                Snackbars.show(findViewById(android.R.id.content), R.string.error_cash_amount_required);
+                errorView.setText(R.string.error_cash_amount_required);
+                errorView.setVisibility(View.VISIBLE);
                 return;
             }
 
@@ -405,26 +520,32 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
             try {
                 amount = Double.parseDouble(amountStr);
             } catch (NumberFormatException e) {
-                Snackbars.show(findViewById(android.R.id.content), R.string.error_cash_amount_invalid);
+                errorView.setText(R.string.error_cash_amount_invalid);
+                errorView.setVisibility(View.VISIBLE);
                 return;
             }
 
             if (amount <= 0) {
-                Snackbars.show(findViewById(android.R.id.content), R.string.error_cash_amount_invalid);
+                errorView.setText(R.string.error_cash_amount_invalid);
+                errorView.setVisibility(View.VISIBLE);
                 return;
             }
 
             if (amount > outstanding) {
-                Snackbars.show(findViewById(android.R.id.content),
-                        getString(R.string.error_cash_amount_exceeds_outstanding, formatPriceValue(outstanding)));
+                errorView.setText(getString(R.string.error_cash_amount_exceeds_outstanding, formatPriceValue(outstanding)));
+                errorView.setVisibility(View.VISIBLE);
                 return;
             }
 
+            dialog.dismiss();
             recordCashPayment(amount);
         });
 
-        builder.setNegativeButton(R.string.cancel, null);
-        builder.show();
+        dialog.show();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setSoftInputMode(
+                    android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
     }
 
     private void recordCashPayment(double amount) {
@@ -436,6 +557,7 @@ public class OwnerBookingDetailsActivity extends AppCompatActivity {
                 btnRecordCashPayment.setEnabled(true);
                 // Reload the booking to refresh payment display
                 loadBooking();
+                bindPaymentHistory();
                 Snackbars.show(findViewById(android.R.id.content),
                         getString(R.string.cash_payment_recorded, formatPriceValue(amount)));
             }
