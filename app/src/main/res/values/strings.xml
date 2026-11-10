@@ -462,6 +462,8 @@
     <string name="hint_salon_location">e.g. Randburg</string>
     <string name="error_salon_name_required">Salon name is required</string>
     <string name="error_salon_location_required">Location is required</string>
+    <string name="btn_pick_on_map">Pick on map</string>
+    <string name="btn_pick_where_you_stay">Search your suburb or street</string>
 
     <string name="label_service_name">Service name</string>
     <string name="label_service_price">Price (R)</string>

@@ -11,7 +11,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -25,6 +28,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.hairgo.app.R;
+import com.hairgo.app.activities.LocationPickerActivity;
 import com.hairgo.app.activities.MyReportsActivity;
 import com.hairgo.app.activities.WelcomeActivity;
 import com.hairgo.app.firebase.AuthManager;
@@ -50,6 +54,13 @@ public class ProfileFragment extends Fragment {
     private EditText etProfileEmail;
     private EditText etProfilePhone;
 
+    private TextView tvProfileLocation;
+    private ActivityResultLauncher<Intent> locationPickerLauncher;
+    // The client's saved coordinates, when they have any. Used to centre the
+    // picker on the current spot; null for accounts without a saved location.
+    private Double currentLatitude;
+    private Double currentLongitude;
+
     private MaterialButton btnSaveProfile;
 
     private View rowDeleteAccount;
@@ -61,6 +72,33 @@ public class ProfileFragment extends Fragment {
     private AlertDialog deleteAccountDialog;
     private EditText deleteAccountPasswordField;
     private TextView deleteAccountPasswordErrorView;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Opens the map picker from the Location row. Backing out of the picker
+        // (RESULT_CANCELED) does nothing. A pick is saved straight away.
+        locationPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() != FragmentActivity.RESULT_OK
+                            || result.getData() == null
+                            || !isAdded()) {
+                        return;
+                    }
+                    Intent data = result.getData();
+                    double lat = data.getDoubleExtra(LocationPickerActivity.EXTRA_LATITUDE, Double.NaN);
+                    double lon = data.getDoubleExtra(LocationPickerActivity.EXTRA_LONGITUDE, Double.NaN);
+                    String address = data.getStringExtra(LocationPickerActivity.EXTRA_ADDRESS);
+                    if (Double.isNaN(lat) || Double.isNaN(lon)
+                            || address == null || address.trim().isEmpty()) {
+                        // Nothing usable was picked, so keep the saved values.
+                        return;
+                    }
+                    saveLocation(address.trim(), lat, lon);
+                });
+    }
 
     @Nullable
     @Override
@@ -87,6 +125,9 @@ public class ProfileFragment extends Fragment {
         etProfileName = view.findViewById(R.id.etProfileName);
         etProfileEmail = view.findViewById(R.id.etProfileEmail);
         etProfilePhone = view.findViewById(R.id.etProfilePhone);
+
+        tvProfileLocation = view.findViewById(R.id.tvProfileLocation);
+        view.findViewById(R.id.btnChangeLocation).setOnClickListener(v -> openLocationPicker());
 
         btnSaveProfile = view.findViewById(R.id.btnSaveProfile);
         View btnLogout = view.findViewById(R.id.btnLogout);
@@ -175,6 +216,17 @@ public class ProfileFragment extends Fragment {
 
                         if (phone != null) {
                             etProfilePhone.setText(phone);
+                        }
+
+                        String area = documentSnapshot.getString("area");
+                        if (area != null && !area.isEmpty()) {
+                            tvProfileLocation.setText(area);
+                        }
+                        Double savedLat = documentSnapshot.getDouble("latitude");
+                        Double savedLon = documentSnapshot.getDouble("longitude");
+                        if (savedLat != null && savedLon != null) {
+                            currentLatitude = savedLat;
+                            currentLongitude = savedLon;
                         }
 
                         if (role != null && !role.isEmpty()) {
@@ -283,6 +335,55 @@ public class ProfileFragment extends Fragment {
                     Log.w(TAG, "Could not update profile: " + e.getMessage());
 
                     Snackbars.show(requireView(), "Could not update profile.");
+                });
+    }
+
+    /**
+     * Opens the map picker on the client's saved spot, if they have one.
+     */
+    private void openLocationPicker() {
+        Intent intent = new Intent(requireContext(), LocationPickerActivity.class);
+        if (currentLatitude != null && currentLongitude != null) {
+            intent.putExtra(LocationPickerActivity.EXTRA_START_LATITUDE, currentLatitude);
+            intent.putExtra(LocationPickerActivity.EXTRA_START_LONGITUDE, currentLongitude);
+        }
+        locationPickerLauncher.launch(intent);
+    }
+
+    /**
+     * Saves the picked address and coordinates to the user's profile. The
+     * screen shows the new address right away; on failure the old values
+     * stay on screen and in Firestore.
+     */
+    private void saveLocation(String address, double latitude, double longitude) {
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        if (currentUser == null) {
+            return;
+        }
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("area", address);
+        updates.put("latitude", latitude);
+        updates.put("longitude", longitude);
+
+        firestore.collection("users")
+                .document(currentUser.getUid())
+                .update(updates)
+                .addOnSuccessListener(unused -> {
+                    if (!isAdded()) return;
+
+                    currentLatitude = latitude;
+                    currentLongitude = longitude;
+                    tvProfileLocation.setText(address);
+                    Toast.makeText(requireContext(), "Location updated", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+
+                    Log.w(TAG, "Could not update location: " + e.getMessage());
+                    Toast.makeText(requireContext(),
+                            "Could not update your location. Please try again.",
+                            Toast.LENGTH_SHORT).show();
                 });
     }
 

@@ -8,8 +8,11 @@ import android.text.SpannableString
 import android.text.TextWatcher
 import android.text.style.ForegroundColorSpan
 import android.util.Patterns
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.TextView
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.hairgo.app.R
@@ -23,10 +26,41 @@ class RegisterClientActivity : AppCompatActivity() {
     private lateinit var binding: ActivityRegisterClientBinding
     private val authManager = AuthManager()
 
+    // Home location chosen on the map. Null until the user picks one;
+    // registration is blocked without it.
+    private var pickedLatitude: Double? = null
+    private var pickedLongitude: Double? = null
+    private var pickedAddress: String? = null
+    private lateinit var locationPickerLauncher: ActivityResultLauncher<Intent>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityRegisterClientBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Opens the map picker used for the required home location.
+        locationPickerLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode != RESULT_OK || result.data == null) return@registerForActivityResult
+
+            val lat = result.data?.getDoubleExtra(LocationPickerActivity.EXTRA_LATITUDE, Double.NaN)
+            val lon = result.data?.getDoubleExtra(LocationPickerActivity.EXTRA_LONGITUDE, Double.NaN)
+            if (lat != null && !lat.isNaN() && lon != null && !lon.isNaN()) {
+                pickedLatitude = lat
+                pickedLongitude = lon
+            }
+            val address = result.data?.getStringExtra(LocationPickerActivity.EXTRA_ADDRESS)
+            if (!address.isNullOrBlank()) {
+                pickedAddress = address
+                binding.btnPickStayLocation.text = address
+                binding.tvLocationError.visibility = View.GONE
+            }
+        }
+
+        binding.btnPickStayLocation.setOnClickListener {
+            locationPickerLauncher.launch(Intent(this, LocationPickerActivity::class.java))
+        }
 
         // Back button -> return to Role Selection screen
         binding.btnBack.setOnClickListener {
@@ -138,11 +172,6 @@ class RegisterClientActivity : AppCompatActivity() {
     }
 
     private fun setupDropdowns() {
-        val areas = resources.getStringArray(R.array.areas_array)
-        binding.actvArea.setAdapter(
-            ArrayAdapter(this, android.R.layout.simple_list_item_1, areas)
-        )
-
         val languages = resources.getStringArray(R.array.languages_array)
         binding.actvLanguage.setAdapter(
             ArrayAdapter(this, android.R.layout.simple_list_item_1, languages)
@@ -158,10 +187,14 @@ class RegisterClientActivity : AppCompatActivity() {
             isValid = false
         } else binding.tilFullName.error = null
 
-        if (binding.actvArea.text.toString().isEmpty()) {
-            binding.tilArea.error = "Please select your area"
+        // The map pick is the required location input; it replaces the old Area dropdown.
+        if (pickedAddress == null) {
+            binding.tvLocationError.text = "Please pick where you stay"
+            binding.tvLocationError.visibility = View.VISIBLE
             isValid = false
-        } else binding.tilArea.error = null
+        } else {
+            binding.tvLocationError.visibility = View.GONE
+        }
 
         val email = binding.etEmail.text.toString().trim()
         if (email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
@@ -220,6 +253,14 @@ class RegisterClientActivity : AppCompatActivity() {
             putExtra("email", binding.etEmail.text.toString().trim())
             putExtra("phone", normalizePhone(binding.etPhone.text.toString()))
             putExtra("password", binding.etPassword.text.toString())
+            putExtra("area", pickedAddress.orEmpty())
+            // Optional home coordinates; sent only when the user picked a location.
+            val lat = pickedLatitude
+            val lon = pickedLongitude
+            if (lat != null && lon != null) {
+                putExtra("latitude", lat)
+                putExtra("longitude", lon)
+            }
         }
         startActivity(intent)
     }

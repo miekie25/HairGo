@@ -44,6 +44,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.hairgo.app.R;
+import com.hairgo.app.activities.LocationPickerActivity;
 import com.hairgo.app.activities.MyReportsActivity;
 import com.hairgo.app.activities.WelcomeActivity;
 import com.hairgo.app.firebase.AuthManager;
@@ -106,7 +107,15 @@ public class OwnerProfileFragment extends Fragment {
 
     private ActivityResultLauncher<PickVisualMediaRequest> photoPicker;
     private ActivityResultLauncher<PickVisualMediaRequest> serviceImagePicker;
+    private ActivityResultLauncher<Intent> locationPickerLauncher;
     private ServiceEditor activeServiceEditor;
+
+    private View btnEditLocation;
+    private TextView tvSalonLocation;
+    // The selected salon's saved coordinates, when it has any. Used to centre
+    // the picker on the current spot; null for salons without coordinates.
+    private Double currentSalonLatitude;
+    private Double currentSalonLongitude;
 
     private FirebaseAuth firebaseAuth;
     private FirebaseFirestore firestore;
@@ -128,6 +137,27 @@ public class OwnerProfileFragment extends Fragment {
                     if (editor != null) {
                         editor.applyPickedImage(uri);
                     }
+                });
+        // Opens the map picker from the salon's Location row. Backing out of
+        // the picker (RESULT_CANCELED) does nothing. A pick is saved straight away.
+        locationPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() != FragmentActivity.RESULT_OK
+                            || result.getData() == null
+                            || !isAdded()) {
+                        return;
+                    }
+                    Intent data = result.getData();
+                    double lat = data.getDoubleExtra(LocationPickerActivity.EXTRA_LATITUDE, Double.NaN);
+                    double lon = data.getDoubleExtra(LocationPickerActivity.EXTRA_LONGITUDE, Double.NaN);
+                    String address = data.getStringExtra(LocationPickerActivity.EXTRA_ADDRESS);
+                    if (Double.isNaN(lat) || Double.isNaN(lon)
+                            || address == null || address.trim().isEmpty()) {
+                        // Nothing usable was picked, so keep the saved values.
+                        return;
+                    }
+                    saveLocation(address.trim(), lat, lon);
                 });
     }
 
@@ -164,6 +194,10 @@ public class OwnerProfileFragment extends Fragment {
 
         btnEditHours = view.findViewById(R.id.btnEditHours);
         btnEditHours.setOnClickListener(v -> showHoursDialog());
+
+        btnEditLocation = view.findViewById(R.id.btnEditLocation);
+        tvSalonLocation = view.findViewById(R.id.tvSalonLocation);
+        btnEditLocation.setOnClickListener(v -> openLocationPicker());
 
         btnEditPhoto = view.findViewById(R.id.btnEditPhoto);
         ivSalonPhotoThumb = view.findViewById(R.id.ivSalonPhotoThumb);
@@ -675,6 +709,19 @@ public class OwnerProfileFragment extends Fragment {
                 currentHours = SalonHours.fromDoc(salon);
                 showServices();
                 loadPhoto();
+
+                // Show the salon's saved address, or the prompt when it has none.
+                String location = salon.get("location") == null
+                        ? null : salon.get("location").toString();
+                tvSalonLocation.setText(location == null || location.trim().isEmpty()
+                        ? "Add your location" : location);
+                btnEditLocation.setVisibility(View.VISIBLE);
+                Double savedLat = salon.get("latitude") instanceof Number
+                        ? ((Number) salon.get("latitude")).doubleValue() : null;
+                Double savedLon = salon.get("longitude") instanceof Number
+                        ? ((Number) salon.get("longitude")).doubleValue() : null;
+                currentSalonLatitude = savedLat;
+                currentSalonLongitude = savedLon;
             }
 
             @Override
@@ -688,6 +735,7 @@ public class OwnerProfileFragment extends Fragment {
         tvServices.setVisibility(View.VISIBLE);
         btnEditServices.setVisibility(View.VISIBLE);
         btnEditHours.setVisibility(View.VISIBLE);
+        btnEditLocation.setVisibility(View.VISIBLE);
         btnEditPhoto.setVisibility(View.VISIBLE);
         btnCloseSalon.setVisibility(View.VISIBLE);
         if (dividerAfterServices != null) dividerAfterServices.setVisibility(View.VISIBLE);
@@ -944,6 +992,51 @@ public class OwnerProfileFragment extends Fragment {
             public void onFailure(String errorMessage) {
                 if (!isAdded()) return;
                 Toast.makeText(getContext(), "Could not save operating hours",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    /** Opens the map picker on the salon's saved spot, if it has one. */
+    private void openLocationPicker() {
+        Intent intent = new Intent(requireContext(), LocationPickerActivity.class);
+        if (currentSalonLatitude != null && currentSalonLongitude != null) {
+            intent.putExtra(LocationPickerActivity.EXTRA_START_LATITUDE, currentSalonLatitude);
+            intent.putExtra(LocationPickerActivity.EXTRA_START_LONGITUDE, currentSalonLongitude);
+        }
+        locationPickerLauncher.launch(intent);
+    }
+
+    /**
+     * Saves the picked address and coordinates to the salon. The existing
+     * "location" string field is kept and simply receives the new address.
+     * The screen shows the new address right away; on failure the old values
+     * stay on screen and in Firestore.
+     */
+    private void saveLocation(String address, double latitude, double longitude) {
+        String salonId = OwnerSession.getSelectedSalonId();
+        if (salonId == null) return;
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("location", address);
+        updates.put("latitude", latitude);
+        updates.put("longitude", longitude);
+
+        salonManager.updateSalon(salonId, updates, new SalonManager.SalonCallback() {
+            @Override
+            public void onSuccess() {
+                if (!isAdded()) return;
+                currentSalonLatitude = latitude;
+                currentSalonLongitude = longitude;
+                tvSalonLocation.setText(address);
+                Toast.makeText(getContext(), "Location updated", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (!isAdded()) return;
+                Log.w(TAG, "Could not update salon location: " + errorMessage);
+                Toast.makeText(getContext(), "Could not update the location",
                         Toast.LENGTH_SHORT).show();
             }
         });

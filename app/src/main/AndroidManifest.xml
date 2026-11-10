@@ -161,6 +161,12 @@
 
         <activity android:name=".activities.PhotoViewerActivity" android:exported="false" />
 
+        <!-- Location picker: Geoapify address search + OpenStreetMap (osmdroid) map -->
+        <activity
+            android:name=".activities.LocationPickerActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
     </application>
 
 </manifest>

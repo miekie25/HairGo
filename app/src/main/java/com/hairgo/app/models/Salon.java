@@ -12,6 +12,9 @@ public class Salon {
     private List<String> services;
     // The services with price and duration. Built from the names if none are saved.
     private List<ServiceDetail> serviceDetails;
+    // Optional map coordinates. Null for salons saved without the map picker.
+    private Double latitude;
+    private Double longitude;
     private int imageRes;
 
     public Salon() {
@@ -52,4 +55,11 @@ public class Salon {
 
     public int getImageRes() { return imageRes; }
     public void setImageRes(int imageRes) { this.imageRes = imageRes; }
+
+    public Double getLatitude() { return latitude; }
+    public Double getLongitude() { return longitude; }
+    public void setCoordinates(Double latitude, Double longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
 }

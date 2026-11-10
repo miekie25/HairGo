@@ -240,11 +240,15 @@ class TermsConditionsActivity : AppCompatActivity() {
         val password = intent.getStringExtra("password").orEmpty()
         val fullName = intent.getStringExtra("fullName").orEmpty()
         val phone = intent.getStringExtra("phone").orEmpty()
+        val area = intent.getStringExtra("area").orEmpty()
+        // Optional home coordinates from the map picker; absent when skipped.
+        val latitude = if (intent.hasExtra("latitude")) intent.getDoubleExtra("latitude", Double.NaN) else null
+        val longitude = if (intent.hasExtra("longitude")) intent.getDoubleExtra("longitude", Double.NaN) else null
 
         if (role == "owner") {
             registerOwner(fullName, email, password, phone)
         } else {
-            registerClient(fullName, email, password, phone)
+            registerClient(fullName, email, password, phone, area, latitude, longitude)
         }
     }
 
@@ -281,7 +285,15 @@ class TermsConditionsActivity : AppCompatActivity() {
         )
     }
 
-    private fun registerClient(fullName: String, email: String, password: String, phone: String) {
+    private fun registerClient(
+        fullName: String,
+        email: String,
+        password: String,
+        phone: String,
+        area: String,
+        latitude: Double?,
+        longitude: Double?
+    ) {
         val nameParts = fullName.split(" ", limit = 2)
         val firstName = nameParts.getOrElse(0) { "" }
         val surname = nameParts.getOrElse(1) { "" }
@@ -292,6 +304,9 @@ class TermsConditionsActivity : AppCompatActivity() {
             email,
             password,
             phone,
+            area,
+            latitude,
+            longitude,
             object : AuthManager.AuthCallback {
                 override fun onSuccess(assignedRole: String?) {
                     Toast.makeText(
