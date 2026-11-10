@@ -11,6 +11,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -60,6 +62,14 @@ public class OwnerDashboardActivity extends AppCompatActivity {
     /** One-shot filter for the next Bookings tab opening (set by the home stat cards). */
     private int pendingBookingsFilter = -1;
 
+    /** Opens the map picker from the add-salon dialog. */
+    private ActivityResultLauncher<Intent> locationPickerLauncher;
+    /** The location field of the add-salon dialog that is currently open, if any. */
+    private TextInputEditText activeLocationInput;
+    // Coordinates chosen on the map, or null when the owner only typed an address.
+    private Double pickedLatitude;
+    private Double pickedLongitude;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,6 +87,26 @@ public class OwnerDashboardActivity extends AppCompatActivity {
         }
         ownerId = user.getUid();
         ownerManager = new OwnerManager();
+
+        // Registered up front so the map picker can be launched from the add-salon dialog.
+        locationPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() != RESULT_OK || result.getData() == null) {
+                        return;
+                    }
+                    Intent data = result.getData();
+                    double lat = data.getDoubleExtra(LocationPickerActivity.EXTRA_LATITUDE, Double.NaN);
+                    double lon = data.getDoubleExtra(LocationPickerActivity.EXTRA_LONGITUDE, Double.NaN);
+                    if (!Double.isNaN(lat) && !Double.isNaN(lon)) {
+                        pickedLatitude = lat;
+                        pickedLongitude = lon;
+                    }
+                    String address = data.getStringExtra(LocationPickerActivity.EXTRA_ADDRESS);
+                    if (address != null && !address.trim().isEmpty() && activeLocationInput != null) {
+                        activeLocationInput.setText(address);
+                    }
+                });
 
         ownerHeader = findViewById(R.id.ownerHeader);
         tvGreeting = findViewById(R.id.tvOwnerGreeting);
@@ -283,6 +313,15 @@ public class OwnerDashboardActivity extends AppCompatActivity {
         TextInputEditText etName = dialogView.findViewById(R.id.etSalonName);
         TextInputEditText etLocation = dialogView.findViewById(R.id.etSalonLocation);
 
+        // A fresh dialog starts without coordinates from an earlier picker run.
+        pickedLatitude = null;
+        pickedLongitude = null;
+        activeLocationInput = etLocation;
+
+        dialogView.findViewById(R.id.btnPickOnMap).setOnClickListener(v ->
+                locationPickerLauncher.launch(
+                        new Intent(OwnerDashboardActivity.this, LocationPickerActivity.class)));
+
         ServiceEditor editor = new ServiceEditor(dialogView);
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(this)
@@ -291,6 +330,7 @@ public class OwnerDashboardActivity extends AppCompatActivity {
                 .setPositiveButton(R.string.btn_add, null)
                 .setNegativeButton(R.string.cancel, null)
                 .create();
+        dialog.setOnDismissListener(d -> activeLocationInput = null);
 
         // Set the click listener after show() so a validation error does not dismiss the dialog.
         dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
@@ -321,15 +361,17 @@ public class OwnerDashboardActivity extends AppCompatActivity {
             }
 
             dialog.dismiss();
-            createSalon(name, location, services);
+            createSalon(name, location, pickedLatitude, pickedLongitude, services);
         }));
         dialog.show();
     }
 
-    private void createSalon(String name, String location, List<ServiceDetail> services) {
+    private void createSalon(String name, String location, Double latitude, Double longitude,
+                             List<ServiceDetail> services) {
         progress.setVisibility(View.VISIBLE);
 
-        new SalonManager().createSalonWithDetails(ownerId, name, location, services,
+        new SalonManager().createSalonWithDetails(ownerId, name, location, latitude, longitude,
+                services,
                 new SalonManager.SalonCreatedCallback() {
                     @Override
                     public void onSuccess(String salonId) {

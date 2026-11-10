@@ -11,6 +11,11 @@ public class User {
     private String role;        // "client", "owner", or "admin"
     private Timestamp createdAt;
     private boolean isDeleted;
+    // Optional home area and map coordinates. Null for users registered
+    // without the map picker, so old documents never break anything.
+    private String area;
+    private Double latitude;
+    private Double longitude;
 
     // Empty constructor required by Firebase
     public User() {}
@@ -51,4 +56,13 @@ public class User {
 
     public boolean isDeleted() { return isDeleted; }
     public void setDeleted(boolean deleted) { isDeleted = deleted; }
+
+    public String getArea() { return area; }
+    public void setArea(String area) { this.area = area; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }

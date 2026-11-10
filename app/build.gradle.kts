@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
     alias(libs.plugins.kotlin.android)
 }
+
+// Loads GEOAPIFY_API_KEY from local.properties (stays local, never printed).
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+val geoapifyApiKey: String = localProperties.getProperty("GEOAPIFY_API_KEY") ?: ""
 
 android {
     namespace = "com.hairgo.app"
@@ -16,6 +26,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Used by LocationPickerActivity for Geoapify search and reverse geocoding.
+        buildConfigField("String", "GEOAPIFY_API_KEY", "\"$geoapifyApiKey\"")
     }
 
     buildTypes {
@@ -73,4 +86,7 @@ dependencies {
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
+
+    // OpenStreetMap map tiles for the location picker
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
 }

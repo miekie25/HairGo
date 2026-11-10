@@ -158,7 +158,8 @@ public class AuthManager {
     }
 
     public void registerUser(String name, String surname, String email, String password,
-                             String phoneNumber, AuthCallback callback) {
+                             String phoneNumber, String area, Double latitude, Double longitude,
+                             AuthCallback callback) {
 
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
@@ -180,6 +181,15 @@ public class AuthManager {
                     newUser.put("role", "client");
                     newUser.put("createdAt", FieldValue.serverTimestamp());
                     newUser.put("isDeleted", false);
+                    // Optional home area and map coordinates. Fields are only
+                    // written when the client picked them during registration.
+                    if (area != null && !area.trim().isEmpty()) {
+                        newUser.put("area", area.trim());
+                    }
+                    if (latitude != null && longitude != null) {
+                        newUser.put("latitude", latitude);
+                        newUser.put("longitude", longitude);
+                    }
 
                     db.collection("users")
                             .document(uid)

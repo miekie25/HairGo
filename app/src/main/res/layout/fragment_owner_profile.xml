@@ -317,6 +317,46 @@
                         app:tint="@color/grey_medium" />
                 </LinearLayout>
 
+                <!-- Salon location -->
+                <LinearLayout
+                    android:id="@+id/btnEditLocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_location"
+                        android:contentDescription="Salon location"
+                        app:tint="@color/teal" />
+
+                    <TextView
+                        android:id="@+id/tvSalonLocation"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="16dp"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        android:text="Add your location"
+                        android:textColor="@color/grey_dark"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        android:contentDescription="@string/navigate_icon"
+                        app:tint="@color/grey_medium" />
+                </LinearLayout>
+
                 <!-- Salon photo -->
                 <LinearLayout
                     android:id="@+id/btnEditPhoto"

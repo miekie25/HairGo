@@ -75,22 +75,26 @@ public class SalonManager {
     public void createSalon(String documentId, String ownerId, String name, String location,
                             List<String> services, SalonCreatedCallback callback) {
         // Turn the names into services with no price and the default duration.
-        saveNewSalon(documentId, ownerId, name, location,
+        saveNewSalon(documentId, ownerId, name, location, null, null,
                 ServiceDetail.fromNames(services), callback);
     }
 
     /**
      * Creates a salon with services that have a price and a duration.
      * Both the new details and the old list of names are saved.
+     * The latitude and longitude are optional map coordinates; pass null when
+     * the owner only typed an address.
      */
     public void createSalonWithDetails(String ownerId, String name, String location,
+                                       Double latitude, Double longitude,
                                        List<ServiceDetail> serviceDetails,
                                        SalonCreatedCallback callback) {
-        saveNewSalon(null, ownerId, name, location, serviceDetails, callback);
+        saveNewSalon(null, ownerId, name, location, latitude, longitude, serviceDetails, callback);
     }
 
     // Shared code that writes a new salon document.
     private void saveNewSalon(String documentId, String ownerId, String name, String location,
+                              Double latitude, Double longitude,
                               List<ServiceDetail> serviceDetails, SalonCreatedCallback callback) {
         DocumentReference ref = documentId == null
                 ? db.collection("salons").document()
@@ -107,6 +111,12 @@ public class SalonManager {
         salon.put("serviceDetails", ServiceDetail.toMapList(serviceDetails));
         salon.put("isDeleted", false);
         salon.put("avgRating", 0.0);
+        // Optional map coordinates. Salons created without the picker have no
+        // fields at all, exactly like the documents that already exist.
+        if (latitude != null && longitude != null) {
+            salon.put("latitude", latitude);
+            salon.put("longitude", longitude);
+        }
 
         ref.set(salon)
                 .addOnSuccessListener(unused -> callback.onSuccess(ref.getId()))
