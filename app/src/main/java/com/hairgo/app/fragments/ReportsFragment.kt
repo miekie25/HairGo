@@ -135,7 +135,7 @@ class ReportsFragment : Fragment() {
             category
         }
 
-        val rawStatus = normalizeStatus(doc.getString("status"))
+        val rawStatus = normalizeStatus(doc.getString("status") ?: "pending")
         val createdAt = createdAtMs(doc)
 
         return AdminReportModel(

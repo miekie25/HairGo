@@ -426,6 +426,7 @@
     <string name="admin_error_action">Could not complete the action: %1$s</string>
     <string name="admin_error_missing_owner">This salon has no owner account to update.</string>
     <string name="admin_error_denied">You do not have permission to do that.</string>
+    <string name="cannot_modify_own_account">You cannot suspend or delete your own account.</string>
 
     <!-- Admin: roles and status -->
     <string name="admin_role_client">Client</string>

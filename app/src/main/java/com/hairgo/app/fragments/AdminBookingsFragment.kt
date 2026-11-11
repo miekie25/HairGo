@@ -134,7 +134,7 @@ class AdminBookingsFragment : Fragment() {
                         .filter {
                             it.getBoolean("isDeleted") != true ||
                                     "cancelled".equals(
-                                        it.getString("status"),
+                                        it.getString("status") ?: "pending",
                                         ignoreCase = true
                                     )
                         }

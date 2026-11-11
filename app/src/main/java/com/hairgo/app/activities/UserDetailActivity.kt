@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth
 import com.hairgo.app.R
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -202,6 +203,10 @@ class UserDetailActivity : AppCompatActivity() {
             .setMessage(message)
             .setPositiveButton(R.string.admin_confirm) { _, _ ->
                 if (userId.isEmpty()) return@setPositiveButton
+                if (userId == FirebaseAuth.getInstance().currentUser?.uid.toString()) {
+                    Toast.makeText(this, R.string.cannot_modify_own_account, Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
 
                 db.collection("users").document(userId)
                     .update("isSuspended", suspend)
@@ -235,6 +240,10 @@ class UserDetailActivity : AppCompatActivity() {
             .setMessage(getString(R.string.admin_confirm_delete, userName))
             .setPositiveButton(R.string.admin_confirm) { _, _ ->
                 if (userId.isEmpty()) return@setPositiveButton
+                if (userId == FirebaseAuth.getInstance().currentUser?.uid.toString()) {
+                    Toast.makeText(this, R.string.cannot_modify_own_account, Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
 
                 val updates = mapOf<String, Any>(
                     "isDeleted" to true,

@@ -57,7 +57,13 @@ class AdminSalonsFragment : Fragment() {
                 observeSalons()
             }
             .addOnFailureListener {
-                observeSalons()
+                context?.let {
+                    Toast.makeText(
+                        it,
+                        getString(R.string.admin_error_load, error.message ?: ""),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
     }
 

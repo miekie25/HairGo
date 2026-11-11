@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.hairgo.app.R
 import com.hairgo.app.activities.UserDetailActivity
@@ -168,6 +169,13 @@ class AdminUsersFragment : Fragment() {
     }
 
     private fun toggleUserStatus(user: AdminUserModel) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        if (currentUserId.isNotEmpty() && currentUserId == user.userId) {
+            context?.let {
+                Toast.makeText(it, R.string.cannot_modify_own_account, Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
         val suspend = !user.isSuspended
         val actionText = getString(
             if (suspend) R.string.admin_user_suspended else R.string.admin_user_unsuspended
