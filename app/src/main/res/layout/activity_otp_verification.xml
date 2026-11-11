@@ -35,7 +35,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Verify your number"
+                android:text="Check your email"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="@color/heading"
@@ -45,18 +45,30 @@
                 android:id="@+id/tvOtpSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="We've sent a 6-digit code to your number"
+                android:text="We've sent a verification link to your email address"
                 android:textSize="13.5sp"
                 android:textColor="@color/grey_medium"
                 android:gravity="center"
-                android:layout_marginBottom="32dp"/>
+                android:layout_marginBottom="12dp"/>
 
-            <!-- 6-digit OTP Input Container -->
+            <TextView
+                android:id="@+id/tvEmailStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:gravity="center"
+                android:visibility="gone"
+                android:layout_marginBottom="12dp"/>
+
+            <!-- 6-digit OTP input container, hidden now that this is an
+                 email verification screen. -->
             <LinearLayout
+                android:id="@+id/layoutOtpBoxes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center"
+                android:visibility="gone"
                 android:layout_marginBottom="24dp">
 
                 <EditText
@@ -141,7 +153,7 @@
                 android:id="@+id/tvResendOtp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Resend OTP"
+                android:text="Resend email"
                 android:textColor="@color/navy"
                 android:textStyle="bold"
                 android:textSize="14sp"
@@ -155,15 +167,28 @@
                 android:id="@+id/btnNext"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
-                android:text="Next"
+                android:text="I've verified"
                 android:textAllCaps="false"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@color/white"
-                android:enabled="false"
                 app:cornerRadius="14dp"
                 app:backgroundTint="@color/navy"
                 app:elevation="0dp"/>
+
+            <TextView
+                android:id="@+id/tvStartOver"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Wrong email? Start over"
+                android:textColor="@color/navy"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless"/>
 
         </LinearLayout>
     </LinearLayout>

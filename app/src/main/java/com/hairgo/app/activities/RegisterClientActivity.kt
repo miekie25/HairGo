@@ -225,7 +225,7 @@ class RegisterClientActivity : AppCompatActivity() {
 
     /**
      * Format checks passed. Ask Firebase whether the email already belongs to
-     * an account so an obvious duplicate is caught here, before OTP and terms.
+     * an account so an obvious duplicate is caught here, before the terms step.
      */
     private fun checkEmailThenContinue() {
         val email = binding.etEmail.text.toString().trim()
@@ -242,12 +242,12 @@ class RegisterClientActivity : AppCompatActivity() {
             }
 
             binding.tilEmail.error = null
-            goToOtpScreen()
+            goToTermsScreen()
         }
     }
 
-    private fun goToOtpScreen() {
-        val intent = Intent(this, OtpVerificationActivity::class.java).apply {
+    private fun goToTermsScreen() {
+        val intent = Intent(this, TermsConditionsActivity::class.java).apply {
             putExtra("role", "client")
             putExtra("fullName", binding.etFullName.text.toString().trim())
             putExtra("email", binding.etEmail.text.toString().trim())
@@ -266,7 +266,8 @@ class RegisterClientActivity : AppCompatActivity() {
     }
 
     /**
-     * Normalises a South African number to E.164 (+27...) so the OTP screen can dial it.
+     * Normalises a South African number to E.164 (+27...) so it is stored in a
+     * consistent format as a contact detail. The number is not verified.
      */
     private fun normalizePhone(raw: String): String {
         var value = raw.trim().replace(Regex("[\\s-]"), "")

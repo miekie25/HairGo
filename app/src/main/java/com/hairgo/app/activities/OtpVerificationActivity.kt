@@ -3,189 +3,321 @@ package com.hairgo.app.activities
 import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.text.Editable
-import android.text.TextWatcher
-import android.view.KeyEvent
-import android.widget.EditText
-import android.widget.Toast
+import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.FirebaseException
+import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.PhoneAuthCredential
-import com.google.firebase.auth.PhoneAuthOptions
-import com.google.firebase.auth.PhoneAuthProvider
+import com.hairgo.app.R
 import com.hairgo.app.databinding.ActivityOtpVerificationBinding
-import java.util.concurrent.TimeUnit
+import com.hairgo.app.firebase.AuthManager
 
+/**
+ * Email verification screen. It reuses the old OTP screen layout as a
+ * "Check your email" step: the code boxes are hidden and the primary action
+ * reloads the Firebase user and checks isEmailVerified before continuing.
+ */
 class OtpVerificationActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityOtpVerificationBinding
-    private var resendTimer: CountDownTimer? = null
-
-    // Firebase Auth variables for SMS OTP
     private val auth = FirebaseAuth.getInstance()
-    private var mVerificationId: String? = null
-    private var mResendToken: PhoneAuthProvider.ForceResendingToken? = null
-    private var phoneNumberStr: String = ""
+    private val authManager = AuthManager()
+
+    private var resendTimer: CountDownTimer? = null
+    private var busy = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityOtpVerificationBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val rawPhone = intent.getStringExtra("phone") ?: ""
-        if (rawPhone.isNotEmpty()) {
-            // Format phone to E.164 standard (e.g. +27...)
-            phoneNumberStr = if (!rawPhone.startsWith("+")) "+27" + rawPhone.removePrefix("0") else rawPhone
-            binding.tvOtpSubtitle.text = "We've sent a 6-digit code to $phoneNumberStr"
+        binding.layoutOtpBoxes.visibility = View.GONE
 
-            // Automatically send the SMS code when screen opens
-            sendVerificationCode(phoneNumberStr)
+        val email = intent.getStringExtra("email").orEmpty()
+            .ifBlank { auth.currentUser?.email.orEmpty() }
+        val role = intent.getStringExtra("role")
+        val fromRegistration = intent.getBooleanExtra("fromRegistration", false)
+        val sendError = intent.getStringExtra("sendError")
+
+        if (email.isBlank()) {
+            binding.tvOtpSubtitle.text =
+                "We could not find the email address for this account."
+            showStatus("Please go back and register again.", true)
+            binding.btnNext.isEnabled = false
+            binding.tvResendOtp.isEnabled = false
         } else {
-            Toast.makeText(this, "Phone number missing", Toast.LENGTH_SHORT).show()
-        }
+            binding.tvOtpSubtitle.text = "We've sent a verification link to\n$email"
 
-        binding.btnBack.setOnClickListener { finish() }
-
-        //  6 OTP fields for Firebase
-        val otpFields = listOf(
-            binding.etOtp1, binding.etOtp2, binding.etOtp3,
-            binding.etOtp4, binding.etOtp5, binding.etOtp6
-        )
-        setupOtpAutoAdvance(otpFields)
-
-        binding.tvResendOtp.setOnClickListener {
-            resendVerificationCode()
-            startResendCountdown()
-        }
-        startResendCountdown()
-
-        binding.btnNext.setOnClickListener {
-            val enteredOtp = otpFields.joinToString("") { it.text.toString() }
-
-            if (enteredOtp.length == 6) {
-                // Verify the 6-digit code with Firebase
-                verifyCode(enteredOtp)
-            } else {
-                Toast.makeText(this, "Please enter the complete 6-digit code", Toast.LENGTH_SHORT).show()
+            when {
+                !sendError.isNullOrBlank() -> {
+                    showStatus(sendError, true)
+                }
+                fromRegistration -> {
+                    showStatus(
+                        "Open the link in the email, then tap I've verified.",
+                        false
+                    )
+                    startResendCountdown()
+                }
+                else -> {
+                    showStatus(
+                        "Open the link in the email, then tap I've verified. " +
+                            "Tap Resend email if you need a new link.",
+                        false
+                    )
+                }
             }
         }
+
+        binding.btnBack.setOnClickListener { leaveToLogin() }
+        binding.btnNext.setOnClickListener { checkVerified() }
+        binding.tvResendOtp.setOnClickListener { resendEmail(email) }
+        binding.tvStartOver.setOnClickListener { startOver(role) }
+
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    leaveToLogin()
+                }
+            }
+        )
     }
 
-    private fun sendVerificationCode(phoneNumber: String) {
-        val options = PhoneAuthOptions.newBuilder(auth)
-            .setPhoneNumber(phoneNumber)
-            .setTimeout(60L, TimeUnit.SECONDS)
-            .setActivity(this)
-            .setCallbacks(verificationCallbacks)
-            .build()
-        PhoneAuthProvider.verifyPhoneNumber(options)
-        Toast.makeText(this, "Sending SMS code...", Toast.LENGTH_SHORT).show()
-    }
+    private fun checkVerified() {
+        if (busy) return
 
-    private fun resendVerificationCode() {
-        if (phoneNumberStr.isEmpty()) return
-        val optionsBuilder = PhoneAuthOptions.newBuilder(auth)
-            .setPhoneNumber(phoneNumberStr)
-            .setTimeout(60L, TimeUnit.SECONDS)
-            .setActivity(this)
-            .setCallbacks(verificationCallbacks)
-
-        mResendToken?.let { token ->
-            optionsBuilder.setForceResendingToken(token)
-        }
-        PhoneAuthProvider.verifyPhoneNumber(optionsBuilder.build())
-        Toast.makeText(this, "Resending SMS code...", Toast.LENGTH_SHORT).show()
-    }
-
-    private val verificationCallbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-        override fun onVerificationCompleted(credential: PhoneAuthCredential) {
-            // Auto-retrieval / Instant verification support
-            signInWithPhoneAuthCredential(credential)
-        }
-
-        override fun onVerificationFailed(e: FirebaseException) {
-            Toast.makeText(this@OtpVerificationActivity, "Verification failed: ${e.message}", Toast.LENGTH_LONG).show()
-        }
-
-        override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
-            mVerificationId = verificationId
-            mResendToken = token
-            Toast.makeText(this@OtpVerificationActivity, "OTP code sent via SMS!", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun verifyCode(code: String) {
-        if (mVerificationId.isNullOrEmpty()) {
-            Toast.makeText(this, "Verification ID not ready. Please wait or resend OTP.", Toast.LENGTH_SHORT).show()
+        val user = auth.currentUser
+        if (user == null) {
+            showStatus("You are no longer signed in. Please log in again.", true)
             return
         }
 
-        val credential = PhoneAuthProvider.getCredential(mVerificationId!!, code)
-        signInWithPhoneAuthCredential(credential)
-    }
+        busy = true
+        binding.btnNext.isEnabled = false
+        binding.btnNext.text = "Checking..."
+        binding.tvStartOver.isEnabled = false
 
-    private fun signInWithPhoneAuthCredential(credential: PhoneAuthCredential) {
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    Toast.makeText(this, "Phone verified successfully!", Toast.LENGTH_SHORT).show()
+        user.reload().addOnCompleteListener { task ->
+            if (isFinishing || isDestroyed) return@addOnCompleteListener
 
-                    // Proceed to Terms & Conditions, passing along intent data
-                    val nextIntent = Intent(this, TermsConditionsActivity::class.java)
-                    intent.extras?.let { nextIntent.putExtras(it) }
-                    startActivity(nextIntent)
-                    finish()
-                } else {
-                    Toast.makeText(this, "Verification failed. Incorrect OTP code.", Toast.LENGTH_LONG).show()
-                }
+            if (!task.isSuccessful) {
+                showStatus(friendlyError(task.exception?.message), true)
+                resetButtons()
+                return@addOnCompleteListener
             }
-    }
 
-    private fun setupOtpAutoAdvance(fields: List<EditText>) {
-        fields.forEachIndexed { index, field ->
-            field.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-                override fun afterTextChanged(s: Editable?) {
-                    if (s?.length == 1 && index < fields.size - 1) {
-                        fields[index + 1].requestFocus()
-                    }
-                    updateNextButtonState(fields)
-                }
-            })
-
-            field.setOnKeyListener { _, keyCode, event ->
-                if (keyCode == KeyEvent.KEYCODE_DEL && event.action == KeyEvent.ACTION_DOWN
-                    && field.text.isEmpty() && index > 0
-                ) {
-                    fields[index - 1].requestFocus()
-                    fields[index - 1].text.clear()
+            val refreshed = auth.currentUser
+            if (refreshed != null && refreshed.isEmailVerified) {
+                continueToDashboard()
+            } else {
+                showStatus(
+                    "Your email is not verified yet. Open the link in your " +
+                        "inbox and spam folder, then try again.",
                     true
-                } else {
-                    false
-                }
+                )
+                resetButtons()
             }
         }
     }
 
-    private fun updateNextButtonState(fields: List<EditText>) {
-        binding.btnNext.isEnabled = fields.all { it.text.toString().isNotEmpty() }
+    private fun continueToDashboard() {
+        showStatus("Email verified. Loading your account...", false)
+
+        authManager.loadCurrentUserProfile(object : AuthManager.ProfileCallback {
+            override fun onSuccess(name: String?, role: String?) {
+                if (isFinishing || isDestroyed) return
+
+                val target = when (role?.lowercase()) {
+                    "owner" -> OwnerDashboardActivity::class.java
+                    "admin" -> AdminDashboardActivity::class.java
+                    else -> ClientDashboardActivity::class.java
+                }
+
+                val intent = Intent(this@OtpVerificationActivity, target)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                finish()
+            }
+
+            override fun onFailure(errorMessage: String?) {
+                if (isFinishing || isDestroyed) return
+                showStatus(friendlyError(errorMessage), true)
+                resetButtons()
+            }
+        })
+    }
+
+    private fun resendEmail(email: String) {
+        if (busy) return
+
+        if (email.isBlank()) {
+            showStatus("No email address is available to send to.", true)
+            return
+        }
+
+        binding.tvResendOtp.isEnabled = false
+        showStatus("Sending verification email...", false)
+
+        authManager.sendVerificationEmail(object : AuthManager.OperationCallback {
+            override fun onSuccess() {
+                if (isFinishing || isDestroyed) return
+                showStatus(
+                    "Verification email sent to $email. Check your inbox and " +
+                        "spam folder.",
+                    false
+                )
+                startResendCountdown()
+            }
+
+            override fun onFailure(errorMessage: String?) {
+                if (isFinishing || isDestroyed) return
+                showStatus(friendlyError(errorMessage), true)
+                resendTimer?.cancel()
+                binding.tvResendOtp.text = "Resend email"
+                binding.tvResendOtp.isEnabled = true
+            }
+        })
+    }
+
+    /**
+     * Removes the unverified login so the user can register again with the
+     * correct email. The Firestore profile is soft-deleted first (while the
+     * session can still authorise the write), then the Auth user is deleted.
+     */
+    private fun startOver(role: String?) {
+        if (busy) return
+
+        if (auth.currentUser == null) {
+            showStatus("You are no longer signed in. Please register again.", true)
+            navigateToRegistration(role)
+            return
+        }
+
+        busy = true
+        binding.tvStartOver.isEnabled = false
+        binding.btnNext.isEnabled = false
+        showStatus("Removing the unverified account...", false)
+
+        authManager.softDeleteCurrentUserProfile(
+            object : AuthManager.OperationCallback {
+                override fun onSuccess() {
+                    authManager.deleteAuthAccount(
+                        object : AuthManager.OperationCallback {
+                            override fun onSuccess() {
+                                authManager.signOut()
+                                if (isFinishing || isDestroyed) return
+                                navigateToRegistration(role)
+                            }
+
+                            override fun onFailure(errorMessage: String?) {
+                                if (isFinishing || isDestroyed) return
+                                showStatus(
+                                    "The profile was marked as deleted, but the " +
+                                        "login could not be removed. " +
+                                        friendlyError(errorMessage),
+                                    true
+                                )
+                                resetButtons()
+                            }
+                        }
+                    )
+                }
+
+                override fun onFailure(errorMessage: String?) {
+                    if (isFinishing || isDestroyed) return
+                    showStatus(friendlyError(errorMessage), true)
+                    resetButtons()
+                }
+            }
+        )
+    }
+
+    private fun navigateToRegistration(role: String?) {
+        val target = when (role) {
+            "owner" -> RegisterOwnerActivity::class.java
+            "client" -> RegisterClientActivity::class.java
+            else -> RoleSelectionActivity::class.java
+        }
+
+        val intent = Intent(this, target)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+            Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
+    }
+
+    private fun leaveToLogin() {
+        resendTimer?.cancel()
+        authManager.signOut()
+
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+            Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
     }
 
     private fun startResendCountdown() {
-        binding.tvResendOtp.isEnabled = false
         resendTimer?.cancel()
-        resendTimer = object : CountDownTimer(30000, 1000) {
+        binding.tvResendOtp.isEnabled = false
+
+        resendTimer = object : CountDownTimer(60_000L, 1_000L) {
             override fun onTick(millisUntilFinished: Long) {
-                binding.tvResendOtp.text = "Resend OTP in ${millisUntilFinished / 1000}s"
+                binding.tvResendOtp.text =
+                    "Resend email in ${millisUntilFinished / 1000}s"
             }
 
             override fun onFinish() {
-                binding.tvResendOtp.text = "Resend OTP"
+                binding.tvResendOtp.text = "Resend email"
                 binding.tvResendOtp.isEnabled = true
             }
         }.start()
+    }
+
+    private fun resetButtons() {
+        busy = false
+        binding.btnNext.isEnabled = true
+        binding.btnNext.text = "I've verified"
+        binding.tvStartOver.isEnabled = true
+    }
+
+    private fun showStatus(message: String, isError: Boolean) {
+        binding.tvEmailStatus.text = message
+        binding.tvEmailStatus.setTextColor(
+            ContextCompat.getColor(
+                this,
+                if (isError) R.color.error else R.color.teal
+            )
+        )
+        binding.tvEmailStatus.visibility = View.VISIBLE
+    }
+
+    private fun friendlyError(raw: String?): String {
+        val message = raw?.lowercase().orEmpty()
+
+        return when {
+            message.contains("network") || message.contains("timeout") ->
+                "No internet connection. Check your connection and try again."
+
+            message.contains("too many") ->
+                "Too many requests. Please wait a moment and try again."
+
+            message.contains("operation not allowed") ||
+                message.contains("not enabled") ->
+                "Email verification is not available right now. " +
+                    "Please contact support."
+
+            message.contains("no user record") ||
+                message.contains("user not found") ->
+                "This account no longer exists. Please register again."
+
+            message.contains("requires recent login") ->
+                "For security, please log out, log in again, then start over."
+
+            else -> "Something went wrong. Please try again."
+        }
     }
 
     override fun onDestroy() {

@@ -18,6 +18,13 @@ import java.util.Map;
 
 public class AuthManager {
 
+    // Sentinel used by LoginActivity so it can offer a resend action without
+    // exposing raw Firebase errors to the user.
+    public static final String EMAIL_NOT_VERIFIED = "EMAIL_NOT_VERIFIED";
+
+    private static final String FIELD_EMAIL_VERIFICATION_REQUIRED =
+            "emailVerificationRequired";
+
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
@@ -87,6 +94,12 @@ public class AuthManager {
         void onResult(boolean registered);
     }
 
+    // Used by Splash to decide whether to show the check-email screen. The role
+    // is passed along so "Wrong email? Start over" can reopen the right form.
+    public interface VerificationCheckCallback {
+        void onResult(boolean pending, String role);
+    }
+
     /**
      * Best-effort check for an existing account with this email, so the register
      * screens can warn before OTP and terms. Firebase's email-enumeration
@@ -106,6 +119,80 @@ public class AuthManager {
                             && !task.getResult().getSignInMethods().isEmpty();
                     callback.onResult(registered);
                 });
+    }
+
+    /**
+     * Sends Firebase's built-in verification email to the signed-in account.
+     * No backend or Cloud Function is involved; errors are returned raw so the
+     * caller can map them to a clear message.
+     */
+    public void sendVerificationEmail(OperationCallback callback) {
+
+        FirebaseUser firebaseUser = getCurrentUser();
+
+        if (firebaseUser == null) {
+            callback.onFailure("You are not signed in.");
+            return;
+        }
+
+        if (firebaseUser.getEmail() == null
+                || firebaseUser.getEmail().trim().isEmpty()) {
+            callback.onFailure("This account has no email address.");
+            return;
+        }
+
+        firebaseUser.sendEmailVerification()
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(e -> callback.onFailure(
+                        e.getMessage() == null
+                                ? "Could not send the verification email."
+                                : e.getMessage()
+                ));
+    }
+
+    /**
+     * True when this account was created by the new email-verification flow
+     * and still has not verified its email. Accounts created before the flow
+     * have no flag, so they are treated as legacy and never blocked.
+     */
+    public void isEmailVerificationPending(VerificationCheckCallback callback) {
+
+        FirebaseUser firebaseUser = getCurrentUser();
+
+        if (firebaseUser == null) {
+            callback.onResult(false, null);
+            return;
+        }
+
+        db.collection(Constants.COLLECTION_USERS)
+                .document(firebaseUser.getUid())
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+
+                    if (!documentSnapshot.exists()) {
+                        callback.onResult(false, null);
+                        return;
+                    }
+
+                    String role = documentSnapshot.getString("role");
+
+                    Boolean required = documentSnapshot.getBoolean(
+                            FIELD_EMAIL_VERIFICATION_REQUIRED
+                    );
+
+                    if (!Boolean.TRUE.equals(required)) {
+                        callback.onResult(false, role);
+                        return;
+                    }
+
+                    firebaseUser.reload().addOnCompleteListener(task -> {
+                        FirebaseUser refreshed = getCurrentUser();
+                        boolean verified = refreshed != null
+                                && refreshed.isEmailVerified();
+                        callback.onResult(!verified, role);
+                    });
+                })
+                .addOnFailureListener(e -> callback.onResult(false, null));
     }
 
     /**
@@ -181,6 +268,9 @@ public class AuthManager {
                     newUser.put("role", "client");
                     newUser.put("createdAt", FieldValue.serverTimestamp());
                     newUser.put("isDeleted", false);
+                    // New accounts must verify their email before they can use
+                    // the app. Older profiles have no flag and stay unaffected.
+                    newUser.put(FIELD_EMAIL_VERIFICATION_REQUIRED, true);
                     // Optional home area and map coordinates. Fields are only
                     // written when the client picked them during registration.
                     if (area != null && !area.trim().isEmpty()) {
@@ -256,6 +346,51 @@ public class AuthManager {
                                     callback.onFailure(
                                             "User role is missing from your profile."
                                     );
+                                    return;
+                                }
+
+                                // Only accounts created by the new email flow
+                                // carry this flag. Legacy accounts skip the
+                                // check entirely.
+                                Boolean requiresVerification =
+                                        documentSnapshot.getBoolean(
+                                                FIELD_EMAIL_VERIFICATION_REQUIRED
+                                        );
+
+                                if (Boolean.TRUE.equals(requiresVerification)) {
+
+                                    firebaseUser.reload().addOnCompleteListener(reloadTask -> {
+
+                                        if (!reloadTask.isSuccessful()
+                                                && reloadTask.getException() != null) {
+
+                                            String reloadError =
+                                                    reloadTask.getException().getMessage();
+
+                                            if (isNetworkError(reloadError)) {
+                                                callback.onFailure(reloadError);
+                                                return;
+                                            }
+                                        }
+
+                                        FirebaseUser refreshed = getCurrentUser();
+
+                                        if (refreshed == null) {
+                                            callback.onFailure(
+                                                    "Could not refresh your account. Please try again."
+                                            );
+                                            return;
+                                        }
+
+                                        if (!refreshed.isEmailVerified()) {
+                                            callback.onFailure(EMAIL_NOT_VERIFIED);
+                                            return;
+                                        }
+
+                                        saveFcmToken();
+                                        callback.onSuccess(role.trim().toLowerCase());
+                                    });
+
                                     return;
                                 }
 
@@ -360,5 +495,17 @@ public class AuthManager {
         firebaseUser.delete()
                 .addOnSuccessListener(unused -> callback.onSuccess())
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    private boolean isNetworkError(String rawMessage) {
+
+        if (rawMessage == null) {
+            return false;
+        }
+
+        String message = rawMessage.toLowerCase();
+
+        return message.contains("network")
+                || message.contains("timeout");
     }
 }

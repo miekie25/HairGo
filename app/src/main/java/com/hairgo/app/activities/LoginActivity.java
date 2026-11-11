@@ -10,6 +10,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,6 +29,7 @@ public class LoginActivity extends AppCompatActivity {
     private TextInputLayout tilUsername;
     private TextInputLayout tilPassword;
     private TextView tvLoginError;
+    private TextView tvResendEmail;
     private Button btnLogin;
     private TextView tvForgotPassword;
     private TextView tvSignUp;
@@ -47,6 +49,7 @@ public class LoginActivity extends AppCompatActivity {
         tilUsername = findViewById(R.id.tilUsername);
         tilPassword = findViewById(R.id.tilPassword);
         tvLoginError = findViewById(R.id.tvLoginError);
+        tvResendEmail = findViewById(R.id.tvResendEmail);
         btnLogin = findViewById(R.id.btnLogin);
         tvForgotPassword = findViewById(R.id.tvForgotPassword);
         tvSignUp = findViewById(R.id.tvSignUp);
@@ -168,6 +171,8 @@ public class LoginActivity extends AppCompatActivity {
             );
         });
 
+        tvResendEmail.setOnClickListener(v -> resendVerificationEmail());
+
         tvForgotPassword.setOnClickListener(v ->
                 startActivity(
                         new Intent(
@@ -195,11 +200,76 @@ public class LoginActivity extends AppCompatActivity {
         );
     }
 
+    private void resendVerificationEmail() {
+
+        tvResendEmail.setEnabled(false);
+        tvResendEmail.setText("Sending...");
+
+        authManager.sendVerificationEmail(new AuthManager.OperationCallback() {
+            @Override
+            public void onSuccess() {
+                restoreResendLink();
+                Toast.makeText(
+                        LoginActivity.this,
+                        "Verification email sent. Check your inbox and spam folder.",
+                        Toast.LENGTH_LONG
+                ).show();
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                restoreResendLink();
+                Toast.makeText(
+                        LoginActivity.this,
+                        mapVerificationError(errorMessage),
+                        Toast.LENGTH_LONG
+                ).show();
+            }
+        });
+    }
+
+    private void restoreResendLink() {
+        tvResendEmail.setEnabled(true);
+        tvResendEmail.setText("Resend verification email");
+    }
+
+    private String mapVerificationError(String rawMessage) {
+
+        String message = rawMessage == null
+                ? ""
+                : rawMessage.toLowerCase(Locale.getDefault());
+
+        if (message.contains("network") || message.contains("timeout")) {
+            return getString(R.string.login_error_network);
+        }
+
+        if (message.contains("too many")) {
+            return getString(R.string.login_error_too_many_attempts);
+        }
+
+        if (message.contains("not signed in")) {
+            return "Please log in again, then tap Resend verification email.";
+        }
+
+        if (message.contains("no email address")) {
+            return "This account has no email address to send to.";
+        }
+
+        if (message.contains("operation not allowed")
+                || message.contains("not enabled")) {
+            return "Email verification is not available right now. "
+                    + "Please contact support.";
+        }
+
+        return getString(R.string.login_error_generic);
+    }
+
     private void clearErrors() {
         tilUsername.setError(null);
         tilPassword.setError(null);
         tvLoginError.setText("");
         tvLoginError.setVisibility(View.GONE);
+        tvResendEmail.setVisibility(View.GONE);
     }
 
     private void showFormError(String message) {
@@ -213,6 +283,15 @@ public class LoginActivity extends AppCompatActivity {
 
         if (raw == null || raw.trim().isEmpty()) {
             showFormError(getString(R.string.login_error_generic));
+            return;
+        }
+
+        if (raw.startsWith(AuthManager.EMAIL_NOT_VERIFIED)) {
+            showFormError(
+                    "Please verify your email address before logging in. "
+                            + "Check your inbox and spam folder, then log in again."
+            );
+            tvResendEmail.setVisibility(View.VISIBLE);
             return;
         }
 

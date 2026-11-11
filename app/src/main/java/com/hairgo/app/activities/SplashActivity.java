@@ -8,6 +8,7 @@ import android.os.Looper;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
 
+import com.google.firebase.auth.FirebaseUser;
 import com.hairgo.app.R;
 import com.hairgo.app.firebase.AuthManager;
 
@@ -39,28 +40,53 @@ public class SplashActivity extends AppCompatActivity {
             return;
         }
 
-        authManager.loadCurrentUserProfile(new AuthManager.ProfileCallback() {
-            @Override
-            public void onSuccess(String name, String role) {
-                if ("client".equals(role)) {
-                    finishTo(ClientDashboardActivity.class);
-                } else if ("owner".equals(role)) {
-                    finishTo(OwnerDashboardActivity.class);
-                } else if ("admin".equals(role)) {
-                    finishTo(AdminDashboardActivity.class);
-                } else {
-                    // Signed in but no dashboard for this role: drop the session
-                    // rather than trapping the user with nowhere to go.
-                    authManager.signOut();
-                    finishTo(WelcomeActivity.class);
-                }
+        authManager.isEmailVerificationPending((pending, role) -> {
+
+            if (pending) {
+                openEmailCheck(authManager, role);
+                return;
             }
 
-            @Override
-            public void onFailure(String errorMessage) {
-                finishTo(WelcomeActivity.class);
-            }
+            authManager.loadCurrentUserProfile(new AuthManager.ProfileCallback() {
+                @Override
+                public void onSuccess(String name, String role) {
+                    if ("client".equals(role)) {
+                        finishTo(ClientDashboardActivity.class);
+                    } else if ("owner".equals(role)) {
+                        finishTo(OwnerDashboardActivity.class);
+                    } else if ("admin".equals(role)) {
+                        finishTo(AdminDashboardActivity.class);
+                    } else {
+                        // Signed in but no dashboard for this role: drop the session
+                        // rather than trapping the user with nowhere to go.
+                        authManager.signOut();
+                        finishTo(WelcomeActivity.class);
+                    }
+                }
+
+                @Override
+                public void onFailure(String errorMessage) {
+                    finishTo(WelcomeActivity.class);
+                }
+            });
         });
+    }
+
+    private void openEmailCheck(AuthManager authManager, String role) {
+        if (isFinishing() || isDestroyed()) return;
+
+        FirebaseUser user = authManager.getCurrentUser();
+        String email = user != null && user.getEmail() != null
+                ? user.getEmail()
+                : "";
+
+        Intent intent = new Intent(SplashActivity.this, OtpVerificationActivity.class);
+        intent.putExtra("email", email);
+        if (role != null && !role.trim().isEmpty()) {
+            intent.putExtra("role", role);
+        }
+        startActivity(intent);
+        finish();
     }
 
     private void finishTo(Class<?> destination) {

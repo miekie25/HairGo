@@ -201,6 +201,8 @@ public class OwnerManager {
                     newUser.put("role", "owner");
                     newUser.put("createdAt", FieldValue.serverTimestamp());
                     newUser.put("isDeleted", false);
+                    // New accounts must verify their email before using the app.
+                    newUser.put("emailVerificationRequired", true);
 
                     db.collection("users").document(uid).set(newUser)
                             .addOnSuccessListener(unused -> {

@@ -90,6 +90,22 @@
                         android:textSize="13sp"
                         android:visibility="gone" />
 
+                    <!-- Shown only when login is blocked because the email is
+                         not verified yet. -->
+                    <TextView
+                        android:id="@+id/tvResendEmail"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:paddingHorizontal="4dp"
+                        android:paddingVertical="8dp"
+                        android:text="Resend verification email"
+                        android:textColor="@color/teal"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+
                     <!-- Email label -->
                     <TextView
                         android:layout_width="wrap_content"

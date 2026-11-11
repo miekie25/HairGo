@@ -234,7 +234,7 @@ class TermsConditionsActivity : AppCompatActivity() {
     private fun completeRegistration() {
         binding.btnFinalRegister.isEnabled = false
 
-        // Both registration screens pass these through the OTP screen. Default role is client.
+        // Both registration screens pass these to this Terms step. Default role is client.
         val role = intent.getStringExtra("role") ?: "client"
         val email = intent.getStringExtra("email").orEmpty()
         val password = intent.getStringExtra("password").orEmpty()
@@ -265,12 +265,7 @@ class TermsConditionsActivity : AppCompatActivity() {
             phone,
             object : AuthManager.AuthCallback {
                 override fun onSuccess(assignedRole: String?) {
-                    Toast.makeText(
-                        this@TermsConditionsActivity,
-                        "Account created! Add your first salon to start taking bookings.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    navigateToDashboard("owner")
+                    afterAccountCreated("owner", email)
                 }
 
                 override fun onFailure(errorMessage: String?) {
@@ -309,12 +304,7 @@ class TermsConditionsActivity : AppCompatActivity() {
             longitude,
             object : AuthManager.AuthCallback {
                 override fun onSuccess(assignedRole: String?) {
-                    Toast.makeText(
-                        this@TermsConditionsActivity,
-                        "Registration successful!",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    navigateToDashboard("client")
+                    afterAccountCreated("client", email)
                 }
 
                 override fun onFailure(errorMessage: String?) {
@@ -329,14 +319,38 @@ class TermsConditionsActivity : AppCompatActivity() {
         )
     }
 
-    private fun navigateToDashboard(role: String) {
-        val targetActivity = if (role == "owner") {
-            OwnerDashboardActivity::class.java
-        } else {
-            ClientDashboardActivity::class.java
+    /**
+     * The account and its profile now exist. Send the verification email and
+     * move to the check-email screen. A send failure does not lose the account:
+     * the screen shows the error and offers a Resend email action.
+     */
+    private fun afterAccountCreated(role: String, email: String) {
+        authManager.sendVerificationEmail(object : AuthManager.OperationCallback {
+            override fun onSuccess() {
+                if (isFinishing || isDestroyed) return
+                openCheckEmail(role, email, null)
+            }
+
+            override fun onFailure(errorMessage: String?) {
+                if (isFinishing || isDestroyed) return
+                openCheckEmail(
+                    role,
+                    email,
+                    "We could not send the verification email. Tap Resend email to try again."
+                )
+            }
+        })
+    }
+
+    private fun openCheckEmail(role: String, email: String, sendError: String?) {
+        val intent = Intent(this, OtpVerificationActivity::class.java).apply {
+            putExtra("role", role)
+            putExtra("email", email)
+            putExtra("fromRegistration", true)
+            if (!sendError.isNullOrBlank()) {
+                putExtra("sendError", sendError)
+            }
         }
-        val intent = Intent(this, targetActivity)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
     }
