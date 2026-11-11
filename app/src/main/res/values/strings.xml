@@ -399,6 +399,147 @@
     <string name="nav_users">Users</string>
     <string name="nav_salons">Salons</string>
     <string name="nav_reports">Reports</string>
+    <string name="login_error_account_suspended">This account has been suspended. Please contact support.</string>
+    <string name="account_unavailable_title">Account unavailable</string>
+    <string name="warning_dialog_title">Important notice</string>
+    <string name="warning_dialog_ok">OK</string>
+
+    <!-- Admin: shared -->
+    <string name="admin_confirm">Confirm</string>
+    <string name="admin_cancel">Cancel</string>
+    <string name="admin_confirm_activate">Activate %1$s? They will be able to sign in again.</string>
+    <string name="admin_confirm_delete">Delete %1$s? This hides the account from the app.</string>
+    <string name="admin_confirm_resolve">Mark this report as resolved for %1$s?</string>
+    <string name="admin_confirm_suspend">Suspend %1$s? They will not be able to sign in.</string>
+    <string name="admin_recently">Recently</string>
+    <string name="admin_joined_on">Joined %1$s</string>
+    <string name="admin_not_provided">Not provided</string>
+    <string name="admin_no_email">No email provided</string>
+    <string name="admin_user_unknown">Unknown user</string>
+    <string name="admin_owner_unknown">Unknown owner</string>
+    <string name="admin_unknown_client">Unknown client</string>
+    <string name="admin_unknown_salon">Unknown salon</string>
+    <string name="admin_hair_service">Hair service</string>
+    <string name="admin_date_pending">Date pending</string>
+    <string name="admin_payment_unknown">Not recorded</string>
+    <string name="admin_error_load">Could not load data: %1$s</string>
+    <string name="admin_error_action">Could not complete the action: %1$s</string>
+    <string name="admin_error_missing_owner">This salon has no owner account to update.</string>
+    <string name="admin_error_denied">You do not have permission to do that.</string>
+
+    <!-- Admin: roles and status -->
+    <string name="admin_role_client">Client</string>
+    <string name="admin_role_owner">Salon Owner</string>
+    <string name="admin_role_admin">Admin</string>
+    <string name="admin_role_unknown">User</string>
+    <string name="admin_status_pending">Pending</string>
+    <string name="admin_status_in_review">In review</string>
+    <string name="admin_status_resolved">Resolved</string>
+    <string name="admin_status_closed">Closed</string>
+    <string name="admin_status_active">Active</string>
+    <string name="admin_status_inactive">Inactive</string>
+    <string name="admin_status_suspended">Suspended</string>
+    <string name="admin_action_activate">Activate Account</string>
+    <string name="admin_action_suspend">Suspend Account</string>
+    <string name="admin_action_delete">Delete Account</string>
+    <string name="admin_action_warning">Give Warning</string>
+    <string name="admin_action_resolve">Mark Resolved</string>
+    <string name="admin_action_close">Close Report</string>
+    <string name="admin_action_in_review">Mark In Review</string>
+    <string name="admin_action_cancel_booking">Cancel Booking</string>
+    <string name="admin_action_deactivate_salon">Deactivate salon</string>
+    <string name="admin_action_activate_salon">Activate salon</string>
+    <string name="admin_activate">Activate</string>
+    <string name="admin_suspend">Suspend</string>
+    <string name="admin_user_suspended">suspended</string>
+    <string name="admin_user_unsuspended">activated</string>
+    <string name="admin_user_status_changed">%1$s has been %2$s.</string>
+    <string name="admin_user_deleted">%1$s has been deleted.</string>
+    <string name="admin_user_not_found">This user could not be found.</string>
+    <string name="admin_warning_hint">Warning message</string>
+    <string name="admin_send_warning">Send warning</string>
+    <string name="admin_default_warning">Please follow the HairGo community rules.</string>
+    <string name="admin_warning_sent">Warning sent to %1$s.</string>
+    <string name="admin_note_in_review">Report marked for review.</string>
+    <string name="admin_note_resolved">Report reviewed and resolved.</string>
+    <string name="admin_note_suspended">Account suspended after reviewing this report.</string>
+    <string name="admin_note_warned">Warning issued after reviewing this report.</string>
+    <string name="admin_note_closed">Report closed after review.</string>
+    <string name="admin_close_hint">Reason for closing this report</string>
+    <string name="admin_resolution_note">Resolution: %1$s</string>
+
+    <!-- Admin: reports -->
+    <string name="admin_filter_incoming">Incoming</string>
+    <string name="admin_filter_in_review">In review</string>
+    <string name="admin_filter_resolved">Resolved</string>
+    <string name="admin_filter_closed">Closed</string>
+    <string name="admin_reports_empty">No reports found</string>
+    <string name="admin_report_not_found">This report could not be found.</string>
+    <string name="admin_report_no_description">No description provided.</string>
+    <string name="admin_report_by_against">Reported by %1$s against %2$s</string>
+    <string name="admin_report_target_salon_owner">Salon owner</string>
+    <string name="admin_report_target_app">HairGo App</string>
+    <string name="admin_report_target_app_role">App</string>
+    <string name="admin_reporter_unknown">Anonymous</string>
+    <string name="admin_reason_with_severity">%1$s · %2$s</string>
+    <string name="admin_category_booking">Booking issue</string>
+    <string name="admin_category_login">Login or account</string>
+    <string name="admin_category_app_error">App error</string>
+    <string name="admin_category_scam">Scam</string>
+    <string name="admin_category_safety">Safety concern</string>
+    <string name="admin_category_harassment">Harassment</string>
+    <string name="admin_category_other">Other issue</string>
+    <string name="admin_severity_low">Low</string>
+    <string name="admin_severity_medium">Medium</string>
+    <string name="admin_severity_high">High</string>
+
+    <!-- Admin: overview -->
+    <string name="admin_new_users_last_seven_days">%1$d new users in the last seven days</string>
+    <string name="admin_new_registrations_empty">No registrations yet</string>
+    <string name="admin_incoming_reports_empty">No incoming reports</string>
+
+    <!-- Admin: users -->
+    <string name="admin_filter_all">All</string>
+    <string name="admin_filter_clients">Clients</string>
+    <string name="admin_filter_owners">Owners</string>
+    <string name="admin_filter_admins">Admins</string>
+    <string name="admin_users_empty">No users found</string>
+    <string name="admin_sort_by">Sort by:</string>
+    <string name="admin_sort_by_date">Sort by Date:</string>
+    <string name="admin_sort_date_newest">Date: Newest First</string>
+    <string name="admin_sort_date_oldest">Date: Oldest First</string>
+    <string name="admin_sort_alpha_az">Alphabetical: A to Z</string>
+    <string name="admin_sort_alpha_za">Alphabetical: Z to A</string>
+    <string name="admin_sort_users_title">Sort Users By</string>
+    <string name="admin_sort_bookings_title">Sort Bookings By</string>
+    <string name="admin_sort_newest">Newest First</string>
+    <string name="admin_sort_oldest">Oldest First</string>
+
+    <!-- Admin: bookings -->
+    <string name="admin_filter_upcoming">Upcoming</string>
+    <string name="admin_filter_completed">Completed</string>
+    <string name="admin_filter_cancelled">Cancelled</string>
+    <string name="admin_bookings_empty">No bookings found</string>
+    <string name="admin_manage_booking">Manage booking: %1$s</string>
+    <string name="admin_cancel_booking_message">Cancel this booking for %1$s? The client will no longer see it as active.</string>
+    <string name="admin_booking_already_cancelled">This booking is already cancelled.</string>
+    <string name="admin_booking_cancelled">Booking cancelled.</string>
+    <string name="admin_client_label">Client: %1$s</string>
+    <string name="admin_salon_label">Salon: %1$s</string>
+    <string name="admin_price_payment">%1$s · Payment: %2$s</string>
+    <string name="admin_booking_status_pending">Pending</string>
+    <string name="admin_booking_status_confirmed">Confirmed</string>
+    <string name="admin_booking_status_completed">Completed</string>
+    <string name="admin_booking_status_cancelled">Cancelled</string>
+    <string name="admin_booking_status_expired">Expired</string>
+
+    <!-- Admin: salons -->
+    <string name="admin_salons_empty">No salons found</string>
+    <string name="admin_salon_owner">Owner: %1$s</string>
+    <string name="admin_salon_services">%1$d services</string>
+    <string name="admin_salon_activated">activated</string>
+    <string name="admin_salon_deactivated">deactivated</string>
+    <string name="admin_salon_status_changed">%1$s has been %2$s.</string>
 
     <!-- Notifications -->
     <string name="notification_channel_reminders">Appointment reminders</string>

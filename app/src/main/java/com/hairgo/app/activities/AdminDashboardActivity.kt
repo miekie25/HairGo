@@ -14,6 +14,7 @@ import com.hairgo.app.R
 import com.hairgo.app.firebase.AuthManager
 import com.hairgo.app.firebase.ReportManager
 import com.hairgo.app.fragments.AdminBookingsFragment
+import com.hairgo.app.fragments.AdminSalonsFragment
 import com.hairgo.app.fragments.AdminUsersFragment
 import com.hairgo.app.fragments.OverviewFragment
 import com.hairgo.app.fragments.ReportsFragment
@@ -50,6 +51,10 @@ class AdminDashboardActivity : AppCompatActivity() {
                     showTab(item.itemId, AdminBookingsFragment())
                     true
                 }
+                R.id.nav_salons -> {
+                    showTab(item.itemId, AdminSalonsFragment())
+                    true
+                }
                 R.id.nav_reports -> {
                     showTab(item.itemId, ReportsFragment())
                     true
@@ -79,6 +84,7 @@ class AdminDashboardActivity : AppCompatActivity() {
             R.id.nav_overview -> showTab(itemId, OverviewFragment())
             R.id.nav_users -> showTab(itemId, AdminUsersFragment())
             R.id.nav_bookings -> showTab(itemId, AdminBookingsFragment())
+            R.id.nav_salons -> showTab(itemId, AdminSalonsFragment())
             R.id.nav_reports -> showTab(itemId, ReportsFragment())
         }
     }

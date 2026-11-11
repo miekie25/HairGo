@@ -11,9 +11,9 @@ import com.hairgo.app.models.UserModel
 object MockDataStore {
 
     val salons: MutableList<AdminSalon> = mutableListOf(
-        AdminSalon(1, "Glam Studio", "Naledi Dlamini", "Sandton", true, 4, "Mon-Sat 09:00-18:00"),
-        AdminSalon(2, "The Sharp Cut", "Thabo Mokoena", "Rosebank", true, 3, "Mon-Sun 08:00-20:00"),
-        AdminSalon(3, "Braids & Co", "Lerato Nkosi", "Soweto", false, 2, "Tue-Sat 09:00-17:00")
+        AdminSalon("1", "Glam Studio", "owner1", "Naledi Dlamini", "Sandton", true, 4),
+        AdminSalon("2", "The Sharp Cut", "owner2", "Thabo Mokoena", "Rosebank", true, 3),
+        AdminSalon("3", "Braids & Co", "owner3", "Lerato Nkosi", "Soweto", false, 2)
     )
 
     val users: MutableList<UserModel> = mutableListOf(

@@ -1,6 +1,5 @@
 package com.hairgo.app.fragments
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,12 +12,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
-import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.DocumentSnapshot
 import com.hairgo.app.R
-import com.hairgo.app.activities.SendMessageActivity
+import com.hairgo.app.firebase.BookingManager
+import com.hairgo.app.utils.CompletionReminderManager
+import com.hairgo.app.utils.ReminderScheduler
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 data class AdminBookingModel(
@@ -29,7 +30,8 @@ data class AdminBookingModel(
     val scheduledDateTime: String = "",
     val status: String = "",
     val totalPrice: Double = 0.0,
-    val paymentStatus: String = ""
+    val paymentStatus: String = "",
+    val dateTimeMs: Long = 0L
 )
 
 class AdminBookingsFragment : Fragment() {
@@ -40,7 +42,8 @@ class AdminBookingsFragment : Fragment() {
     private lateinit var tvEmptyBookings: TextView
 
     private val db = FirebaseFirestore.getInstance()
-    private var allBookingsList = mutableListOf<AdminBookingModel>()
+    private val bookingManager = BookingManager()
+    private val allBookingsList = mutableListOf<AdminBookingModel>()
 
     private var currentSortMode = SortMode.DATE_NEWEST
     private var currentFilterStatus = "all"
@@ -75,7 +78,7 @@ class AdminBookingsFragment : Fragment() {
         toggleGroupBookingStatus.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
                 currentFilterStatus = when (checkedId) {
-                    R.id.btnFilterUpcoming -> "pending"  // maps to 'pending' in Firestore
+                    R.id.btnFilterUpcoming -> "upcoming"
                     R.id.btnFilterCompleted -> "completed"
                     R.id.btnFilterCancelled -> "cancelled"
                     else -> "all"
@@ -88,14 +91,14 @@ class AdminBookingsFragment : Fragment() {
     private fun setupSortingSelector() {
         btnSortOrder.setOnClickListener {
             val options = arrayOf(
-                "Date: Newest First",
-                "Date: Oldest First",
-                "Alphabetical (Service): A to Z",
-                "Alphabetical (Service): Z to A"
+                getString(R.string.admin_sort_date_newest),
+                getString(R.string.admin_sort_date_oldest),
+                getString(R.string.admin_sort_alpha_az),
+                getString(R.string.admin_sort_alpha_za)
             )
 
             AlertDialog.Builder(requireContext())
-                .setTitle("Sort Bookings By")
+                .setTitle(R.string.admin_sort_bookings_title)
                 .setItems(options) { _, which ->
                     currentSortMode = when (which) {
                         0 -> SortMode.DATE_NEWEST
@@ -104,7 +107,7 @@ class AdminBookingsFragment : Fragment() {
                         3 -> SortMode.ALPHA_ZA
                         else -> SortMode.DATE_NEWEST
                     }
-                    btnSortOrder.text = "${options[which]} ▾"
+                    btnSortOrder.text = options[which]
                     applyFilterAndSort()
                 }
                 .show()
@@ -112,75 +115,99 @@ class AdminBookingsFragment : Fragment() {
     }
 
     private fun fetchBookingsFromFirestore() {
-        // Real-time listener for Firestore 'bookings' collection
         db.collection("bookings")
-            .whereEqualTo("isDeleted", false)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Toast.makeText(context, "Error fetching bookings: ${error.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        getString(R.string.admin_error_load, error.message ?: ""),
+                        Toast.LENGTH_SHORT
+                    ).show()
                     return@addSnapshotListener
                 }
 
-                if (snapshot != null) {
-                    allBookingsList.clear()
-                    val dateFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
+                if (snapshot == null) return@addSnapshotListener
 
-                    for (doc in snapshot.documents) {
-                        val bookingId = doc.getString("bookingID") ?: doc.id
-                        val clientName = doc.getString("clientName") ?: "Unknown Client"
-                        val salonName = doc.getString("salonName") ?: "Unknown Salon"
-                        val status = doc.getString("status") ?: "pending"
-                        val paymentStatus = doc.getString("paymentStatus") ?: ""
-
-                        // Handle price
-                        val totalPrice = doc.getDouble("totalPrice")
-                            ?: doc.getDouble("amountOutstanding")
-                            ?: 0.0
-
-                        // Handle Service Name (single string or array)
-                        var serviceName = doc.getString("serviceName") ?: ""
-                        if (serviceName.isEmpty()) {
-                            val serviceNamesArray = doc.get("serviceNames") as? List<*>
-                            serviceName = serviceNamesArray?.firstOrNull()?.toString() ?: "Hair Service"
+                allBookingsList.clear()
+                allBookingsList.addAll(
+                    snapshot.documents
+                        .filter {
+                            it.getBoolean("isDeleted") != true ||
+                                    "cancelled".equals(
+                                        it.getString("status"),
+                                        ignoreCase = true
+                                    )
                         }
-
-                        // Handle Date Timestamp
-                        val timestamp = doc.getTimestamp("dateTime")
-                        val formattedDate = if (timestamp != null) {
-                            dateFormat.format(timestamp.toDate())
-                        } else {
-                            "Date Pending"
-                        }
-
-                        val model = AdminBookingModel(
-                            bookingId = bookingId,
-                            serviceName = serviceName,
-                            clientName = clientName,
-                            salonName = salonName,
-                            scheduledDateTime = formattedDate,
-                            status = status,
-                            totalPrice = totalPrice,
-                            paymentStatus = paymentStatus
-                        )
-                        allBookingsList.add(model)
-                    }
-                    applyFilterAndSort()
-                }
+                        .map { toBooking(it) }
+                )
+                applyFilterAndSort()
             }
     }
 
+    private fun toBooking(doc: DocumentSnapshot): AdminBookingModel {
+        val status = (doc.getString("status") ?: "pending").lowercase(Locale.getDefault())
+        val dateTime = doc.getTimestamp("dateTime")?.toDate()
+        val dateTimeMs = dateTime?.time ?: 0L
+        val payment = paymentFields(doc)
+
+        return AdminBookingModel(
+            bookingId = doc.getString("bookingID") ?: doc.id,
+            serviceName = serviceNames(doc),
+            clientName = doc.getString("clientName") ?: getString(R.string.admin_unknown_client),
+            salonName = doc.getString("salonName") ?: getString(R.string.admin_unknown_salon),
+            scheduledDateTime = if (dateTime != null) {
+                SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(dateTime)
+            } else {
+                getString(R.string.admin_date_pending)
+            },
+            status = status,
+            totalPrice = payment.first,
+            paymentStatus = payment.second,
+            dateTimeMs = dateTimeMs
+        )
+    }
+
+    private fun paymentFields(doc: DocumentSnapshot): Pair<Double, String> {
+        val nested = doc.get("paymentDetails") as? Map<*, *>
+        val price = doc.getDouble("totalPrice")
+            ?: doc.getDouble("amountPaid")
+            ?: (nested?.get("amountPaid") as? Number)?.toDouble()
+            ?: 0.0
+        val status = doc.getString("paymentStatus")
+            ?: nested?.get("paymentStatus")?.toString()
+            ?: ""
+        return Pair(price, status)
+    }
+
+    private fun serviceNames(doc: DocumentSnapshot): String {
+        val names = (doc.get("serviceNames") as? List<*>)
+            ?.mapNotNull { it?.toString()?.takeIf { name -> name.isNotBlank() } }
+            .orEmpty()
+
+        if (names.isNotEmpty()) return names.joinToString(", ")
+
+        return doc.getString("serviceName")
+            ?.takeIf { it.isNotBlank() }
+            ?: getString(R.string.admin_hair_service)
+    }
+
     private fun applyFilterAndSort() {
-        val filteredList = if (currentFilterStatus == "all") {
-            allBookingsList
-        } else {
-            allBookingsList.filter { it.status.equals(currentFilterStatus, ignoreCase = true) }
+        val filteredList = when (currentFilterStatus) {
+            "upcoming" -> allBookingsList.filter {
+                it.status == "pending" || it.status == "confirmed"
+            }
+            "completed" -> allBookingsList.filter { it.status == "completed" }
+            "cancelled" -> allBookingsList.filter { it.status == "cancelled" }
+            else -> allBookingsList
         }
 
         val sortedList = when (currentSortMode) {
-            SortMode.DATE_NEWEST -> filteredList
-            SortMode.DATE_OLDEST -> filteredList.reversed()
-            SortMode.ALPHA_AZ -> filteredList.sortedBy { it.serviceName }
-            SortMode.ALPHA_ZA -> filteredList.sortedByDescending { it.serviceName }
+            SortMode.DATE_NEWEST -> filteredList.sortedByDescending { it.dateTimeMs }
+            SortMode.DATE_OLDEST -> filteredList.sortedBy { it.dateTimeMs }
+            SortMode.ALPHA_AZ -> filteredList.sortedBy { it.serviceName.lowercase(Locale.getDefault()) }
+            SortMode.ALPHA_ZA -> filteredList.sortedByDescending {
+                it.serviceName.lowercase(Locale.getDefault())
+            }
         }
 
         rvBookings.layoutManager = LinearLayoutManager(requireContext())
@@ -192,37 +219,42 @@ class AdminBookingsFragment : Fragment() {
     }
 
     private fun showBookingActionDialog(booking: AdminBookingModel) {
-        val options = arrayOf("Cancel Booking in Firestore", "Contact Client", "Contact Salon")
         AlertDialog.Builder(requireContext())
-            .setTitle("Manage Booking: ${booking.serviceName}")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> cancelBookingInFirestore(booking.bookingId)
-                    1 -> openSendMessage(booking.clientName, "")
-                    2 -> openSendMessage(booking.salonName, "")
-                }
+            .setTitle(getString(R.string.admin_manage_booking, booking.serviceName))
+            .setMessage(getString(R.string.admin_cancel_booking_message, booking.clientName))
+            .setPositiveButton(R.string.admin_action_cancel_booking) { _, _ ->
+                cancelBooking(booking)
             }
-            .setNegativeButton("Close", null)
+            .setNegativeButton(R.string.admin_cancel, null)
             .show()
     }
 
-    private fun cancelBookingInFirestore(bookingId: String) {
-        db.collection("bookings").document(bookingId)
-            .update("status", "cancelled")
-            .addOnSuccessListener {
-                Toast.makeText(context, "Booking status updated to cancelled", Toast.LENGTH_SHORT).show()
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(context, "Failed to update: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun openSendMessage(recipientName: String, recipientEmail: String) {
-        val intent = Intent(requireContext(), SendMessageActivity::class.java).apply {
-            putExtra("recipientName", recipientName)
-            putExtra("recipientEmail", recipientEmail)
+    private fun cancelBooking(booking: AdminBookingModel) {
+        if (booking.status == "cancelled") {
+            Toast.makeText(context, R.string.admin_booking_already_cancelled, Toast.LENGTH_SHORT)
+                .show()
+            return
         }
-        startActivity(intent)
+
+        bookingManager.cancelBooking(booking.bookingId, object : BookingManager.BookingCallback {
+            override fun onSuccess() {
+                ReminderScheduler.cancel(requireContext().applicationContext, booking.bookingId)
+                CompletionReminderManager.getInstance().remove(booking.bookingId)
+                Toast.makeText(
+                    context,
+                    R.string.admin_booking_cancelled,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+
+            override fun onFailure(errorMessage: String?) {
+                Toast.makeText(
+                    context,
+                    getString(R.string.admin_error_action, errorMessage ?: ""),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        })
     }
 }
 
@@ -237,6 +269,7 @@ class AdminBookingsAdapter(
         val tvScheduledDate: TextView = itemView.findViewById(R.id.tvBookingScheduledDate)
         val tvClientName: TextView = itemView.findViewById(R.id.tvBookingClientName)
         val tvSalonName: TextView = itemView.findViewById(R.id.tvBookingSalonName)
+        val tvCreatedDate: TextView = itemView.findViewById(R.id.tvBookingCreatedDate)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookingViewHolder {
@@ -247,11 +280,23 @@ class AdminBookingsAdapter(
 
     override fun onBindViewHolder(holder: BookingViewHolder, position: Int) {
         val booking = bookings[position]
+        val context = holder.itemView.context
+
         holder.tvServiceName.text = booking.serviceName
-        holder.tvStatusBadge.text = booking.status.replaceFirstChar { it.uppercase() }
+        holder.tvStatusBadge.text = statusLabel(context, booking.status)
         holder.tvScheduledDate.text = booking.scheduledDateTime
-        holder.tvClientName.text = "Client: ${booking.clientName}"
-        holder.tvSalonName.text = "Salon: ${booking.salonName}"
+        holder.tvClientName.text = context.getString(R.string.admin_client_label, booking.clientName)
+        holder.tvSalonName.text = context.getString(R.string.admin_salon_label, booking.salonName)
+
+        val price = "R${String.format(Locale.getDefault(), "%.2f", booking.totalPrice)}"
+        val payment = booking.paymentStatus.ifEmpty {
+            context.getString(R.string.admin_payment_unknown)
+        }
+        holder.tvCreatedDate.text = context.getString(
+            R.string.admin_price_payment,
+            price,
+            payment
+        )
 
         holder.itemView.setOnClickListener {
             onItemClick(booking)
@@ -259,4 +304,14 @@ class AdminBookingsAdapter(
     }
 
     override fun getItemCount(): Int = bookings.size
+
+    private fun statusLabel(context: android.content.Context, status: String): String {
+        return when (status) {
+            "confirmed" -> context.getString(R.string.admin_booking_status_confirmed)
+            "completed" -> context.getString(R.string.admin_booking_status_completed)
+            "cancelled" -> context.getString(R.string.admin_booking_status_cancelled)
+            "expired" -> context.getString(R.string.admin_booking_status_expired)
+            else -> context.getString(R.string.admin_booking_status_pending)
+        }
+    }
 }

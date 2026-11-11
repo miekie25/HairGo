@@ -348,6 +348,9 @@ public class HomeFragment extends Fragment {
         for (Map<String, Object> raw : rawSalons) {
             if (raw == null) continue;
 
+            if (Boolean.TRUE.equals(raw.get("isDeleted"))) continue;
+            if (Boolean.FALSE.equals(raw.get("isActive"))) continue;
+
             String name = asString(raw.get("name"));
             String location = asString(raw.get("location"));
             String salonId = asString(raw.get("salonID"));

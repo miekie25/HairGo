@@ -8,9 +8,11 @@ import android.os.Looper;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseUser;
 import com.hairgo.app.R;
 import com.hairgo.app.firebase.AuthManager;
+import com.hairgo.app.utils.WarningDialog;
 
 public class SplashActivity extends AppCompatActivity {
 
@@ -50,26 +52,64 @@ public class SplashActivity extends AppCompatActivity {
             authManager.loadCurrentUserProfile(new AuthManager.ProfileCallback() {
                 @Override
                 public void onSuccess(String name, String role) {
-                    if ("client".equals(role)) {
-                        finishTo(ClientDashboardActivity.class);
-                    } else if ("owner".equals(role)) {
-                        finishTo(OwnerDashboardActivity.class);
-                    } else if ("admin".equals(role)) {
-                        finishTo(AdminDashboardActivity.class);
-                    } else {
-                        // Signed in but no dashboard for this role: drop the session
-                        // rather than trapping the user with nowhere to go.
-                        authManager.signOut();
-                        finishTo(WelcomeActivity.class);
-                    }
+                    WarningDialog.showIfUnseen(
+                            SplashActivity.this,
+                            () -> routeToDashboard(authManager, role)
+                    );
                 }
 
                 @Override
                 public void onFailure(String errorMessage) {
-                    finishTo(WelcomeActivity.class);
+                    showBlockedAccountIfNeeded(authManager, errorMessage);
                 }
             });
         });
+    }
+
+    private void routeToDashboard(AuthManager authManager, String role) {
+        if ("client".equals(role)) {
+            finishTo(ClientDashboardActivity.class);
+        } else if ("owner".equals(role)) {
+            finishTo(OwnerDashboardActivity.class);
+        } else if ("admin".equals(role)) {
+            finishTo(AdminDashboardActivity.class);
+        } else {
+            // Signed in but no dashboard for this role: drop the session
+            // rather than trapping the user with nowhere to go.
+            authManager.signOut();
+            finishTo(WelcomeActivity.class);
+        }
+    }
+
+    private void showBlockedAccountIfNeeded(AuthManager authManager, String errorMessage) {
+        if (errorMessage == null) {
+            finishTo(WelcomeActivity.class);
+            return;
+        }
+
+        String message = errorMessage.toLowerCase();
+        boolean suspended = message.contains("suspended");
+        boolean deactivated = message.contains("deactivated")
+                || message.contains("disabled");
+
+        if (!suspended && !deactivated) {
+            finishTo(WelcomeActivity.class);
+            return;
+        }
+
+        authManager.signOut();
+
+        String body = getString(suspended
+                ? R.string.login_error_account_suspended
+                : R.string.login_error_account_disabled);
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.account_unavailable_title)
+                .setMessage(body)
+                .setCancelable(false)
+                .setPositiveButton(R.string.warning_dialog_ok,
+                        (dialog, which) -> finishTo(WelcomeActivity.class))
+                .show();
     }
 
     private void openEmailCheck(AuthManager authManager, String role) {

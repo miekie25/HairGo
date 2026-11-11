@@ -14,9 +14,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.DocumentSnapshot
 import com.hairgo.app.R
 import com.hairgo.app.activities.UserDetailActivity
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 data class AdminUserModel(
@@ -24,10 +26,10 @@ data class AdminUserModel(
     val userName: String = "",
     val email: String = "",
     val phone: String = "",
-    val role: String = "Client",
+    val role: String = "client",
     val dateJoined: String = "",
-    val isActive: Boolean = true,
-    val createdAtMs: Long = 0L // Added for accurate chronological sorting
+    val isSuspended: Boolean = false,
+    val createdAtMs: Long = 0L
 )
 
 class AdminUsersFragment : Fragment() {
@@ -39,10 +41,9 @@ class AdminUsersFragment : Fragment() {
 
     private val db = FirebaseFirestore.getInstance()
     private val allUsersList = mutableListOf<AdminUserModel>()
-    private val displayedUsersList = mutableListOf<AdminUserModel>()
     private lateinit var usersAdapter: AdminUsersAdapter
 
-    private var currentRoleFilter = "All"
+    private var currentRoleFilter = "all"
     private var currentSortMode = SortMode.DATE_NEWEST
 
     enum class SortMode {
@@ -73,9 +74,9 @@ class AdminUsersFragment : Fragment() {
 
     private fun setupRecyclerView() {
         usersAdapter = AdminUsersAdapter(
-            users = displayedUsersList,
+            users = emptyList(),
             onItemClick = { user -> openUserDetail(user) },
-            onDeactivateClick = { user -> toggleUserStatus(user) }
+            onSuspendClick = { user -> toggleUserStatus(user) }
         )
         rvUsers.layoutManager = LinearLayoutManager(requireContext())
         rvUsers.adapter = usersAdapter
@@ -86,9 +87,10 @@ class AdminUsersFragment : Fragment() {
         toggleGroupUserRole.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
                 currentRoleFilter = when (checkedId) {
-                    R.id.btnFilterClients -> "Client"
-                    R.id.btnFilterSalons -> "Salon Owner"
-                    else -> "All"
+                    R.id.btnFilterClients -> "client"
+                    R.id.btnFilterSalons -> "owner"
+                    R.id.btnFilterAdmins -> "admin"
+                    else -> "all"
                 }
                 applyFilterAndSort()
             }
@@ -98,14 +100,14 @@ class AdminUsersFragment : Fragment() {
     private fun setupSortSelector() {
         btnUserSortOption.setOnClickListener {
             val options = arrayOf(
-                "Date: Newest First",
-                "Date: Oldest First",
-                "Alphabetical: A to Z",
-                "Alphabetical: Z to A"
+                getString(R.string.admin_sort_date_newest),
+                getString(R.string.admin_sort_date_oldest),
+                getString(R.string.admin_sort_alpha_az),
+                getString(R.string.admin_sort_alpha_za)
             )
 
             AlertDialog.Builder(requireContext())
-                .setTitle("Sort Users By")
+                .setTitle(R.string.admin_sort_users_title)
                 .setItems(options) { _, which ->
                     currentSortMode = when (which) {
                         0 -> SortMode.DATE_NEWEST
@@ -114,7 +116,7 @@ class AdminUsersFragment : Fragment() {
                         3 -> SortMode.ALPHA_ZA
                         else -> SortMode.DATE_NEWEST
                     }
-                    btnUserSortOption.text = "${options[which]} ▾"
+                    btnUserSortOption.text = options[which]
                     applyFilterAndSort()
                 }
                 .show()
@@ -126,91 +128,87 @@ class AdminUsersFragment : Fragment() {
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     context?.let {
-                        Toast.makeText(it, "Error fetching users: ${error.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            it,
+                            getString(R.string.admin_error_load, error.message ?: ""),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                     return@addSnapshotListener
                 }
 
-                if (snapshot != null) {
-                    allUsersList.clear()
-                    val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                if (snapshot == null) return@addSnapshotListener
 
-                    for (doc in snapshot.documents) {
-                        val userId = doc.id
-
-                        val userName = doc.getString("name")
-                            ?: doc.getString("userName")
-                            ?: doc.getString("clientName")
-                            ?: doc.getString("salonName")
-                            ?: "Unknown User"
-
-                        val email = doc.getString("email") ?: ""
-                        val phone = doc.getString("phone") ?: doc.getString("phoneNumber") ?: ""
-                        val role = doc.getString("role") ?: "Client"
-
-                        val isActive = doc.getBoolean("isActive")
-                            ?: doc.getBoolean("active")
-                            ?: (doc.getBoolean("isSuspended") == false)
-
-                        val timestamp = doc.getTimestamp("createdAt")
-                            ?: doc.getTimestamp("joinedDate")
-                            ?: doc.getTimestamp("dateTime")
-
-                        val timestampMs = timestamp?.toDate()?.time ?: 0L
-
-                        val dateJoinedStr = if (timestamp != null) {
-                            "Joined ${dateFormat.format(timestamp.toDate())}"
-                        } else {
-                            doc.getString("dateJoined") ?: doc.getString("createdAt") ?: "Joined Recently"
-                        }
-
-                        val user = AdminUserModel(
-                            userId = userId,
-                            userName = userName,
-                            email = email,
-                            phone = phone,
-                            role = role,
-                            dateJoined = dateJoinedStr,
-                            isActive = isActive,
-                            createdAtMs = timestampMs
-                        )
-                        allUsersList.add(user)
-                    }
-                    applyFilterAndSort()
-                }
+                allUsersList.clear()
+                allUsersList.addAll(
+                    snapshot.documents
+                        .filter { it.getBoolean("isDeleted") != true }
+                        .map { toUser(it) }
+                )
+                applyFilterAndSort()
             }
     }
 
+    private fun toUser(doc: DocumentSnapshot): AdminUserModel {
+        val timestampMs = doc.getTimestamp("createdAt")?.toDate()?.time
+            ?: doc.getTimestamp("joinedDate")?.toDate()?.time
+            ?: 0L
+
+        return AdminUserModel(
+            userId = doc.id,
+            userName = fullName(doc),
+            email = doc.getString("email") ?: "",
+            phone = doc.getString("phoneNumber") ?: doc.getString("phone") ?: "",
+            role = (doc.getString("role") ?: "client").lowercase(Locale.getDefault()),
+            dateJoined = getString(R.string.admin_joined_on, formatDate(timestampMs)),
+            isSuspended = doc.getBoolean("isSuspended") == true ||
+                    doc.getBoolean("isActive") == false,
+            createdAtMs = timestampMs
+        )
+    }
+
     private fun toggleUserStatus(user: AdminUserModel) {
-        val newStatus = !user.isActive
-        val actionText = if (newStatus) "activated" else "deactivated"
+        val suspend = !user.isSuspended
+        val actionText = getString(
+            if (suspend) R.string.admin_user_suspended else R.string.admin_user_unsuspended
+        )
 
         db.collection("users").document(user.userId)
-            .update("isActive", newStatus)
+            .update("isSuspended", suspend)
             .addOnSuccessListener {
                 context?.let {
-                    Toast.makeText(it, "${user.userName} has been $actionText.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        it,
+                        getString(R.string.admin_user_status_changed, user.userName, actionText),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
             .addOnFailureListener { e ->
                 context?.let {
-                    Toast.makeText(it, "Failed to update status: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        it,
+                        getString(R.string.admin_error_action, e.message ?: ""),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
     }
 
     private fun applyFilterAndSort() {
-        val filtered = if (currentRoleFilter == "All") {
+        val filtered = if (currentRoleFilter == "all") {
             allUsersList
         } else {
-            allUsersList.filter { it.role.equals(currentRoleFilter, ignoreCase = true) }
+            allUsersList.filter { it.role == currentRoleFilter }
         }
 
         val sorted = when (currentSortMode) {
             SortMode.DATE_NEWEST -> filtered.sortedByDescending { it.createdAtMs }
             SortMode.DATE_OLDEST -> filtered.sortedBy { it.createdAtMs }
-            SortMode.ALPHA_AZ -> filtered.sortedBy { it.userName.lowercase() }
-            SortMode.ALPHA_ZA -> filtered.sortedByDescending { it.userName.lowercase() }
+            SortMode.ALPHA_AZ -> filtered.sortedBy { it.userName.lowercase(Locale.getDefault()) }
+            SortMode.ALPHA_ZA -> filtered.sortedByDescending {
+                it.userName.lowercase(Locale.getDefault())
+            }
         }
 
         usersAdapter.updateData(sorted)
@@ -218,28 +216,44 @@ class AdminUsersFragment : Fragment() {
     }
 
     private fun openUserDetail(user: AdminUserModel) {
-        try {
-            val intent = Intent(requireContext(), UserDetailActivity::class.java).apply {
-                putExtra("EXTRA_USER_ID", user.userId)
-                putExtra("EXTRA_NAME", user.userName)
-                putExtra("EXTRA_EMAIL", user.email)
-                putExtra("EXTRA_PHONE", user.phone)
-                putExtra("EXTRA_ROLE", user.role)
-                putExtra("EXTRA_JOINED", user.dateJoined)
-                putExtra("EXTRA_IS_ACTIVE", user.isActive)
-            }
-            startActivity(intent)
-        } catch (e: Exception) {
-            Toast.makeText(context, "Unable to open user details: ${e.message}", Toast.LENGTH_LONG).show()
-            e.printStackTrace()
+        val intent = Intent(requireContext(), UserDetailActivity::class.java).apply {
+            putExtra("EXTRA_USER_ID", user.userId)
+            putExtra("EXTRA_NAME", user.userName)
+            putExtra("EXTRA_EMAIL", user.email)
+            putExtra("EXTRA_PHONE", user.phone)
+            putExtra("EXTRA_ROLE", user.role)
+            putExtra("EXTRA_JOINED", user.dateJoined)
+            putExtra("EXTRA_IS_ACTIVE", !user.isSuspended)
+            putExtra("EXTRA_IS_SUSPENDED", user.isSuspended)
+        }
+        startActivity(intent)
+    }
+
+    private fun fullName(doc: DocumentSnapshot): String {
+        val combined = listOf(
+            doc.getString("name").orEmpty(),
+            doc.getString("surname").orEmpty()
+        ).map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .joinToString(" ")
+
+        return combined.ifEmpty {
+            doc.getString("userName")
+                ?: doc.getString("email")
+                ?: getString(R.string.admin_user_unknown)
         }
     }
+
+    private fun formatDate(timeMs: Long): String {
+        if (timeMs <= 0L) return getString(R.string.admin_recently)
+        return SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(timeMs))
+    }
 }
-// --- RecyclerView Adapter matched to admin_item_user.xml ---
+
 class AdminUsersAdapter(
     private var users: List<AdminUserModel>,
     private val onItemClick: (AdminUserModel) -> Unit,
-    private val onDeactivateClick: (AdminUserModel) -> Unit
+    private val onSuspendClick: (AdminUserModel) -> Unit
 ) : RecyclerView.Adapter<AdminUsersAdapter.UserViewHolder>() {
 
     fun updateData(newUsers: List<AdminUserModel>) {
@@ -253,8 +267,7 @@ class AdminUsersAdapter(
         val tvUserEmail: TextView = itemView.findViewById(R.id.tvUserEmail)
         val tvUserJoined: TextView = itemView.findViewById(R.id.tvUserJoined)
         val tvUserRoleBadge: TextView = itemView.findViewById(R.id.tvUserRoleBadge)
-        val btnMessageUser: View? = itemView.findViewById(R.id.btnMessageUser)
-        val btnDeactivate: View? = itemView.findViewById(R.id.btnDeactivate) // Changed from TextView to View to prevent ClassCastException
+        val btnDeactivate: View? = itemView.findViewById(R.id.btnDeactivate)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
@@ -265,22 +278,41 @@ class AdminUsersAdapter(
 
     override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
         val user = users[position]
-        holder.tvUserName.text = user.userName
-        holder.tvUserEmail.text = if (user.email.isNotEmpty()) user.email else "No email provided"
-        holder.tvUserJoined.text = user.dateJoined
-        holder.tvUserRoleBadge.text = user.role
-        holder.tvAvatar.text = if (user.role.equals("Salon Owner", ignoreCase = true)) "💈" else "👤"
+        val context = holder.itemView.context
 
-        // Safely set text/label if it's a TextView or Button, otherwise ignore safely
-        when (val btn = holder.btnDeactivate) {
-            is TextView -> btn.text = if (user.isActive) "Deactivate" else "Activate"
-            is com.google.android.material.button.MaterialButton -> btn.text = if (user.isActive) "Deactivate" else "Activate"
+        holder.tvUserName.text = user.userName
+        holder.tvUserEmail.text = user.email.ifEmpty {
+            context.getString(R.string.admin_no_email)
         }
+        holder.tvUserJoined.text = user.dateJoined
+        holder.tvUserRoleBadge.text = roleLabel(context, user.role)
+        holder.tvAvatar.text = initials(user.userName)
+
+        holder.btnDeactivate?.contentDescription = context.getString(
+            if (user.isSuspended) R.string.admin_activate else R.string.admin_suspend
+        )
 
         holder.itemView.setOnClickListener { onItemClick(user) }
-        holder.btnMessageUser?.setOnClickListener { onItemClick(user) }
-        holder.btnDeactivate?.setOnClickListener { onDeactivateClick(user) }
+        holder.btnDeactivate?.setOnClickListener { onSuspendClick(user) }
     }
 
     override fun getItemCount(): Int = users.size
+
+    private fun initials(name: String): String {
+        val parts = name.trim().split(" ").filter { it.isNotEmpty() }
+        return when {
+            parts.isEmpty() -> "?"
+            parts.size == 1 -> parts[0].take(1).uppercase(Locale.getDefault())
+            else -> (parts[0].take(1) + parts[1].take(1)).uppercase(Locale.getDefault())
+        }
+    }
+
+    private fun roleLabel(context: android.content.Context, role: String): String {
+        return when (role.lowercase(Locale.getDefault())) {
+            "owner" -> context.getString(R.string.admin_role_owner)
+            "admin" -> context.getString(R.string.admin_role_admin)
+            "client" -> context.getString(R.string.admin_role_client)
+            else -> context.getString(R.string.admin_role_unknown)
+        }
+    }
 }

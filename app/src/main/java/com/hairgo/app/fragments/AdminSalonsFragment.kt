@@ -7,15 +7,25 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.DocumentSnapshot
+import com.hairgo.app.R
 import com.hairgo.app.adapters.AdminSalonAdapter
 import com.hairgo.app.databinding.AdminFragmentSalonsBinding
-import com.hairgo.app.utils.MockDataStore
+import com.hairgo.app.models.AdminSalon
+import java.util.Locale
 
 class AdminSalonsFragment : Fragment() {
 
     private var _binding: AdminFragmentSalonsBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: AdminSalonAdapter
+
+    private val db = FirebaseFirestore.getInstance()
+    private var salonListener: ListenerRegistration? = null
+    private val ownerNames = mutableMapOf<String, String>()
+    private val salons = mutableListOf<AdminSalon>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -27,17 +37,122 @@ class AdminSalonsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = AdminSalonAdapter(MockDataStore.salons) { salon ->
-            salon.isActive = false
-            adapter.notifyDataSetChanged()
-            Toast.makeText(requireContext(), "${salon.name} deactivated", Toast.LENGTH_SHORT).show()
+        adapter = AdminSalonAdapter(emptyList()) { salon ->
+            toggleSalonActive(salon)
         }
 
         binding.rvSalons.layoutManager = LinearLayoutManager(requireContext())
         binding.rvSalons.adapter = adapter
+
+        loadOwnerNamesThenSalons()
+    }
+
+    private fun loadOwnerNamesThenSalons() {
+        db.collection("users")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                for (doc in snapshot.documents) {
+                    ownerNames[doc.id] = fullName(doc)
+                }
+                observeSalons()
+            }
+            .addOnFailureListener {
+                observeSalons()
+            }
+    }
+
+    private fun observeSalons() {
+        salonListener?.remove()
+        salonListener = db.collection("salons")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Toast.makeText(
+                        context,
+                        getString(R.string.admin_error_load, error.message ?: ""),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@addSnapshotListener
+                }
+
+                if (snapshot == null) return@addSnapshotListener
+
+                salons.clear()
+                salons.addAll(
+                    snapshot.documents
+                        .filter { it.getBoolean("isDeleted") != true }
+                        .map { toSalon(it) }
+                        .sortedBy { it.name.lowercase(Locale.getDefault()) }
+                )
+
+                adapter.updateData(salons)
+                binding.tvEmptySalons.visibility =
+                    if (salons.isEmpty()) View.VISIBLE else View.GONE
+            }
+    }
+
+    private fun toSalon(doc: DocumentSnapshot): AdminSalon {
+        val ownerId = doc.getString("ownerID")
+            ?: doc.getString("ownerId")
+            ?: ""
+        val services = doc.get("serviceDetails") as? List<*>
+            ?: doc.get("services") as? List<*>
+            ?: emptyList<Any>()
+
+        return AdminSalon(
+            id = doc.id,
+            name = doc.getString("name") ?: getString(R.string.admin_unknown_salon),
+            ownerId = ownerId,
+            ownerName = ownerNames[ownerId] ?: getString(R.string.admin_owner_unknown),
+            area = doc.getString("location")
+                ?: doc.getString("area")
+                ?: "",
+            isActive = doc.getBoolean("isActive") != false,
+            serviceCount = services.size
+        )
+    }
+
+    private fun toggleSalonActive(salon: AdminSalon) {
+        val newValue = !salon.isActive
+        val action = getString(
+            if (newValue) R.string.admin_salon_activated else R.string.admin_salon_deactivated
+        )
+
+        db.collection("salons").document(salon.id)
+            .update("isActive", newValue)
+            .addOnSuccessListener {
+                salon.isActive = newValue
+                adapter.updateData(salons)
+                Toast.makeText(
+                    context,
+                    getString(R.string.admin_salon_status_changed, salon.name, action),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(
+                    context,
+                    getString(R.string.admin_error_action, e.message ?: ""),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+    }
+
+    private fun fullName(doc: DocumentSnapshot): String {
+        val combined = listOf(
+            doc.getString("name").orEmpty(),
+            doc.getString("surname").orEmpty()
+        ).map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .joinToString(" ")
+
+        return combined.ifEmpty {
+            doc.getString("email") ?: getString(R.string.admin_owner_unknown)
+        }
     }
 
     override fun onDestroyView() {
+        salonListener?.remove()
+        salonListener = null
         super.onDestroyView()
         _binding = null
     }

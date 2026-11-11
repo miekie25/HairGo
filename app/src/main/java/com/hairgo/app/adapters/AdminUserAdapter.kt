@@ -11,8 +11,7 @@ import com.hairgo.app.models.UserModel
 class AdminUserAdapter(
     private val users: MutableList<UserModel>,
     private val onPromote: (UserModel) -> Unit,
-    private val onDeactivate: (UserModel) -> Unit,
-    private val onMessage: (UserModel) -> Unit
+    private val onDeactivate: (UserModel) -> Unit
 ) : RecyclerView.Adapter<AdminUserAdapter.AdminUserViewHolder>() {
 
     inner class AdminUserViewHolder(val binding: AdminItemUserBinding) :
@@ -56,7 +55,6 @@ class AdminUserAdapter(
 
         b.btnPromote.setOnClickListener { onPromote(user) }
         b.btnDeactivate.setOnClickListener { onDeactivate(user) }
-        b.btnMessageUser.setOnClickListener { onMessage(user) }
     }
 
     override fun getItemCount() = users.size

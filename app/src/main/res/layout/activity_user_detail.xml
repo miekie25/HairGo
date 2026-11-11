@@ -95,6 +95,14 @@
                         android:textSize="12sp"
                         android:textStyle="bold" />
 
+                    <TextView
+                        android:id="@+id/tvAccountStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -185,24 +193,12 @@
                 android:textStyle="bold" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnMessageUser"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginBottom="10dp"
-                android:text="Message User"
-                android:textAllCaps="false"
-                android:textColor="@color/navy"
-                app:cornerRadius="12dp"
-                app:strokeColor="@color/navy" />
-
-            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnWarning"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginBottom="10dp"
-                android:text="Give Warning"
+                android:text="@string/admin_action_warning"
                 android:textAllCaps="false"
                 android:textColor="@color/navy"
                 app:cornerRadius="12dp"
@@ -214,7 +210,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginBottom="10dp"
-                android:text="Suspend Account"
+                android:text="@string/admin_action_suspend"
                 android:textAllCaps="false"
                 android:textColor="@color/warning_dark"
                 app:cornerRadius="12dp"
@@ -225,7 +221,7 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:text="Delete Account"
+                android:text="@string/admin_action_delete"
                 android:textAllCaps="false"
                 android:textColor="@color/error"
                 app:cornerRadius="12dp"

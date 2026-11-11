@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseUser;
@@ -86,6 +87,10 @@ public class AuthManager {
     public interface ProfileCallback {
         void onSuccess(String name, String role);
         void onFailure(String errorMessage);
+    }
+
+    public interface WarningCallback {
+        void onResult(String note);
     }
 
     // Callback for the early "is this email already taken?" check on the
@@ -176,6 +181,16 @@ public class AuthManager {
 
                     String role = documentSnapshot.getString("role");
 
+                    Boolean isDeleted = documentSnapshot.getBoolean("isDeleted");
+                    Boolean isSuspended = documentSnapshot.getBoolean("isSuspended");
+                    Boolean isActive = documentSnapshot.getBoolean("isActive");
+                    if (Boolean.TRUE.equals(isDeleted)
+                            || Boolean.TRUE.equals(isSuspended)
+                            || Boolean.FALSE.equals(isActive)) {
+                        callback.onResult(false, role);
+                        return;
+                    }
+
                     Boolean required = documentSnapshot.getBoolean(
                             FIELD_EMAIL_VERIFICATION_REQUIRED
                     );
@@ -227,6 +242,13 @@ public class AuthManager {
                         return;
                     }
 
+                    Boolean isSuspended = documentSnapshot.getBoolean("isSuspended");
+                    Boolean isActive = documentSnapshot.getBoolean("isActive");
+                    if (Boolean.TRUE.equals(isSuspended) || Boolean.FALSE.equals(isActive)) {
+                        callback.onFailure("This account has been suspended. Please contact support.");
+                        return;
+                    }
+
                     String name = documentSnapshot.getString("name");
                     String role = documentSnapshot.getString("role");
 
@@ -242,6 +264,71 @@ public class AuthManager {
                                 "Could not load your user profile: " + e.getMessage()
                         )
                 );
+    }
+
+    /**
+     * Returns the admin warning note when it has not been seen yet. Missing
+     * fields mean there is no warning, so older profiles are unaffected.
+     */
+    public void loadUnseenWarning(WarningCallback callback) {
+
+        FirebaseUser firebaseUser = getCurrentUser();
+
+        if (firebaseUser == null) {
+            callback.onResult(null);
+            return;
+        }
+
+        db.collection(Constants.COLLECTION_USERS)
+                .document(firebaseUser.getUid())
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+
+                    if (!documentSnapshot.exists()) {
+                        callback.onResult(null);
+                        return;
+                    }
+
+                    String note = documentSnapshot.getString("lastWarningNote");
+                    if (note == null || note.trim().isEmpty()) {
+                        callback.onResult(null);
+                        return;
+                    }
+
+                    Timestamp seenAt = documentSnapshot.getTimestamp("warningSeenAt");
+                    Timestamp lastWarningAt = documentSnapshot.getTimestamp("lastWarningAt");
+
+                    boolean unseen = seenAt == null
+                            || (lastWarningAt != null && lastWarningAt.compareTo(seenAt) > 0);
+
+                    callback.onResult(unseen ? note.trim() : null);
+                })
+                .addOnFailureListener(e -> callback.onResult(null));
+    }
+
+    /** Marks the current user's warning note as seen. */
+    public void markWarningSeen() {
+        markWarningSeen(null);
+    }
+
+    public void markWarningSeen(OperationCallback callback) {
+
+        FirebaseUser firebaseUser = getCurrentUser();
+
+        if (firebaseUser == null) {
+            if (callback != null) callback.onFailure("Not signed in.");
+            return;
+        }
+
+        db.collection(Constants.COLLECTION_USERS)
+                .document(firebaseUser.getUid())
+                .update("warningSeenAt", FieldValue.serverTimestamp())
+                .addOnSuccessListener(unused -> {
+                    if (callback != null) callback.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onFailure(e.getMessage());
+                });
     }
 
     public void registerUser(String name, String surname, String email, String password,
@@ -335,6 +422,19 @@ public class AuthManager {
                                 if (Boolean.TRUE.equals(isDeleted)) {
                                     callback.onFailure(
                                             "This account has been deactivated."
+                                    );
+                                    return;
+                                }
+
+                                Boolean isSuspended =
+                                        documentSnapshot.getBoolean("isSuspended");
+                                Boolean isActive =
+                                        documentSnapshot.getBoolean("isActive");
+
+                                if (Boolean.TRUE.equals(isSuspended)
+                                        || Boolean.FALSE.equals(isActive)) {
+                                    callback.onFailure(
+                                            "This account has been suspended. Please contact support."
                                     );
                                     return;
                                 }

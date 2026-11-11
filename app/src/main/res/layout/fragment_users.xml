@@ -29,9 +29,9 @@
                 android:layout_width="0dp"
                 android:layout_height="40dp"
                 android:layout_weight="1"
-                android:text="All"
+                android:text="@string/admin_filter_all"
                 android:textAllCaps="false"
-                android:textSize="12.5sp"
+                android:textSize="11sp"
                 app:strokeColor="@color/navy" />
 
             <com.google.android.material.button.MaterialButton
@@ -40,9 +40,9 @@
                 android:layout_width="0dp"
                 android:layout_height="40dp"
                 android:layout_weight="1"
-                android:text="Clients"
+                android:text="@string/admin_filter_clients"
                 android:textAllCaps="false"
-                android:textSize="12.5sp"
+                android:textSize="11sp"
                 app:strokeColor="@color/grey_border" />
 
             <com.google.android.material.button.MaterialButton
@@ -51,9 +51,20 @@
                 android:layout_width="0dp"
                 android:layout_height="40dp"
                 android:layout_weight="1"
-                android:text="Salon Owners"
+                android:text="@string/admin_filter_owners"
                 android:textAllCaps="false"
-                android:textSize="12.5sp"
+                android:textSize="11sp"
+                app:strokeColor="@color/grey_border" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFilterAdmins"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="@string/admin_filter_admins"
+                android:textAllCaps="false"
+                android:textSize="11sp"
                 app:strokeColor="@color/grey_border" />
 
         </com.google.android.material.button.MaterialButtonToggleGroup>
@@ -69,7 +80,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
-                android:text="Sort by:"
+                android:text="@string/admin_sort_by"
                 android:textColor="@color/heading"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -80,7 +91,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                android:text="Date: Newest First ▾"
+                android:text="@string/admin_sort_date_newest"
                 android:textAllCaps="false"
                 android:textColor="@color/navy"
                 android:textSize="13sp"
@@ -105,7 +116,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="32dp"
-        android:text="No users found"
+        android:text="@string/admin_users_empty"
         android:textColor="@color/grey_medium"
         android:textSize="14sp"
         android:visibility="gone" />

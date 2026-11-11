@@ -124,7 +124,7 @@
             android:layout_width="wrap_content"
             android:layout_height="36dp"
             android:layout_gravity="end"
-            android:text="Deactivate account"
+            android:text="@string/admin_action_deactivate_salon"
             android:textAllCaps="false"
             android:textSize="12.5sp"
             app:icon="@drawable/ic_delete"

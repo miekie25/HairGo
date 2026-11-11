@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat;
 import com.google.android.material.textfield.TextInputLayout;
 import com.hairgo.app.R;
 import com.hairgo.app.firebase.AuthManager;
+import com.hairgo.app.utils.WarningDialog;
 
 import java.util.Locale;
 
@@ -104,61 +105,10 @@ public class LoginActivity extends AppCompatActivity {
 
                             setLoading(false);
 
-                            if ("owner".equals(role)) {
-
-                                startActivity(
-                                        new Intent(
-                                                LoginActivity.this,
-                                                OwnerDashboardActivity.class
-                                        )
-                                        // Wipe Welcome/Login so Back exits
-                                        // instead of returning to them.
-                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                                                Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                );
-
-                            } else if ("admin".equals(role)) {
-
-                                startActivity(
-                                        new Intent(
-                                                LoginActivity.this,
-                                                AdminDashboardActivity.class
-                                        )
-                                        // Wipe Welcome/Login so Back exits
-                                        // instead of returning to them.
-                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                                                Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                );
-
-                            } else if ("client".equals(role)) {
-
-                                startActivity(
-                                        new Intent(
-                                                LoginActivity.this,
-                                                ClientDashboardActivity.class
-                                        )
-                                        // Wipe Welcome/Login so Back exits
-                                        // instead of returning to them.
-                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                                                Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                );
-
-                            } else {
-
-                                // Authentication succeeded but there is no
-                                // dashboard for this role. Drop the session,
-                                // otherwise the user is left signed in with no
-                                // way to reach a dashboard or log out.
-                                authManager.signOut();
-
-                                showFormError(
-                                        getString(R.string.login_error_unknown_role)
-                                );
-
-                                return;
-                            }
-
-                            finish();
+                            WarningDialog.showIfUnseen(
+                                    LoginActivity.this,
+                                    () -> routeToDashboard(role)
+                            );
                         }
 
                         @Override
@@ -190,6 +140,60 @@ public class LoginActivity extends AppCompatActivity {
                         )
                 )
         );
+    }
+
+    private void routeToDashboard(String role) {
+
+        if ("owner".equals(role)) {
+
+            startActivity(
+                    new Intent(
+                            LoginActivity.this,
+                            OwnerDashboardActivity.class
+                    )
+                    // Wipe Welcome/Login so Back exits instead of returning
+                    // to them.
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            );
+
+        } else if ("admin".equals(role)) {
+
+            startActivity(
+                    new Intent(
+                            LoginActivity.this,
+                            AdminDashboardActivity.class
+                    )
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            );
+
+        } else if ("client".equals(role)) {
+
+            startActivity(
+                    new Intent(
+                            LoginActivity.this,
+                            ClientDashboardActivity.class
+                    )
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            );
+
+        } else {
+
+            // Authentication succeeded but there is no dashboard for this
+            // role. Drop the session, otherwise the user is left signed in
+            // with no way to reach a dashboard or log out.
+            authManager.signOut();
+
+            showFormError(
+                    getString(R.string.login_error_unknown_role)
+            );
+
+            return;
+        }
+
+        finish();
     }
 
     private void setLoading(boolean loading) {
@@ -333,6 +337,14 @@ public class LoginActivity extends AppCompatActivity {
 
             showFormError(
                     getString(R.string.login_error_too_many_attempts)
+            );
+            return;
+        }
+
+        if (message.contains("suspended")) {
+
+            showFormError(
+                    getString(R.string.login_error_account_suspended)
             );
             return;
         }
