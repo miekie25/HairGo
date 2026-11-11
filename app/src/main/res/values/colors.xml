@@ -66,6 +66,9 @@
     <color name="home_rating_text">#B44A24</color>
     <color name="home_accent">#E8824F</color>
 
+    <!-- Owner profile surface. Matches the client dashboard background in dark mode. -->
+    <color name="owner_profile_bg">#F2F2F2</color>
+
     <!-- Bookings screen only. No grey tones. -->
     <color name="booking_status_pending_bg">#FFF3D6</color>
     <color name="booking_status_pending_text">#8A5A00</color>
