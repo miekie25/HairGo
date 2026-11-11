@@ -15,6 +15,9 @@ public class Salon {
     // Optional map coordinates. Null for salons saved without the map picker.
     private Double latitude;
     private Double longitude;
+    // Distance from the client in metres. Null when either side has no
+    // usable coordinates, or when the salon has no location at all.
+    private Double distanceMetres;
     private int imageRes;
 
     public Salon() {
@@ -62,4 +65,7 @@ public class Salon {
         this.latitude = latitude;
         this.longitude = longitude;
     }
+
+    public Double getDistanceMetres() { return distanceMetres; }
+    public void setDistanceMetres(Double distanceMetres) { this.distanceMetres = distanceMetres; }
 }

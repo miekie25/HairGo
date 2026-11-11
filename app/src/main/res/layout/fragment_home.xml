@@ -91,6 +91,51 @@
 
     </LinearLayout>
 
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/locationBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="@color/home_card_bg"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="3dp"
+        app:strokeWidth="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="14dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/home_location_banner"
+                android:textColor="@color/home_text_primary"
+                android:textSize="13sp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddLocation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:backgroundTint="@color/teal"
+                android:minWidth="0dp"
+                android:text="@string/home_location_banner_action"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                app:cornerRadius="12dp"/>
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
     <TextView
         android:id="@+id/tvHomeSectionTitle"
         android:layout_width="match_parent"

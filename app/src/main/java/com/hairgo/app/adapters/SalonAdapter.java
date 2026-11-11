@@ -59,6 +59,24 @@ public class SalonAdapter extends RecyclerView.Adapter<SalonAdapter.SalonViewHol
         holder.tvSalonLocation.setText(salon.getLocation());
         holder.tvSalonRating.setText(String.format(Locale.getDefault(), "%.1f", salon.getAvgRating()));
 
+        // The distance is only known when both the client and the salon have
+        // usable coordinates, so salons without one simply show no label.
+        Double distanceMetres = salon.getDistanceMetres();
+        if (distanceMetres != null && distanceMetres >= 0) {
+            holder.tvSalonDistance.setVisibility(View.VISIBLE);
+            if (distanceMetres < 1000) {
+                holder.tvSalonDistance.setText(holder.itemView.getContext().getString(
+                        R.string.salon_distance_m, Math.round(distanceMetres)));
+            } else {
+                holder.tvSalonDistance.setText(holder.itemView.getContext().getString(
+                        R.string.salon_distance_km,
+                        String.format(Locale.getDefault(), "%.1f", distanceMetres / 1000.0)));
+            }
+        } else {
+            holder.tvSalonDistance.setVisibility(View.GONE);
+            holder.tvSalonDistance.setText(null);
+        }
+
         // Uploaded photo first, then any local drawables, then the placeholder.
         // Every branch sets the image explicitly so recycled rows cannot show
         // a photo that belongs to a different salon.
@@ -83,7 +101,7 @@ public class SalonAdapter extends RecyclerView.Adapter<SalonAdapter.SalonViewHol
 
     static class SalonViewHolder extends RecyclerView.ViewHolder {
         ShapeableImageView ivSalonPhoto;
-        TextView tvSalonName, tvSalonLocation, tvSalonRating;
+        TextView tvSalonName, tvSalonLocation, tvSalonRating, tvSalonDistance;
 
         SalonViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -91,6 +109,7 @@ public class SalonAdapter extends RecyclerView.Adapter<SalonAdapter.SalonViewHol
             tvSalonName = itemView.findViewById(R.id.tvSalonName);
             tvSalonLocation = itemView.findViewById(R.id.tvSalonLocation);
             tvSalonRating = itemView.findViewById(R.id.tvSalonRating);
+            tvSalonDistance = itemView.findViewById(R.id.tvSalonDistance);
         }
     }
 }
