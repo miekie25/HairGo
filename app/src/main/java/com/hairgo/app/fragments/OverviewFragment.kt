@@ -1,4 +1,4 @@
-package com.hairgo.app.fragments
+﻿package com.hairgo.app.fragments
 
 import android.content.Intent
 import android.os.Bundle
@@ -421,3 +421,6 @@ class OverviewFragment : Fragment() {
         private const val SEVEN_DAYS_MS = 7L * 24L * 60L * 60L * 1000L
     }
 }
+
+
+

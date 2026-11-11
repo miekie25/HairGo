@@ -1,4 +1,4 @@
-package com.hairgo.app.activities
+﻿package com.hairgo.app.activities
 
 import android.os.Bundle
 import android.view.View
@@ -297,3 +297,4 @@ class UserDetailActivity : AppCompatActivity() {
         }
     }
 }
+

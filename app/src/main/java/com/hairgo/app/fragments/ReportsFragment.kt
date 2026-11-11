@@ -1,4 +1,4 @@
-package com.hairgo.app.fragments
+﻿package com.hairgo.app.fragments
 
 import android.content.Intent
 import android.os.Bundle
@@ -271,3 +271,4 @@ class AdminReportsAdapter(
 
     override fun getItemCount(): Int = reports.size
 }
+

@@ -1,4 +1,4 @@
-package com.hairgo.app.fragments
+﻿package com.hairgo.app.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -315,3 +315,4 @@ class AdminBookingsAdapter(
         }
     }
 }
+
