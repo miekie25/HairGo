@@ -27,6 +27,9 @@
     <string name="login_error_no_account">Could not load your account. Please try again.</string>
     <string name="login_error_generic">Something went wrong. Please try again.</string>
 
+    <!-- Email verification (Check your email screen) -->
+    <string name="email_verification_helper">We sent a verification link from HairGo to your email. Open the email, tap the link, then come back here and tap I\'ve verified. Can\'t find it? Check your spam folder. The email may say it is from a Firebase address, this is normal.</string>
+
     <!-- Register Screen -->
     <string-array name="areas_array">
         <item>Soweto</item>
