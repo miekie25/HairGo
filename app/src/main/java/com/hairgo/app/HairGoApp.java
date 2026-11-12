@@ -5,6 +5,7 @@ import android.app.Application;
 
 import com.hairgo.app.firebase.AuthManager;
 import com.hairgo.app.utils.Notifications;
+import com.hairgo.app.utils.OfflineBanner;
 import com.hairgo.app.utils.ThemeManager;
 import com.hairgo.app.utils.LocaleHelper;
 
@@ -13,6 +14,8 @@ public class HairGoApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        OfflineBanner.install(this);
 
         // Force HairGo to use English.
         LocaleHelper.INSTANCE.apply(this, "en");
