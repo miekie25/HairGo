@@ -77,7 +77,7 @@
                     android:layout_marginEnd="24dp"
                     android:fontFamily="sans-serif-black"
                     android:text="Skip the wait."
-                    android:textColor="@color/teal_light"
+                    android:textColor="@color/welcome_hero_accent"
                     android:textSize="36sp" />
 
                 <TextView
@@ -89,7 +89,7 @@
                     android:layout_marginTop="12dp"
                     android:lineSpacingExtra="3dp"
                     android:text="Find salons and barbers near you, see the times that are actually free, and book in seconds."
-                    android:textColor="@color/grey_light"
+                    android:textColor="@color/welcome_hero_subtext"
                     android:textSize="16sp" />
 
                 <!-- Auto-scrolling photo strip -->
@@ -167,7 +167,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="How it works"
-                    android:textColor="@color/navy"
+                    android:textColor="@color/heading"
                     android:textSize="22sp"
                     android:textStyle="bold" />
 
@@ -199,7 +199,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Find your salon"
-                            android:textColor="@color/navy"
+                            android:textColor="@color/heading"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -241,7 +241,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Pick a time"
-                            android:textColor="@color/navy"
+                            android:textColor="@color/heading"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -283,7 +283,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Get confirmed"
-                            android:textColor="@color/navy"
+                            android:textColor="@color/heading"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -313,7 +313,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
                     android:text="Why you'll love HairGo"
-                    android:textColor="@color/navy"
+                    android:textColor="@color/heading"
                     android:textSize="22sp"
                     android:textStyle="bold" />
 
@@ -343,7 +343,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
                             android:text="Live availability"
-                            android:textColor="@color/navy"
+                            android:textColor="@color/heading"
                             android:textSize="15sp"
                             android:textStyle="bold" />
 
@@ -376,7 +376,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
                             android:text="Several services"
-                            android:textColor="@color/navy"
+                            android:textColor="@color/heading"
                             android:textSize="15sp"
                             android:textStyle="bold" />
 
@@ -416,7 +416,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
                             android:text="Reminders"
-                            android:textColor="@color/navy"
+                            android:textColor="@color/heading"
                             android:textSize="15sp"
                             android:textStyle="bold" />
 
@@ -449,7 +449,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
                             android:text="Ratings"
-                            android:textColor="@color/navy"
+                            android:textColor="@color/heading"
                             android:textSize="15sp"
                             android:textStyle="bold" />
 
@@ -477,7 +477,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
                     android:text="Get inspired"
-                    android:textColor="@color/navy"
+                    android:textColor="@color/heading"
                     android:textSize="22sp"
                     android:textStyle="bold" />
 
@@ -524,7 +524,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="Put your business in front of new clients."
-                    android:textColor="@color/teal_light"
+                    android:textColor="@color/welcome_hero_accent"
                     android:textSize="15sp" />
 
                 <TextView
@@ -581,7 +581,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
                     android:text="Ready for your next look?"
-                    android:textColor="@color/navy"
+                    android:textColor="@color/heading"
                     android:textSize="22sp" />
 
                 <TextView
