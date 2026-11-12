@@ -59,7 +59,7 @@
                 android:gravity="center"
                 android:lineSpacingMultiplier="1.2"
                 android:text="@string/login_subtitle"
-                android:textColor="@color/grey_medium"
+                android:textColor="@color/auth_text_secondary"
                 android:textSize="14sp" />
 
             <!-- Form surface -->
@@ -137,8 +137,8 @@
                             android:imeOptions="actionNext"
                             android:inputType="textEmailAddress"
                             android:maxLines="1"
-                            android:textColor="@color/grey_dark"
-                            android:textColorHint="@color/grey_medium"
+                            android:textColor="@color/auth_text_input"
+                            android:textColorHint="@color/auth_text_hint"
                             android:textSize="16sp" />
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -175,8 +175,8 @@
                             android:imeOptions="actionDone"
                             android:inputType="textPassword"
                             android:maxLines="1"
-                            android:textColor="@color/grey_dark"
-                            android:textColorHint="@color/grey_medium"
+                            android:textColor="@color/auth_text_input"
+                            android:textColorHint="@color/auth_text_hint"
                             android:textSize="16sp" />
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -196,7 +196,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="8dp"
                             android:text="Or sign in with fingerprint"
-                            android:textColor="@color/grey_medium"
+                            android:textColor="@color/auth_text_secondary"
                             android:textSize="13sp" />
 
                         <ImageView
@@ -250,7 +250,7 @@
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="14dp"
                 android:text="@string/no_account"
-                android:textColor="@color/grey_medium"
+                android:textColor="@color/auth_text_secondary"
                 android:textSize="14sp" />
 
         </LinearLayout>

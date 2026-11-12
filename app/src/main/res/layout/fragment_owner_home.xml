@@ -19,6 +19,16 @@
             android:text="Good morning"
             android:textColor="@color/home_text_primary"
             android:textSize="20sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvOwnerPageTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Salon overview"
+            android:textColor="@color/home_text_primary"
+            android:textSize="24sp"
             android:textStyle="bold" />
 
         <TextView
@@ -585,7 +595,7 @@
                     android:layout_height="wrap_content"
                     android:text="Quick actions"
                     android:textColor="@color/home_text_primary"
-                    android:textSize="16sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
                 <com.google.android.material.button.MaterialButton
@@ -597,7 +607,7 @@
                     android:textColor="@color/white"
                     android:textAllCaps="false"
                     android:textStyle="bold"
-                    app:backgroundTint="@color/navy"
+                    app:backgroundTint="@color/teal"
                     app:cornerRadius="16dp" />
 
             </LinearLayout>

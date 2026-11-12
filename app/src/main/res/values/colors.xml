@@ -69,6 +69,17 @@
     <!-- Owner profile surface. Matches the client dashboard background in dark mode. -->
     <color name="owner_profile_bg">#F2F2F2</color>
 
+    <!-- Welcome screen hero text. The hero always uses a dark gradient, so these
+         stay light in both light and dark mode. -->
+    <color name="welcome_hero_subtext">#F2F2F2</color>
+    <color name="welcome_hero_accent">#CCF2EC</color>
+
+    <!-- Login / Forgot Password only. Light values match the previous
+         grey_medium / grey_dark tones; night values are lightened for contrast. -->
+    <color name="auth_text_secondary">#8A8A8A</color>
+    <color name="auth_text_hint">#8A8A8A</color>
+    <color name="auth_text_input">#333333</color>
+
     <!-- Bookings screen only. No grey tones. -->
     <color name="booking_status_pending_bg">#FFF3D6</color>
     <color name="booking_status_pending_text">#8A5A00</color>

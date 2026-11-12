@@ -49,6 +49,11 @@
     <!-- Owner profile surface. Matches the client dashboard background in dark mode. -->
     <color name="owner_profile_bg">#0D1828</color>
 
+    <!-- Login / Forgot Password text. -->
+    <color name="auth_text_secondary">#C7CDD3</color>
+    <color name="auth_text_hint">#AEB4BA</color>
+    <color name="auth_text_input">#E6E6E6</color>
+
     <!-- Bookings screen only. Soft tints on deep navy, no grey. -->
     <color name="booking_status_pending_bg">#3A3020</color>
     <color name="booking_status_pending_text">#FFD48A</color>
