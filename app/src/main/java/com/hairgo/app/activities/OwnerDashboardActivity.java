@@ -61,6 +61,10 @@ public class OwnerDashboardActivity extends AppCompatActivity {
     private boolean promptedForSalon = false;
     /** One-shot filter for the next Bookings tab opening (set by the home stat cards). */
     private int pendingBookingsFilter = -1;
+    /** One-shot focus for the next Reports tab opening (set by the home payment cards). */
+    private int pendingReportsFocus = OwnerReportsFragment.FOCUS_NONE;
+    /** One-shot period for the next Reports tab opening, or -1 to use the default. */
+    private int pendingReportsPeriod = -1;
 
     /** Opens the map picker from the add-salon dialog. */
     private ActivityResultLauncher<Intent> locationPickerLauncher;
@@ -248,6 +252,19 @@ public class OwnerDashboardActivity extends AppCompatActivity {
             }
         } else if (tabId == R.id.nav_owner_reports) {
             fragment = new OwnerReportsFragment();
+            if (pendingReportsPeriod != -1
+                    || pendingReportsFocus != OwnerReportsFragment.FOCUS_NONE) {
+                Bundle args = new Bundle();
+                if (pendingReportsPeriod != -1) {
+                    args.putInt(OwnerReportsFragment.ARG_PERIOD, pendingReportsPeriod);
+                }
+                if (pendingReportsFocus != OwnerReportsFragment.FOCUS_NONE) {
+                    args.putInt(OwnerReportsFragment.ARG_FOCUS, pendingReportsFocus);
+                }
+                fragment.setArguments(args);
+            }
+            pendingReportsPeriod = -1;
+            pendingReportsFocus = OwnerReportsFragment.FOCUS_NONE;
         } else if (tabId == R.id.nav_owner_messages) {
             fragment = MessagesFragment.newInstance(true);
         } else if (tabId == R.id.nav_owner_profile) {
@@ -265,6 +282,12 @@ public class OwnerDashboardActivity extends AppCompatActivity {
     /** Pre-selects a filter for the next time the Bookings tab opens. */
     public void setPendingBookingsFilter(int filter) {
         pendingBookingsFilter = filter;
+    }
+
+    /** Pre-selects a period and focus for the next time the Reports tab opens. */
+    public void setPendingReportsFocus(int focus, int period) {
+        pendingReportsFocus = focus;
+        pendingReportsPeriod = period;
     }
 
     private void updateSalonPicker() {

@@ -364,6 +364,7 @@
     <string name="reports_subtitle">View payment summaries by period</string>
     <string name="report_period_today">Today</string>
     <string name="report_period_this_month">This Month</string>
+    <string name="report_period_all_time">All Time</string>
     <string name="reports_booking_summary">Booking Summary</string>
     <string name="reports_payment_summary">Payment Summary</string>
     <string name="reports_payment_breakdown">Payment Method Breakdown</string>
@@ -371,6 +372,7 @@
     <string name="reports_bookings_outstanding">Bookings with outstanding</string>
     <string name="reports_amount_paid">Amount paid</string>
     <string name="reports_outstanding_balance">Outstanding balance</string>
+    <string name="reports_focus_message">Showing all-time figures for %1$s</string>
     <string name="reports_card_payments">Simulated card payments</string>
     <string name="reports_cash_payments">Owner-recorded cash</string>
     <string name="reports_card_payments_note">Includes deposits &amp; full payments</string>

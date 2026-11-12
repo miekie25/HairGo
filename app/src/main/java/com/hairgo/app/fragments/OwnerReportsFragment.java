@@ -10,6 +10,7 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -25,6 +26,7 @@ import com.hairgo.app.firebase.BookingManager;
 import com.hairgo.app.models.OwnerBooking;
 import com.hairgo.app.models.PaymentDetails;
 import com.hairgo.app.utils.OwnerSession;
+import com.hairgo.app.utils.Snackbars;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -35,9 +37,23 @@ import java.util.Map;
 
 public class OwnerReportsFragment extends Fragment {
 
+    public static final String ARG_PERIOD = "arg_period";
+    public static final String ARG_FOCUS = "arg_focus";
+
+    public static final int PERIOD_TODAY = 0;
+    public static final int PERIOD_THIS_MONTH = 1;
+    public static final int PERIOD_ALL_TIME = 2;
+
+    public static final int FOCUS_NONE = 0;
+    public static final int FOCUS_TOTAL_VALUE = 1;
+    public static final int FOCUS_BOOKINGS_OUTSTANDING = 2;
+    public static final int FOCUS_AMOUNT_PAID = 3;
+    public static final int FOCUS_OUTSTANDING_BALANCE = 4;
+
     private BookingManager bookingManager;
     private String salonId;
     private int currentPeriod = PERIOD_TODAY;
+    private int pendingFocus = FOCUS_NONE;
 
     private ReviewAdapter reviewAdapter;
     private RecyclerView rvReviews;
@@ -51,9 +67,6 @@ public class OwnerReportsFragment extends Fragment {
     private final List<ReviewLoader.Item> loadedReviews = new ArrayList<>();
     private final List<com.hairgo.app.models.PaymentRecord> loadedPayments = new ArrayList<>();
 
-    public static final int PERIOD_TODAY = 0;
-    public static final int PERIOD_THIS_MONTH = 1;
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -65,6 +78,18 @@ public class OwnerReportsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         bookingManager = new BookingManager();
+
+        Bundle args = getArguments();
+        if (args != null) {
+            int requestedPeriod = args.getInt(ARG_PERIOD, PERIOD_TODAY);
+            if (requestedPeriod == PERIOD_TODAY
+                    || requestedPeriod == PERIOD_THIS_MONTH
+                    || requestedPeriod == PERIOD_ALL_TIME) {
+                currentPeriod = requestedPeriod;
+            }
+            pendingFocus = args.getInt(ARG_FOCUS, FOCUS_NONE);
+        }
+
         setupPeriodSelector(view);
 
         rvReviews = view.findViewById(R.id.rvReviews);
@@ -98,15 +123,26 @@ public class OwnerReportsFragment extends Fragment {
         chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.isEmpty()) return;
             int selectedId = checkedIds.get(0);
-            int newPeriod = selectedId == R.id.chipToday ? PERIOD_TODAY : PERIOD_THIS_MONTH;
+            int newPeriod;
+            if (selectedId == R.id.chipToday) {
+                newPeriod = PERIOD_TODAY;
+            } else if (selectedId == R.id.chipThisMonth) {
+                newPeriod = PERIOD_THIS_MONTH;
+            } else {
+                newPeriod = PERIOD_ALL_TIME;
+            }
             if (newPeriod != currentPeriod) {
                 currentPeriod = newPeriod;
+                pendingFocus = FOCUS_NONE;
                 refreshReports();
             }
         });
 
         // Set initial selection
-        chipGroup.check(currentPeriod == PERIOD_TODAY ? R.id.chipToday : R.id.chipThisMonth);
+        int initialChip = currentPeriod == PERIOD_TODAY
+                ? R.id.chipToday
+                : currentPeriod == PERIOD_THIS_MONTH ? R.id.chipThisMonth : R.id.chipAllTime;
+        chipGroup.check(initialChip);
     }
 
     private void refreshReports() {
@@ -168,6 +204,7 @@ public class OwnerReportsFragment extends Fragment {
             @Override
             public void onFailure(String errorMessage) {
                 if (!isAdded() || getView() == null) return;
+                pendingFocus = FOCUS_NONE;
                 View view = getView();
                 view.findViewById(R.id.progressReports).setVisibility(View.GONE);
                 view.findViewById(R.id.tvEmptyReports).setVisibility(View.VISIBLE);
@@ -199,19 +236,19 @@ public class OwnerReportsFragment extends Fragment {
             if (booking == null) continue;
 
             Date bookingDate = booking.getDateTime();
-            if (bookingDate == null) continue;
+            if (bookingDate == null && currentPeriod != PERIOD_ALL_TIME) continue;
 
-            boolean inPeriod;
-            if (currentPeriod == PERIOD_TODAY) {
+            boolean inPeriod = currentPeriod == PERIOD_ALL_TIME;
+            if (!inPeriod) {
                 Calendar bc = Calendar.getInstance();
                 bc.setTime(bookingDate);
-                inPeriod = bc.get(Calendar.YEAR) == currentYear
-                        && bc.get(Calendar.DAY_OF_YEAR) == cal.get(Calendar.DAY_OF_YEAR);
-            } else {
-                Calendar bc = Calendar.getInstance();
-                bc.setTime(bookingDate);
-                inPeriod = bc.get(Calendar.YEAR) == currentYear
-                        && bc.get(Calendar.MONTH) == currentMonth;
+                if (currentPeriod == PERIOD_TODAY) {
+                    inPeriod = bc.get(Calendar.YEAR) == currentYear
+                            && bc.get(Calendar.DAY_OF_YEAR) == cal.get(Calendar.DAY_OF_YEAR);
+                } else {
+                    inPeriod = bc.get(Calendar.YEAR) == currentYear
+                            && bc.get(Calendar.MONTH) == currentMonth;
+                }
             }
 
             if (!inPeriod) continue;
@@ -239,7 +276,9 @@ public class OwnerReportsFragment extends Fragment {
                         Calendar pc = Calendar.getInstance();
                         pc.setTime(paymentDate);
                         boolean paymentInPeriod;
-                        if (currentPeriod == PERIOD_TODAY) {
+                        if (currentPeriod == PERIOD_ALL_TIME) {
+                            paymentInPeriod = true;
+                        } else if (currentPeriod == PERIOD_TODAY) {
                             paymentInPeriod = pc.get(Calendar.YEAR) == currentYear
                                     && pc.get(Calendar.DAY_OF_YEAR) == cal.get(Calendar.DAY_OF_YEAR);
                         } else {
@@ -283,7 +322,9 @@ public class OwnerReportsFragment extends Fragment {
                     Calendar pc = Calendar.getInstance();
                     pc.setTime(paymentDate);
                     boolean paymentInPeriod;
-                    if (currentPeriod == PERIOD_TODAY) {
+                    if (currentPeriod == PERIOD_ALL_TIME) {
+                        paymentInPeriod = true;
+                    } else if (currentPeriod == PERIOD_TODAY) {
                         paymentInPeriod = pc.get(Calendar.YEAR) == currentYear
                                 && pc.get(Calendar.DAY_OF_YEAR) == cal.get(Calendar.DAY_OF_YEAR);
                     } else {
@@ -470,10 +511,55 @@ public class OwnerReportsFragment extends Fragment {
 
         if (data.totalBookingsInPeriod == 0) {
             showEmptyState();
+        } else {
+            applyPendingFocus(view);
         }
     }
 
+    private void applyPendingFocus(View view) {
+        if (pendingFocus == FOCUS_NONE) return;
+
+        int focus = pendingFocus;
+        pendingFocus = FOCUS_NONE;
+
+        int sectionId;
+        int labelRes;
+        switch (focus) {
+            case FOCUS_TOTAL_VALUE:
+                sectionId = R.id.tvBookingSummaryLabel;
+                labelRes = R.string.reports_total_value;
+                break;
+            case FOCUS_BOOKINGS_OUTSTANDING:
+                sectionId = R.id.tvBookingSummaryLabel;
+                labelRes = R.string.reports_bookings_outstanding;
+                break;
+            case FOCUS_AMOUNT_PAID:
+                sectionId = R.id.tvPaymentSummaryLabel;
+                labelRes = R.string.reports_amount_paid;
+                break;
+            case FOCUS_OUTSTANDING_BALANCE:
+                sectionId = R.id.tvPaymentSummaryLabel;
+                labelRes = R.string.reports_outstanding_balance;
+                break;
+            default:
+                return;
+        }
+
+        final int focusLabelRes = labelRes;
+        View section = view.findViewById(sectionId);
+        if (!(view instanceof NestedScrollView) || section == null) return;
+
+        NestedScrollView scroll = (NestedScrollView) view;
+        scroll.post(() -> {
+            if (!isAdded() || getView() == null) return;
+            scroll.smoothScrollTo(0, Math.max(0, section.getTop()));
+            Snackbars.show(scroll, getString(R.string.reports_focus_message,
+                    getString(focusLabelRes)));
+        });
+    }
+
     private void showEmptyState() {
+        pendingFocus = FOCUS_NONE;
         View view = getView();
         if (view == null) return;
         view.findViewById(R.id.progressReports).setVisibility(View.GONE);

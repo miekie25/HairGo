@@ -156,11 +156,28 @@ public class OwnerHomeFragment extends Fragment {
                 openBookingsWithFilter(OwnerBookingsFragment.FILTER_UPCOMING));
         view.findViewById(R.id.cardCompleted).setOnClickListener(v ->
                 openBookingsWithFilter(OwnerBookingsFragment.FILTER_COMPLETED));
+
+        // Each payment card opens the Reports tab focused on its all-time summary.
+        view.findViewById(R.id.cardTotalValue).setOnClickListener(v ->
+                openReportsWithFocus(OwnerReportsFragment.FOCUS_TOTAL_VALUE));
+        view.findViewById(R.id.cardAmountPaid).setOnClickListener(v ->
+                openReportsWithFocus(OwnerReportsFragment.FOCUS_AMOUNT_PAID));
+        view.findViewById(R.id.cardOutstandingBalance).setOnClickListener(v ->
+                openReportsWithFocus(OwnerReportsFragment.FOCUS_OUTSTANDING_BALANCE));
+        view.findViewById(R.id.cardBookingsWithOutstanding).setOnClickListener(v ->
+                openReportsWithFocus(OwnerReportsFragment.FOCUS_BOOKINGS_OUTSTANDING));
     }
 
     private void openBookingsWithFilter(int filter) {
         ((OwnerDashboardActivity) requireActivity()).setPendingBookingsFilter(filter);
         BottomNavigationView nav = requireActivity().findViewById(R.id.ownerBottomNav);
         nav.setSelectedItemId(R.id.nav_owner_bookings);
+    }
+
+    private void openReportsWithFocus(int focus) {
+        ((OwnerDashboardActivity) requireActivity()).setPendingReportsFocus(
+                focus, OwnerReportsFragment.PERIOD_ALL_TIME);
+        BottomNavigationView nav = requireActivity().findViewById(R.id.ownerBottomNav);
+        nav.setSelectedItemId(R.id.nav_owner_reports);
     }
 }
