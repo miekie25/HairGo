@@ -92,7 +92,8 @@
                 android:text="Message"
                 android:textColor="@color/white"
                 android:backgroundTint="@color/teal_primary"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                app:cornerRadius="12dp" />
 
             <Button
                 android:id="@+id/btnDecline"
@@ -107,7 +108,8 @@
                 android:text="Decline"
                 android:textColor="@color/white"
                 android:backgroundTint="@color/error"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                app:cornerRadius="12dp" />
 
             <Button
                 android:id="@+id/btnConfirm"
@@ -122,7 +124,8 @@
                 android:text="Confirm"
                 android:textColor="@color/white"
                 android:backgroundTint="@color/teal"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                app:cornerRadius="12dp" />
         </LinearLayout>
 
         <Button
@@ -133,7 +136,8 @@
             android:text="@string/btn_message_client"
             android:textColor="@color/white"
             android:backgroundTint="@color/teal_primary"
-            android:textSize="13sp" />
+            android:textSize="13sp"
+            app:cornerRadius="12dp" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

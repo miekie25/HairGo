@@ -225,6 +225,7 @@
                     android:textAllCaps="false"
                     android:textColor="@color/white"
                     android:textSize="16sp"
+                    android:textStyle="bold"
                     app:cornerRadius="12dp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -460,6 +461,7 @@
             android:textAllCaps="false"
             android:textColor="@color/error"
             android:textSize="16sp"
+            android:textStyle="bold"
             app:cornerRadius="12dp"
             app:strokeColor="@color/error"
             app:strokeWidth="1dp" />
