@@ -118,15 +118,17 @@ class AdminBookingsFragment : Fragment() {
         db.collection("bookings")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Toast.makeText(
-                        context,
-                        getString(R.string.admin_error_load, error.message ?: ""),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    context?.let { ctx ->
+                        Toast.makeText(
+                            ctx,
+                            getString(R.string.admin_error_load, error.message ?: ""),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                     return@addSnapshotListener
                 }
 
-                if (snapshot == null) return@addSnapshotListener
+                if (snapshot == null || !isAdded) return@addSnapshotListener
 
                 allBookingsList.clear()
                 allBookingsList.addAll(

@@ -89,4 +89,11 @@ dependencies {
 
     // OpenStreetMap map tiles for the location picker
     implementation("org.osmdroid:osmdroid-android:6.1.20")
+    // Glide for image loading and full-screen previews
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+    // Biometric authentication (Fingerprint / Face ID)
+    implementation("androidx.biometric:biometric:1.1.0")
+    // AndroidX Security for encrypted SharedPreferences
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }

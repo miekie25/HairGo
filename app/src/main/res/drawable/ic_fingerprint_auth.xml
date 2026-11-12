@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+
+    <!-- Circular button background -->
+    <path
+        android:fillColor="@color/teal"
+        android:pathData="M2,48a46,46 0 1,0 92,0a46,46 0 1,0 -92,0z" />
+
+    <!-- Scan frame: four rounded corner brackets -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M20,32V26A6,6 0 0,1 26,20H32 M64,20H70A6,6 0 0,1 76,26V32 M76,64V70A6,6 0 0,1 70,76H64 M32,76H26A6,6 0 0,1 20,70V64" />
+
+    <!-- Fingerprint ridges -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M30,60V48A18,18 0 0,1 66,48V54 M35,65V48A13,13 0 0,1 61,48V62 M40,67V48A8,8 0 0,1 56,48V64 M48,50V62" />
+
+</vector>

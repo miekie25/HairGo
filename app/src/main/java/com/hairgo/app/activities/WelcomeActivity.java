@@ -157,6 +157,9 @@ public class WelcomeActivity extends AppCompatActivity {
     // ------------------------------------------------------------------ motion
 
     /** The hero builds itself on screen, one piece after another. */
+    /**
+     * The hero builds itself on screen, one piece after another.
+     */
     private void playHeroEntrance() {
         View[] pieces = {
                 findViewById(R.id.heroBrandRow),
@@ -180,7 +183,9 @@ public class WelcomeActivity extends AppCompatActivity {
         }
     }
 
-    /** Each section below the hero slides up and fades in the first time it scrolls into view. */
+    /**
+     * Each section below the hero slides up and fades in the first time it scrolls into view.
+     */
     private void setupScrollReveal() {
         final NestedScrollView scroll = findViewById(R.id.scrollContent);
         final View[] sections = {
@@ -194,6 +199,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
         final float density = getResources().getDisplayMetrics().density;
         final float rise = 36 * density;
+
         for (View section : sections) {
             section.setAlpha(0f);
             section.setTranslationY(rise);

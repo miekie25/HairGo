@@ -1,0 +1,661 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- App -->
+    <string name="app_name">HairGo</string>
+
+    <!-- Login Screen -->
+    <string name="login_title">Wamukelekile futhi</string>
+    <string name="login_subtitle">Ngena ukuze uqhubeke</string>
+    <string name="hint_email">I-imeyili</string>
+    <string name="hint_password">Iphasiwedi</string>
+    <string name="btn_login">Ngena</string>
+    <string name="forgot_password">Ukhohlwe iphasiwedi?</string>
+    <string name="no_account">Awunayo i-akhawunti? Bhalisa</string>
+    <string name="hint_email_required">Faka ikheli lakho le-imeyili</string>
+    <string name="hint_email_invalid">Faka ikheli le-imeyili elisebenzayo</string>
+    <string name="hint_password_required">Faka iphasiwedi yakho</string>
+    <string name="incorrect_password">Iphasiwedi ayilungile</string>
+    <string name="btn_logging_in">Kungenwa…</string>
+    <string name="login_error_invalid_credentials">I-imeyili noma iphasiwedi ayilungile</string>
+    <string name="login_error_network">Ayikwazanga ukuxhumana neseva. Hlola uxhumano lwakho bese uzama futhi.</string>
+    <string name="login_error_too_many_attempts">Imizamo eminingi kakhulu. Sicela uzame futhi kamuva.</string>
+    <string name="login_error_account_disabled">Le akhawunti imisiwe. Sicela uxhumane nosekelo.</string>
+    <string name="login_error_unknown_role">Asikwazanga ukuthola uhlobo lwe-akhawunti yakho. Sicela uxhumane nosekelo.</string>
+    <string name="login_error_profile_not_found">Asikwazanga ukuthola iphrofayela ye-akhawunti yakho. Sicela ubhalise futhi.</string>
+    <string name="login_error_role_missing">Uhlobo lwe-akhawunti yakho alukho. Sicela uxhumane nosekelo.</string>
+    <string name="login_error_no_account">Ayikwazanga ukulayisha i-akhawunti yakho. Sicela uzame futhi.</string>
+    <string name="login_error_generic">Kukhona okungahambanga kahle. Sicela uzame futhi.</string>
+
+    <!-- Email verification (Check your email screen) -->
+    <string name="email_verification_helper">Sithumele isixhumanisi sokuqinisekisa esivela ku-HairGo ku-imeyili yakho. Vula i-imeyili, cindezela isixhumanisi, bese ubuya lapha ucindezele Okokuqinisekisiwe. Awukutholi? Hlola ifolda yakho yogaxekile (spam). I-imeyili ingase isho ukuthi ivela ekhelini le-Firebase, lokhu kujwayelekile.</string>
+
+    <!-- Register Screen -->
+    <string-array name="areas_array">
+        <item>Soweto</item>
+        <item>Alexandra</item>
+        <item>Tembisa</item>
+        <item>Dobsonville</item>
+        <item>Mabopane</item>
+        <item>Soshanguve</item>
+        <item>Mamelodi</item>
+        <item>Atteridgeville</item>
+        <item>Khayelitsha</item>
+        <item>Gugulethu</item>
+        <item>Umlazi</item>
+        <item>KwaMashu</item>
+    </string-array>
+
+    <string-array name="languages_array">
+        <item>English</item>
+        <item>isiZulu</item>
+    </string-array>
+
+    <!-- Forgot Password -->
+    <string name="back">Emuva</string>
+    <string name="forgot_password_title">Ukhohlwe iphasiwedi?</string>
+    <string name="forgot_password_subtitle">Faka ikheli lakho le-imeyili ukuze usethe kabusha iphasiwedi yakho.</string>
+    <string name="email_address">I-imeyili</string>
+    <string name="back_to_login">Buyela ekungeneni</string>
+    <string name="send_reset_link">Thumela Isixhumanisi Sokusetha Kabusha</string>
+    <string name="forgot_error_not_configured">Ukusetha kabusha iphasiwedi akutholakali okwamanje. Sicela uxhumane nosekelo.</string>
+    <string name="forgot_success">Uma kukhona i-akhawunti yaleli kheli le-imeyili, isixhumanisi sokusetha kabusha iphasiwedi siyasiza.</string>
+    <string name="btn_sending">Kuthunyelwa…</string>
+
+    <!-- Client Dashboard & Booking -->
+    <string name="nav_home">Ekhaya</string>
+    <string name="nav_bookings">Okubhaliwe</string>
+    <string name="nav_profile">Iphrofayela</string>
+    <string name="dashboard_welcome_default">Wamukelekile futhi</string>
+    <string name="home_greeting">Ulungele ukubukeka okusha?</string>
+    <string name="home_popular_salons">Izitendi ezidumile</string>
+    <string name="title_home">Thola Isitendi Sezinwele</string>
+    <string name="home_subtitle">Sesha isitendi bese wenza ukubhuka</string>
+    <string name="hint_search_salons">Sesha izitendi noma izindawo</string>
+    <string name="no_salons_found">Azikho izitendi ezitholakele</string>
+    <string name="home_location_banner">Engeza indawo yakho ukuze ubone izitendi eziseduze nawe</string>
+    <string name="home_location_banner_action">Engeza indawo</string>
+    <string name="salon_distance_km">Kuqhele ngamakhilomitha angu-%1$s</string>
+    <string name="salon_distance_m">Kuqhele ngamamitha angu-%1$d</string>
+    <string name="salon_photo_desc">Isithombe sesitendi</string>
+    <string name="section_services">Izinsizakalo</string>
+    <string name="salon_not_found">Isitendi asitholakali.</string>
+    <string name="salon_next_available">Okulandelayo okutholakalayo: %1$s</string>
+    <string name="salon_no_available_slots">Azikho izikhathi ezitholakalayo ezinsukwini ezingu-%d ezizayo.</string>
+    <string name="closed_day_title">Isitendi Sivalile</string>
+    <string name="closed_day_message">Isitendi sivalile ngo-%s. Sicela ukhethe olunye usuku.</string>
+    <string name="btn_book_now">Bhuka Manje</string>
+    <string name="title_book_appointment">Bhuka Isikhathi</string>
+    <string name="label_select_service">Khetha izinsizakalo</string>
+    <string name="select_services_title">Khetha izinsizakalo</string>
+    <string name="hint_choose_services">Khetha insizakalo eyodwa noma ngaphezulu</string>
+    <string name="label_select_date">Khetha usuku</string>
+    <string name="label_select_time">Khetha isikhathi</string>
+    <string name="hint_choose_date">Khetha usuku</string>
+    <string name="hint_choose_time">Khetha isikhathi</string>
+    <string name="btn_confirm_booking">Qinisekisa Ukubhuka</string>
+    <string name="error_incomplete_booking">Sicela ukhethe insizakalo, usuku, nesikhathi.</string>
+    <string name="error_past_datetime">Sicela ukhethe usuku nesikhathi sesikhathi esizayo.</string>
+    <string name="error_notice_period">Ukubhuka kumele kwenziwe okungenani imizuzu engu-%d ngaphambi kwesikhathi.</string>
+    <string name="error_outside_hours">Isitendi asisavuliwe ngaleso sikhathi. Sicela ukhethe olunye usuku nesikhathi.</string>
+    <string name="booking_demo_success">Isicelo sokubhuka sithunyelwe — lokhu kungumbukiso, umqondo wangempela wokubhuka uza esigabeni sesi-2.</string>
+    <string name="title_my_bookings">Okubhaliwe Kwami</string>
+    <string name="bookings_subtitle">Ama-aphoyintimenti akho azayo nawasedlule</string>
+    <string name="section_upcoming">Azayo</string>
+    <string name="section_past">Asedlule</string>
+    <string name="no_bookings_found">Akukho okubhaliwe okwamanje</string>
+    <string name="filter_bookings_all">Konke</string>
+    <string name="filter_bookings_today">Namuhla</string>
+    <string name="filter_bookings_upcoming">Azayo</string>
+    <string name="filter_bookings_past">Asedlule</string>
+    <string name="no_today_bookings">Akukho okubhaliwe namuhla</string>
+    <string name="no_upcoming_bookings">Azikho izincwadi ezizayo</string>
+    <string name="no_past_bookings">Akukho okubhaliwe kwasedlule</string>
+    <string name="title_booking_details">Imininingwane Yokubhuka</string>
+    <string name="label_service">Insizakalo</string>
+    <string name="label_date_time">Usuku &amp; Isikhathi</string>
+    <string name="total">Konke</string>
+    <string name="label_location">Indawo</string>
+    <string name="maps_open_location">Vula ku-Google Maps</string>
+    <string name="maps_app_not_found">Ayikho i-app etholakalayo ukuze uvule le ndawo</string>
+    <string name="btn_cancel_booking">Khansela Ukubhuka</string>
+    <string name="cancel_booking_confirm_title">Uyakukhansela lokhu kubhuka?</string>
+    <string name="cancel_booking_confirm_message">Lokhu kuzokwazisa isitendi ukuthi ngeke ukwazi ukuza. Lokhu ngeke kubuyiselwe emuva.</string>
+    <string name="btn_keep_booking">Gcina Ukubhuka</string>
+
+    <string name="booking_cancelled_demo">Ukubhuka kukhanseliwe — lokhu kungumbukiso, ukususwa kwangempela kuza esigabeni sesi-2.</string>
+    <string name="booking_cancelled">Ukubhuka kukhanseliwe.</string>
+    <string name="booking_cancel_failed">Ayikwazanga ukukhansela ukubhuka: %1$s</string>
+
+    <!-- Client payments -->
+    <string name="payment_choice_title">Khetha inkokhelo</string>
+    <string name="payment_card_unavailable_unpriced">Izinkokhelo zekhadi azitholakali ngoba lokhu kubhuka kungenayo intengo ephelele. Ungakhokha ngokheshi esitendini.</string>
+    <string name="payment_deposit_option">Khokha idiphozithi ka-10%% ngekhadi — R%1$s manje, R%2$s esitendini</string>
+    <string name="payment_full_option">Khokha inani eliphelele ngekhadi — R%1$s</string>
+    <string name="payment_cash_option">Khokha inani eliphelele ngokheshi esitendini — R%1$s</string>
+    <string name="payment_cash_option_unknown">Khokha inani eliphelele ngokheshi esitendini</string>
+    <string name="payment_failed_no_booking">Inkokhelo yehlulekile. Akukho lutho olukhokhelisiwe.</string>
+    <string name="payment_summary_label">Inkokhelo</string>
+    <string name="payment_badge_deposit">Idiphozithi Ikhokhiwe</string>
+    <string name="payment_badge_full">Kukhokhelwe Ngokugcwele</string>
+    <string name="payment_badge_cash">Ukheshi Esitendini</string>
+    <string name="payment_deposit_summary">Idiphozithi ekhokhiwe: R%1$s\nOkusele: R%2$s</string>
+    <string name="payment_full_summary">Kukhokhelwe ngokugcwele ngekhadi: R%1$s</string>
+    <string name="payment_status_unknown">Isimo senkokhelo asaziwa</string>
+    <string name="payment_cash_summary">Ukheshi okumele ukhokhwe esitendini: R%1$s</string>
+    <string name="payment_cash_summary_unknown">Ukheshi okumele ukhokhwe esitendini</string>
+    <string name="payment_deposit_summary_owner">Inkokhelo yekomidi yekhadi — Idiphozithi ekhokhiwe: R%1$s\nOkusele: R%2$s</string>
+    <string name="payment_full_summary_owner">Inkokhelo yekomidi yekhadi — Kukhokhelwe ngokugcwele: R%1$s</string>
+    <string name="btn_record_cash_payment">Qopha Inkokhelo Yokheshi</string>
+    <string name="title_record_cash_payment">Qopha Inkokhelo Yokheshi</string>
+    <string name="message_record_cash_payment">Ibhalansi esasele: R%1$s\n\nFaka inani lokheshi elamukelwe kumakhasimende:</string>
+    <string name="hint_cash_amount">Inani (R)</string>
+    <string name="error_cash_amount_required">Faka inani.</string>
+    <string name="error_cash_amount_invalid">Faka inani elilungile.</string>
+    <string name="error_cash_amount_exceeds_outstanding">Inani alinakudlula ibhalansi esasele ka-R%1$s.</string>
+    <string name="error_cash_payment_not_allowed">Lokhu kubhuka akwamukeli zinkokhelo zokheshi.</string>
+    <string name="cash_payment_recorded">Inkokhelo yokheshi ka-R%1$s iqoshiwe.</string>
+    <string name="cash_payment_recorded_paid_in_full">Inkokhelo yokheshi ka-R%1$s iqoshiwe. Ukubhuka manje sekukhokhelwe ngokugcwele.</string>
+    <string name="payment_summary_total_value">Inani lokubhuka eliphelele</string>
+    <string name="payment_summary_amount_paid">Inani elikhokhiwe</string>
+    <string name="payment_summary_outstanding">Ibhalansi esasele</string>
+    <string name="payment_summary_bookings_outstanding">Ukubhuka okunokusele</string>
+    <string name="title_card_payment">Inkokhelo yekhadi</string>
+    <string name="label_amount_due">Inani okumele likhokhwe</string>
+    <string name="payment_deposit_label">Idiphozithi</string>
+    <string name="payment_full_label">Inani eliphelele</string>
+    <string name="payment_additional_deposit_label">Idiphozithi eyengeziwe</string>
+    <string name="payment_remaining_balance_label">Ibhalansi esasele</string>
+    <string name="card_demo_note">Umbukiso kuphela — akukho nkokhelo yangempela ethathwayo. Noma iyiphi ikhadi lezinombolo ezingu-16 iyaphumelela; inombolo evela ku-0000 ilingisa ukwehluleka.</string>
+    <string name="hint_cardholder_name">Igama elisekhasini</string>
+    <string name="hint_card_number">Inombolo yekhadi</string>
+    <string name="hint_card_expiry">MM/YY</string>
+    <string name="hint_card_cvv">CVV</string>
+    <string name="btn_pay_amount">Khokha %1$s</string>
+    <string name="error_cardholder_required">Faka igama elisekhasini.</string>
+    <string name="error_card_number_invalid">Faka inombolo yekhadi lezinombolo ezingu-16.</string>
+    <string name="error_card_number_incomplete">Faka zonke izinombolo ezingu-16.</string>
+    <string name="error_card_expiry_invalid">Faka usuku lokuphelelwa yisikhathi njengo-MM/YY.</string>
+    <string name="error_expiry_month_invalid">Inyanga kumele ibe ngu-01–12.</string>
+    <string name="error_expiry_expired">Lolu suku selwedlule.</string>
+    <string name="error_name_invalid">Igama kumele libe ngamabhuku kuphela, okungenani izinhlamvu ezingu-2.</string>
+    <string name="error_card_cvv_invalid">Faka i-CVV yezinombolo ezingu-3.</string>
+    <string name="title_payment_result">Inkokhelo</string>
+    <string name="payment_processing_title">Kucutshungulwa inkokhelo…</string>
+    <string name="payment_processing_message">Sicela ulinde ngenkathi sicubungula inkokhelo yekhadi lakho.</string>
+    <string name="payment_processing_amount">Inani: %1$s</string>
+    <string name="payment_success_title">Inkokhelo iphumelele</string>
+    <string name="payment_success_message">Inkokhelo yakho ihambile. Siqeda manje.</string>
+    <string name="payment_failed_title">Inkokhelo yehlulekile</string>
+    <string name="payment_failed_message">Ayikho inkokhelo ethathiwe. Sicela uhlole ikhadi lakho bese uzama futhi.</string>
+    <string name="btn_try_again">Zama futhi</string>
+    <string name="card_ending">Ikhadi eliphela ngo-%1$s</string>
+    <string name="saving_booking">Kulondolozwa ukubhuka…</string>
+    <string name="title_confirmation">Ukuqinisekisa</string>
+    <string name="confirmation_service_line">Insizakalo: %1$s</string>
+    <string name="confirmation_date_time_line">Usuku &amp; Isikhathi: %1$s</string>
+    <string name="confirmation_total">Konke: %1$s</string>
+    <string name="btn_view_booking">Buka ukubhuka</string>
+    <string name="btn_done">Kwenziwe</string>
+
+    <string name="select_time_title">Khetha Isikhathi</string>
+    <string name="fully_booked_title">Kugcwele Ngokuphelele</string>
+    <string name="fully_booked_message">Azikho izikhathi ezitholakalayo zosuku lolu. Sicela ukhethe olunye usuku.</string>
+    <string name="no_times_notice_title">Azikho Izikhathi Ezitholakalayo</string>
+    <string name="no_times_notice_message">Zonke izikhathi zosuku lolu zingaphansi kwemizuzu engu-%d noma sezedlule. Sicela ukhethe usuku oluzayo.</string>
+    <string name="please_select_date_first">Sicela uqale ukhethe usuku</string>
+    <string name="ok">Kulungile</string>
+    <string name="cancel">Khansela</string>
+    <string name="done">Kwenziwe</string>
+    <string name="done_with_count">Kwenziwe (%d)</string>
+    <string name="please_choose_at_least_one_service">Sicela ukhethe okungenani insizakalo eyodwa</string>
+    <string name="booking_created_success">Isicelo sokubhuka sithunyelwe</string>
+    <string name="couldnt_load_times_title">Ayikwazanga ukulayisha izikhathi ezitholakalayo</string>
+
+    <string name="review_rating_required">Sicela ukhethe isilinganiso sezinkanyezi</string>
+    <string name="review_comment_required">Sicela ufake amazwana</string>
+    <string name="review_login_required">Sicela uqale ungene ngemvume</string>
+    <string name="review_submitting">Kuthunyelwa…</string>
+    <string name="review_submitted">Ukubuyekeza kuthunyelwe. Siyabonga.</string>
+    <string name="review_submit_failed">Akukwazanga ukuthumela ukubuyekeza: %1$s</string>
+    <string name="review_missing_booking">Lokhu kubuyekeza akuxhumene nokubhuka.</string>
+
+    <!-- Salon reviews on the client profile -->
+    <string name="title_reviews">Ukubuyekeza</string>
+    <string name="see_all_reviews">Bona konke ukubuyekeza</string>
+    <string name="no_reviews_yet">Akukho ukubuyekeza okwamanje</string>
+    <string name="reviews_load_failed">Ayikwazanga ukulayisha ukubuyekeza</string>
+    <string name="reviews_section_client_reviews">Ukubuyekeza Kwamakhasimende</string>
+    <string name="review_no_comment">Awunamazwana</string>
+    <string name="reviewer_client">Ikhasimende</string>
+    <string name="reviews_summary">%1$s - %2$s</string>
+    <plurals name="reviews_count">
+        <item quantity="one">ukubuyekeza okungu-%d</item>
+        <item quantity="other">ukubuyekeza okungu-%d</item>
+    </plurals>
+
+    <string name="report_description_required">Sicela uchaze inkinga</string>
+    <string name="report_description_too_short">Sicela unikeze imininingwane eyengeziwe (okungenani izinhlamvu ezingu-10)</string>
+    <string name="report_login_required">Sicela uqale ungene ngemvume</string>
+    <string name="report_submitting">Kuthunyelwa…</string>
+    <string name="report_submitted">Umbiko uthunyelwe. Sizobheka!</string>
+    <string name="report_submit_failed">Ayikwazanga ukuthumela umbiko wakho. Sicela uzame futhi.</string>
+    <string name="report_problem_subtitle">Sitshele ukuthi yini engasebenzi</string>
+    <string name="booking_not_found">Ukubhuka akutholakali.</string>
+    <string name="booking_date_format">dd MMM yyyy • hh:mm a</string>
+    <string name="booking_expired_explanation">Isitendi asizange samukele noma sikhansele lokhu kubhuka, ngakho sesiphelelwe yisikhathi.</string>
+
+    <!-- Edit / Reschedule -->
+    <string name="btn_edit_booking">Hlela Ukubhuka</string>
+    <string name="btn_reschedule">Hlela kabusha isikhathi</string>
+    <string name="title_reschedule_booking">Hlela kabusha isikhathi sokubhuka</string>
+    <string name="btn_save_changes">Londoloza Izinguquko</string>
+    <string name="booking_updated">Ukubhuka kuvuselelwe — kulindwe ukuba isitendi siqinisekise.</string>
+    <string name="reschedule_confirm_title">Uyafuna ukuhlela kabusha lolu bhuka?</string>
+    <string name="reschedule_confirm_message">Ukulondoloza kuthumela lolu bhuka emuva esitendini ukuze siqinisekise usuku olusha nesikhathi.</string>
+    <string name="edit_payment_required_title">Inkokhelo eyengeziwe iyadingeka</string>
+    <string name="edit_deposit_payment_required_message">Inani lakho elisha ngu-R%1$s. Idiphozithi eyengeziwe ka-R%2$s ifunwa manje ngekhadi. R%3$s kuzohlala kumele ikhokhwe esitendini.</string>
+    <string name="edit_full_payment_required_message">Inani lakho elisha ngu-R%1$s. Okusele R%2$s kufunwa manje ngekhadi.</string>
+    <string name="error_edit_card_needs_prices">Yonke insizakalo kumele ibe nentengo ngaphambi kokuthi ulondoloze izinguquko zokubhuka okukhokhelwe ngekhadi.</string>
+    <string name="error_edit_payment_load_failed">Ayikwazanga ukulayisha imininingwane yenkokhelo yalolu bhuka. Sicela uvale bese uzama futhi.</string>
+    <string name="error_edit_card_price_unknown">Ayikwazi ukuvuselela le nkokhelo yekhadi ngoba insizakalo eyodwa noma ngaphezulu ekhethiwe ayinantengo. Sicela uxhumane nesitendi.</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_initials_placeholder">JD</string>
+    <string name="profile_name_placeholder">John Doe</string>
+    <string name="profile_role_placeholder">Ikhasimende</string>
+    <string name="personal_information">Imininingwane Yomuntu Siqu</string>
+    <string name="full_name">Igama Eliphelele</string>
+    <string name="enter_your_name">Faka igama lakho</string>
+    <string name="enter_your_email">Faka i-imeyili yakho</string>
+    <string name="phone_number">Inombolo Yocingo</string>
+    <string name="enter_your_phone">Faka inombolo yakho yocingo</string>
+    <string name="save_changes">Londoloza Izinguquko</string>
+    <string name="leave_a_review">Shiya Ukubuyekeza</string>
+    <string name="report_a_problem">Bika Inkinga</string>
+    <string name="navigate_icon">Zulazula</string>
+    <string name="logout">Phuma</string>
+    <string name="logout_success">Uphumile.</string>
+    <string name="delete_account">Susa i-akhawunti</string>
+    <string name="delete_account_title">Uyafuna ukususa i-akhawunti?</string>
+    <string name="delete_account_message">Lokhu kuzokhansela konke okubhaliwe kwakho okuzayo, kumake iphrofayela yakho njengeyisusiwe (igcinelwe amarekhodi ethu), kukhiphe futhi kususe unomphepha ukungena kwakho. Ngeke ukwazi ukungena ngale akhawunti futhi.</string>
+    <string name="btn_delete_account">Susa i-akhawunti</string>
+    <string name="deleting_account">Kususwa i-akhawunti…</string>
+    <string name="account_deleted">I-akhawunti yakho isusiwe.</string>
+    <string name="account_deactivated">I-akhawunti yakho imisiwe okwesikhashana. Ukhishiwe.</string>
+    <string name="delete_account_error">Ayikwazanga ukususa i-akhawunti yakho. Sicela uzame futhi.</string>
+    <string name="notifications_cleared">Izaziso zisuliwe.</string>
+    <string name="btn_saving_profile">Kulondolozwa.</string>
+    <string name="submit_report">Thumela Umbiko</string>
+    <string name="submit_review">Thumela Ukubuyekeza</string>
+    <string name="leave_a_review_title">Shiya Ukubuyekeza</string>
+    <string name="how_was_your_experience">Bekunjani ukuzizwela kwakho?</string>
+    <string name="your_comment">Amazwana Akho</string>
+    <string name="tell_us_about_your_experience">Sitshele ngalokho okuzizwile</string>
+    <string name="report_a_problem_title">Bika Inkinga</string>
+    <string name="let_us_know_whats_wrong_with_the_app">Sitshele ukuthi yini engalungile nge-app</string>
+    <string name="description">Incazelo</string>
+    <string name="describe_the_problem">Chaza inkinga</string>
+
+    <!-- Appearance -->
+    <string name="appearance">Ukubukeka</string>
+    <string name="dark_mode">Imodi emnyama</string>
+
+    <!-- Report a Problem: form -->
+    <string name="report_category_label">Kube yini okungahambanga kahle?</string>
+    <string name="report_category_required">Sicela ukhethe isigaba</string>
+    <string name="report_category_booking">Inkinga yokubhuka</string>
+    <string name="report_category_login">Ukungena / I-akhawunti</string>
+    <string name="report_category_app_error">Iphutha le-app</string>
+    <string name="report_category_other">Inkinga eyengeziwe</string>
+    <string name="report_severity_label">Ubungako benkinga</string>
+    <string name="report_severity_low">Phansi</string>
+    <string name="report_severity_medium">Phakathi</string>
+    <string name="report_severity_high">Phezulu</string>
+    <string name="report_description_too_long">Incazelo inde kakhulu (kungenani izinhlamvu ezingu-500)</string>
+    <string name="report_contact_email">I-imeyili yokuxhumana (ayiphoqelelekile)</string>
+    <string name="report_contact_email_invalid">Faka ikheli le-imeyili elisebenzayo</string>
+    <string name="report_screenshots_label">Izithombe zesikrini (aziphoqelelekile)</string>
+    <string name="report_add_screenshot">Engeza isithombe sesikrini</string>
+    <string name="report_max_screenshots">Unganamathisela izithombe zesikrini ezingafika kwezintathu (3)</string>
+    <string name="report_remove_screenshot">Susa isithombe sesikrini</string>
+    <string name="report_char_counter">%1$d/500</string>
+    <string name="report_uploading">Kunalungiswa izithombe zesikrini…</string>
+    <string name="report_type_label">Ubika ngani?</string>
+    <string name="report_type_app">Inkinga ye-app</string>
+    <string name="report_type_salon">Inkinga yesitendi</string>
+    <string name="report_salon_label">Siyiphi isitendi?</string>
+    <string name="report_salon_hint">Sesha isitendi</string>
+    <string name="report_salon_required">Sicela ukhethe isitendi</string>
+    <string name="report_salon_category_label">Yiluphi uhlobo lwenkinga?</string>
+    <string name="report_salon_category_required">Sicela ukhethe isigaba</string>
+    <string name="report_category_scam">Ubudlova/Ubuqola</string>
+    <string name="report_category_safety">Ukukhathazeka ngokuphepha</string>
+    <string name="report_category_harassment">Ukuhlukunyezwa</string>
+    <string name="report_salon_action">Bika lesi sitendi</string>
+    <string name="report_salon_meta">Isitendi: %1$s</string>
+    <string name="report_salon_unavailable">Imininingwane yesitendi ayitholakali.</string>
+    <string name="report_salon_title">Bika isitendi</string>
+    <string name="report_salon_subtitle">Bika isitendi eqenjini le-HairGo</string>
+
+    <!-- My Reports -->
+    <string name="title_my_reports">Imibiko Yami</string>
+    <string name="my_reports_subtitle">Izinkinga ozibike nesimo sazo</string>
+    <string name="my_reports">Imibiko Yami</string>
+    <string name="no_reports_found">Ayikho imibiko okwamanje</string>
+    <string name="reports_loaded_failed">Ayikwazanga ukulayisha imibiko yakho.</string>
+    <string name="report_screenshots_count">Isithombe/izithombe zesikrini ezingu-%1$d</string>
+    <string name="report_no_screenshots">Azikho izithombe zesikrini</string>
+    <string name="report_screenshots_heading">Izithombe zesikrini</string>
+    <string name="report_no_description">Ayikho incazelo</string>
+    <string name="report_edit">Hlela umbiko</string>
+    <string name="report_edit_title">Hlela umbiko</string>
+    <string name="report_edit_button">Londoloza izinguquko</string>
+    <string name="report_updated">Umbiko uvuselelwe.</string>
+    <string name="report_save_failed">Akukwazanga ukulondoloza izinguquko zakho. Sicela uzame futhi.</string>
+    <string name="report_saving">Kulondolozwa…</string>
+    <string name="report_tap_image_hint">Cindezela isithombe ukuze sikhuliswe</string>
+    <string name="report_tap_to_close">Cindezela noma yikuphi ukuze uvale</string>
+    <string name="close">Vala</string>
+
+    <!-- Owner Payment Reports -->
+    <string name="reports_title">Imibiko Yezinkokhelo</string>
+    <string name="reports_subtitle">Buka izifinyezo zezinkokhelo ngesikhathi</string>
+    <string name="report_period_today">Namuhla</string>
+    <string name="report_period_this_month">Le Nyanga</string>
+    <string name="reports_booking_summary">Isifinyezo Sokubhuka</string>
+    <string name="reports_payment_summary">Isifinyezo Senkokhelo</string>
+    <string name="reports_payment_breakdown">Ukuhlukaniswa Kwezindlela Zenkokhelo</string>
+    <string name="reports_total_value">Inani lokubhuka eliphelele</string>
+    <string name="reports_bookings_outstanding">Ukubhuka okunokusele</string>
+    <string name="reports_amount_paid">Inani elikhokhiwe</string>
+    <string name="reports_outstanding_balance">Ibhalansi esasele</string>
+    <string name="reports_card_payments">Izinkokhelo zekhadi ezilingisiwe</string>
+    <string name="reports_cash_payments">Ukheshi oqoshwe ngumnikazi</string>
+    <string name="reports_card_payments_note">Kufaka amadiphozithi &amp; izinkokhelo ezigcwele</string>
+    <string name="reports_cash_payments_note">Kuqoshwe esitendini ngumnikazi</string>
+    <string name="reports_data_completeness_note">Qaphela: Amanani abonisa kuphela ukubhuka okunemininingwane eyaziwayo yenkokhelo. Ukubhuka kwangaphambilini okungenamarekhodi enkokhelo akufakiwe.</string>
+    <string name="reports_unknown_payment_dates">Izinkokhelo ezingenazo izinsuku eziqoshiwe: %1$s</string>
+    <string name="reports_empty">Akukho okubhaliwe kulesi sikhathi.</string>
+    <string name="reports_load_failed">Ayikwazanga ukulayisha imibiko: %1$s</string>
+
+    <!-- Salon setup (owner registration) -->
+    <string name="salon_setup_intro_title">Setha isitendi sakho</string>
+    <string name="salon_setup_intro_body">Engeza imininingwane yesitendi sakho ukuze amakhasimende akuthole futhi akubhukele.</string>
+    <string name="continue_label">Qhubeka</string>
+
+    <!-- Admin -->
+    <string name="admin_dashboard_title">Ukuphatha</string>
+    <string name="nav_overview">Ukubuka konke</string>
+    <string name="nav_users">Abasebenzisi</string>
+    <string name="nav_salons">Izitendi</string>
+    <string name="nav_reports">Imibiko</string>
+    <string name="login_error_account_suspended">Le akhawunti imisiwe. Sicela uxhumane nosekelo.</string>
+    <string name="account_unavailable_title">I-akhawunti ayitholakali</string>
+    <string name="warning_dialog_title">Isaziso esibalulekile</string>
+    <string name="warning_dialog_ok">Kulungile</string>
+
+    <!-- Admin: shared -->
+    <string name="admin_confirm">Qinisekisa</string>
+    <string name="admin_cancel">Khansela</string>
+    <string name="admin_confirm_activate">Vula u-%1$s? Bazokwazi ukuphinde bangene ngemvume.</string>
+    <string name="admin_confirm_delete">Susa u-%1$s? Lokhu kufihla i-akhawunti ku-app.</string>
+    <string name="admin_confirm_resolve">Maka lo mbiko njengowaxazululiwe ku-%1$s?</string>
+    <string name="admin_confirm_suspend">Misa u-%1$s? Ngeke bakwazi ukungena ngemvume.</string>
+    <string name="admin_recently">Muva nje</string>
+    <string name="admin_joined_on">Ujoyine ngo-%1$s</string>
+    <string name="admin_not_provided">Akunikeziwe</string>
+    <string name="admin_no_email">Ayikho i-imeyili enikeziwe</string>
+    <string name="admin_user_unknown">Umsebenzisi ongaziwa</string>
+    <string name="admin_owner_unknown">Unikazi ongaziwa</string>
+    <string name="admin_unknown_client">Ikhasimende elingaziwa</string>
+    <string name="admin_unknown_salon">Isitendi esingaziwa</string>
+    <string name="admin_hair_service">Insizakalo yezinwele</string>
+    <string name="admin_date_pending">Usuku lulindile</string>
+    <string name="admin_payment_unknown">Akukuqoshwanga</string>
+    <string name="admin_error_load">Ayikwazanga ukulayisha idatha: %1$s</string>
+    <string name="admin_error_action">Ayikwazanga ukuqedela isenzo: %1$s</string>
+    <string name="admin_error_missing_owner">Lesi sitendi asinenkosi ye-akhawunti okumele ivuselelwe.</string>
+    <string name="admin_error_denied">Awunayo imvume yokwenza lokho.</string>
+    <string name="cannot_modify_own_account">Ngeke umise noma ususe i-akhawunti yakho siqu.</string>
+
+    <!-- Admin: roles and status -->
+    <string name="admin_role_client">Ikhasimende</string>
+    <string name="admin_role_owner">Umnikazi Wesitendi</string>
+    <string name="admin_role_admin">Umphathi</string>
+    <string name="admin_role_unknown">Umsebenzisi</string>
+    <string name="admin_status_pending">Kulindile</string>
+    <string name="admin_status_in_review">Kuyabuyekezwa</string>
+    <string name="admin_status_resolved">Kuxazululiwe</string>
+    <string name="admin_status_closed">Kuvaliwe</string>
+    <string name="admin_status_active">Isebenza</string>
+    <string name="admin_status_inactive">Ayisebenzi</string>
+    <string name="admin_status_suspended">Imisiwe</string>
+    <string name="admin_action_activate">Vula I-akhawunti</string>
+    <string name="admin_action_suspend">Misa I-akhawunti</string>
+    <string name="admin_action_delete">Susa I-akhawunti</string>
+    <string name="admin_action_warning">Nikela Ngexwayiso</string>
+    <string name="admin_action_resolve">Maka Njengoxazululiwe</string>
+    <string name="admin_action_close">Vala Umbiko</string>
+    <string name="admin_action_in_review">Maka Kuyabuyekezwa</string>
+    <string name="admin_action_cancel_booking">Khansela Ukubhuka</string>
+    <string name="admin_action_deactivate_salon">Vala isitendi okwesikhashana</string>
+    <string name="admin_action_activate_salon">Vula isitendi</string>
+    <string name="admin_activate">Vula</string>
+    <string name="admin_suspend">Misa</string>
+    <string name="admin_user_suspended">misiwe</string>
+    <string name="admin_user_unsuspended">vuliwe</string>
+    <string name="admin_user_status_changed">U-%1$s use-%2$s.</string>
+    <string name="admin_user_deleted">U-%1$s ususiwe.</string>
+    <string name="admin_user_not_found">Lo msebenzisi akatholakali.</string>
+    <string name="admin_warning_hint">Umlayezo wesixwayiso</string>
+    <string name="admin_send_warning">Thumela isixwayiso</string>
+    <string name="admin_default_warning">Sicela ulandele imithetho yomphakathi ye-HairGo.</string>
+    <string name="admin_warning_sent">Isixwayiso sithunyelwe ku-%1$s.</string>
+    <string name="admin_note_in_review">Umbiko umakiwe ukuthi uyabuyekezwa.</string>
+    <string name="admin_note_resolved">Umbiko ubuyekeziwe wabe usuxazululwa.</string>
+    <string name="admin_note_suspended">I-akhawunti imisiwe ngemuva kokubuyekeza lo mbiko.</string>
+    <string name="admin_note_warned">Isixwayiso sikhiphe ngemuva kokubuyekeza lo mbiko.</string>
+    <string name="admin_note_closed">Umbiko uvaliwe ngemuva kokubuyekezwa.</string>
+    <string name="admin_close_hint">Isizathu sokuvala lo mbiko</string>
+    <string name="admin_resolution_note">Isixazululo: %1$s</string>
+
+    <!-- Admin: reports -->
+    <string name="admin_filter_incoming">Okungenayo</string>
+    <string name="admin_filter_in_review">Kuyabuyekezwa</string>
+    <string name="admin_filter_resolved">Kuxazululiwe</string>
+    <string name="admin_filter_closed">Kuvaliwe</string>
+    <string name="admin_reports_empty">Ayikho imibiko etholakele</string>
+    <string name="admin_report_not_found">Lo mbiko awutholakali.</string>
+    <string name="admin_report_no_description">Ayikho incazelo enikeziwe.</string>
+    <string name="admin_report_by_against">Kubikwe ngu-%1$s ngokumelene no-%2$s</string>
+    <string name="admin_report_target_salon_owner">Umnikazi wesitendi</string>
+    <string name="admin_report_target_app">I-HairGo App</string>
+    <string name="admin_report_target_app_role">I-App</string>
+    <string name="admin_reporter_unknown">Akayaziwa</string>
+    <string name="admin_reason_with_severity">%1$s · %2$s</string>
+    <string name="admin_category_booking">Inkinga yokubhuka</string>
+    <string name="admin_category_login">Ukungena noma i-akhawunti</string>
+    <string name="admin_category_app_error">Iphutha le-app</string>
+    <string name="admin_category_scam">Ubuqola</string>
+    <string name="admin_category_safety">Ukukhathazeka ngokuphepha</string>
+    <string name="admin_category_harassment">Ukuhlukunyezwa</string>
+    <string name="admin_category_other">Inkinga eyengeziwe</string>
+    <string name="admin_severity_low">Phansi</string>
+    <string name="admin_severity_medium">Phakathi</string>
+    <string name="admin_severity_high">Phezulu</string>
+
+    <!-- Admin: overview -->
+    <string name="admin_new_users_last_seven_days">Abasebenzisi abasha abangu-%1$d ezinsukwini eziyisikhombisa ezedlule</string>
+    <string name="admin_new_registrations_empty">Azikho izibhaliso okwamanje</string>
+    <string name="admin_incoming_reports_empty">Ayikho imibiko engenayo</string>
+
+    <!-- Admin: users -->
+    <string name="admin_filter_all">Konke</string>
+    <string name="admin_filter_clients">Amakhasimende</string>
+    <string name="admin_filter_owners">Abanikazi</string>
+    <string name="admin_filter_admins">Abaphathi</string>
+    <string name="admin_users_empty">Abasebenzisi abatholakalanga</string>
+    <string name="admin_sort_by">Hlela ngo:</string>
+    <string name="admin_sort_by_date">Hlela Ngosuku:</string>
+    <string name="admin_sort_date_newest">Usuku: Okusha Kuqala</string>
+    <string name="admin_sort_date_oldest">Usuku: Okudala Kuqala</string>
+    <string name="admin_sort_alpha_az">Ngokulandelana kwezinhlamvu: A kuya ku-Z</string>
+    <string name="admin_sort_alpha_za">Ngokulandelana kwezinhlamvu: Z kuya ku-A</string>
+    <string name="admin_sort_users_title">Hlela Abasebenzisi Ngo</string>
+    <string name="admin_sort_bookings_title">Hlela Ukubhuka Ngo</string>
+    <string name="admin_sort_newest">Okusha Kuqala</string>
+    <string name="admin_sort_oldest">Okudala Kuqala</string>
+
+    <!-- Admin: bookings -->
+    <string name="admin_filter_upcoming">Azayo</string>
+    <string name="admin_filter_completed">Kuqediwe</string>
+    <string name="admin_filter_cancelled">Kukhanseliwe</string>
+    <string name="admin_bookings_empty">Akukho okubhaliwe okutholakele</string>
+    <string name="admin_manage_booking">Phatha ukubhuka: %1$s</string>
+    <string name="admin_cancel_booking_message">Khansela lolu bhuka luka-%1$s? Ikhasimende ngeke lisalibona njengelingasebenza.</string>
+    <string name="admin_booking_already_cancelled">Lolu bhuka selivele lukhanseliwe.</string>
+    <string name="admin_booking_cancelled">Ukubhuka kukhanseliwe.</string>
+    <string name="admin_client_label">Ikhasimende: %1$s</string>
+    <string name="admin_salon_label">Isitendi: %1$s</string>
+    <string name="admin_price_payment">%1$s · Inkokhelo: %2$s</string>
+    <string name="admin_booking_status_pending">Kulindile</string>
+    <string name="admin_booking_status_confirmed">Kuqinisekisiwe</string>
+    <string name="admin_booking_status_completed">Kuqediwe</string>
+    <string name="admin_booking_status_cancelled">Kukhanseliwe</string>
+    <string name="admin_booking_status_expired">Kuphelelwe yisikhathi</string>
+
+    <!-- Admin: salons -->
+    <string name="admin_salons_empty">Azikho izitendi ezitholakele</string>
+    <string name="admin_salon_owner">Umnikazi: %1$s</string>
+    <string name="admin_salon_services">Izinsizakalo ezingu-%1$d</string>
+    <string name="admin_salon_activated">kuvuliwe</string>
+    <string name="admin_salon_deactivated">kuvaliwe</string>
+    <string name="admin_salon_status_changed">U-%1$s use-%2$s.</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_reminders">Izikhumbuzo zama-aphoyintimenti</string>
+    <string name="notification_channel_reminders_desc">Izikhumbuzo ngaphambi kwama-aphoyintimenti akho azayo</string>
+    <string name="notification_channel_updates">Ukuvuselelwa kokubhuka</string>
+    <string name="notification_channel_updates_desc">Ukuqinisekisa nezinguquko zesimo zokubhuka kwakho</string>
+    <string name="notification_default_title">HairGo</string>
+    <string name="booking_confirmation_title">Isicelo sokubhuka sithunyelwe</string>
+    <string name="booking_confirmation_body">Isicelo sakho sokubhuka ku-%1$s silindile ukuqinisekiswa.</string>
+    <string name="reminder_title">Isikhumbuzo se-aphoyintimenti</string>
+    <string name="reminder_body">I-aphoyintimenti yakho ku-%1$s ithi %2$s.</string>
+    <string name="reminder_when_tomorrow">kusasa</string>
+    <string name="reminder_when_hour">ngehora eliyi-1</string>
+    <string name="status_change_title">Ukubhuka kuvuselelwe</string>
+    <string name="status_change_body">%1$s: ukubhuka kwakho manje sekungu-%2$s.</string>
+
+    <!-- In-app notifications screen (bell icon) -->
+    <string name="title_notifications">Izaziso</string>
+    <string name="notifications_subtitle">Ulwazi mayelana nokubhuka kwakho</string>
+    <string name="no_notifications_found">Azikho izaziso okwamanje</string>
+    <string name="clear_all">Sula konke</string>
+
+    <!-- Messaging (client-to-salon booking chat) -->
+    <string name="nav_messages">Imiyalezo</string>
+    <string name="title_messages">Imiyalezo</string>
+    <string name="messages_subtitle">Xoxa ngokubhuka kwakho</string>
+    <string name="messages_empty">Azikho izingxoxo okwamanje. Vula ukubhuka bese ucindezela uMiyalezo ukuze uqale ukuxoxa.</string>
+    <string name="btn_message_salon">Thumela umyalezo esitendini</string>
+    <string name="btn_message_client">Thumela umyalezo kumakhasimende</string>
+    <string name="chat_empty">Ayikho imiyalezo okwamanje, sayo sawubona</string>
+    <string name="chat_hint">Thayipha umyalezo</string>
+    <string name="chat_send">Thumela</string>
+    <string name="chat_message_too_long">Umyalezo mude kakhulu (kungenani izinhlamvu ezingu-1000).</string>
+    <string name="chat_unavailable">Le ngxoxo ayitholakali.</string>
+
+    <!-- Owner booking detail screen -->
+    <string name="title_owner_booking_details">Imininingwane Yokubhuka</string>
+    <string name="label_client">Ikhasimende</string>
+    <string name="label_phone">Ucingo</string>
+    <string name="label_notes">Amanothi</string>
+    <string name="hint_booking_notes">Izinothi zesitendi (akuyonaphoqelelekile)</string>
+    <string name="btn_mark_completed">Maka njengokuqediwe</string>
+    <string name="btn_confirm">Qinisekisa</string>
+    <string name="btn_decline">Nqaba</string>
+    <string name="phone_unavailable">Ayikho inombolo yocingo efakiwe</string>
+    <string name="booking_marked_completed">Ukubhuka kumakwe njengokuqediwe</string>
+    <string name="booking_confirmed">Ukubhuka kuqinisekisiwe</string>
+    <string name="booking_update_failed">Ayikwazanga ukuvuselela ukubhuka: %1$s</string>
+
+    <!-- Owner: salon services with price and duration -->
+    <string name="title_add_salon">Engeza isitendi</string>
+    <string name="title_edit_services">Phatha izinsizakalo</string>
+    <string name="helper_manage_services">Cindezela insizakalo ukuze uyihlele noma uyisuse.</string>
+    <string name="services_empty">Azikho izinsizakalo okwamanje.\nEngeza insizakalo yakho yokuqala ukuze uqale.</string>
+    <string name="title_new_service">Insizakalo entsha</string>
+    <string name="title_edit_service">Hlela insizakalo</string>
+    <string name="helper_new_service">Engeza insizakalo amakhasimende angayibhukela.</string>
+    <string name="helper_edit_service_form">Vuselela imininingwane, bese ucindezela uKwenziwe.</string>
+    <string name="btn_delete_service">Susa</string>
+    <string name="title_delete_service">Susa insizakalo?</string>
+    <string name="message_delete_service">Susa u-&quot;%1$s&quot; ezinsizakalweni zakho?</string>
+    <string name="btn_remove_service">Susa</string>
+    <string name="btn_add">Engeza</string>
+    <string name="btn_save">Londoloza</string>
+
+    <string name="label_salon_name">Igama lesitendi</string>
+    <string name="hint_salon_name">isb. Glam Studio</string>
+    <string name="hint_salon_location">isb. Randburg</string>
+    <string name="error_salon_name_required">Igama lesitendi liyadingeka</string>
+    <string name="error_salon_location_required">Indawo iyadingeka</string>
+    <string name="btn_pick_on_map">Khetha emephini</string>
+    <string name="btn_pick_where_you_stay">Sesha ilokishi noma umgwaqo wakho</string>
+
+    <string name="label_service_name">Igama lensizakalo</string>
+    <string name="label_service_price">Intengo (R)</string>
+    <string name="label_service_duration">Isikhathi</string>
+    <string name="hint_service_name">isb. Ukugunda</string>
+    <string name="hint_service_price">isb. 150</string>
+    <string name="hint_service_duration">Khetha imizuzu</string>
+    <string name="btn_add_service">Engeza insizakalo</string>
+    <string name="btn_update_service">Vuselela insizakalo</string>
+    <string name="helper_service_editor">Faka igama, intengo kanye nesikhathi, bese ucindezela Engeza insizakalo</string>
+    <string name="helper_service_chips">Cindezela i-chip ukuze ushintsho intengo yayo noma isikhathi</string>
+    <string name="helper_editing_service">Kuyahlelwa: %1$s</string>
+    <string name="label_service_image">Isithombe sensizakalo (akuyona phoqelelekile)</string>
+    <string name="helper_service_image">Kuboniswa amakhasimende ekhasini lesitendi sakho</string>
+    <string name="service_image_preview_desc">Ukubuka kuqala kwesithombe sensizakalo</string>
+    <string name="btn_choose_service_image">Khetha isithombe</string>
+    <string name="btn_change_service_image">Shintsha isithombe</string>
+    <string name="btn_remove_service_image">Susa</string>
+    <string name="service_image_preparing">Kunalungiswa isithombe…</string>
+    <string name="service_image_ready">Isithombe silungele ukulondolozwa</string>
+    <string name="service_image_loading">Kulayishwa isithombe…</string>
+    <string name="service_image_load_failed">Ayikwazanga ukulayisha isithombe samanje</string>
+    <string name="service_image_read_failed">Ayikwazanga ukufunda isithombe esikhethiwe</string>
+    <string name="service_image_too_large">Lesi sithombe sikhulu kakhulu. Sicela ukhethe isithombe esincane.</string>
+    <string name="error_too_many_service_images">Sicela ulondoloze izinguquko zezithombe ezimbalwa ngesikhathi esisodwa</string>
+
+    <string name="error_service_name_required">Faka igama lensizakalo</string>
+    <string name="error_service_price_required">Faka intengo</string>
+    <string name="error_service_price_invalid">Faka intengo engu-0 noma ngaphezulu</string>
+    <string name="error_service_duration_required">Khetha isikhathi</string>
+    <string name="error_service_duration_invalid">Khetha isikhathi esohlwini</string>
+    <string name="error_service_duplicate">Usuvele ungeze u-&quot;%1$s&quot;</string>
+    <string name="error_no_services">Engeza okungenani insizakalo eyodwa</string>
+
+    <string name="service_price_not_set">Intengo ayibekiwe</string>
+    <string name="service_price_missing_short">Ayinantengo</string>
+    <string name="service_price_rand">R%1$s</string>
+    <string name="service_duration_minutes">%1$dmin</string>
+    <string name="service_chip_text">%1$s - %2$s - %3$s</string>
+
+    <!-- Client: service lines and booking totals -->
+    <string name="service_total">Konke: %1$s - %2$dmin</string>
+    <string name="service_total_duration">Konke: %1$dmin</string>
+    <string name="service_missing_price_note">Ezinye izinsizakalo azinenani elibekiwe</string>
+    <string name="booking_total_no_price">Inani eliphelele alibekiwe - %1$dmin</string>
+
+    <string name="saving_services">Kulondolozwa…</string>
+    <string name="services_saved">Izinsizakalo zivuselelwe</string>
+    <string name="services_save_failed">Ayikwazanga ukulondoloza izinsizakalo</string>
+    <string name="salon_added">U-%1$s ungeziwe</string>
+    <string name="salon_add_failed">Ayikwazanga ukungeza isitendi: %1$s</string>
+    <string name="salon_refresh_failed">Isitendi silondolozwe, kodwa uhlu alukwazanga ukuvuselelwa</string>
+
+
+</resources>

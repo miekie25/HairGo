@@ -37,7 +37,7 @@
 
         <activity
             android:name=".activities.WelcomeActivity"
-            android:exported="false" />
+            android:exported="true" />
 
         <activity
             android:name=".activities.LoginActivity"
@@ -132,8 +132,13 @@
         <activity
             android:name=".activities.SendMessageActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.UserDetailActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.SalonDetailActivity"
             android:exported="false" />
 
         <!-- Client-to-salon booking chat -->

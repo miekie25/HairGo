@@ -49,14 +49,6 @@
     <string-array name="languages_array">
         <item>English</item>
         <item>isiZulu</item>
-        <item>isiXhosa</item>
-        <item>Sesotho</item>
-        <item>Setswana</item>
-        <item>Sepedi</item>
-        <item>Tshivenda</item>
-        <item>isiNdebele</item>
-        <item>Seswati</item>
-        <item>Afrikaans</item>
     </string-array>
 
     <!-- Forgot Password -->

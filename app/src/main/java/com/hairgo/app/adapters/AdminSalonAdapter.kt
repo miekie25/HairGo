@@ -3,13 +3,15 @@ package com.hairgo.app.adapters
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.hairgo.app.R
 import com.hairgo.app.databinding.AdminItemSalonBinding
 import com.hairgo.app.models.AdminSalon
 
 class AdminSalonAdapter(
     private var salons: List<AdminSalon>,
-    private val onToggleActive: (AdminSalon) -> Unit
+    private val onToggleActive: (AdminSalon) -> Unit,
+    private val onSalonClicked: (AdminSalon) -> Unit
 ) : RecyclerView.Adapter<AdminSalonAdapter.AdminSalonViewHolder>() {
 
     fun updateData(newSalons: List<AdminSalon>) {
@@ -47,6 +49,18 @@ class AdminSalonAdapter(
             if (salon.isActive) R.string.admin_status_active else R.string.admin_status_inactive
         )
 
+        // Load owner or salon profile image using Glide into the avatar view
+        // Assuming your AdminItemSalonBinding has an ImageView (or TextView avatar).
+        // If it's an ImageView, use Glide:
+        /*
+        Glide.with(context)
+            .load(salon.ownerPhotoUrl.ifEmpty { salon.salonPhotoUrl })
+            .placeholder(R.drawable.ic_profile_placeholder)
+            .error(R.drawable.ic_profile_placeholder)
+            .circleCrop()
+            .into(b.ivSalonAvatar)
+        */
+
         b.root.alpha = if (salon.isActive) 1f else 0.55f
         b.btnDeactivateSalon.text = context.getString(
             if (salon.isActive) R.string.admin_action_deactivate_salon
@@ -54,6 +68,9 @@ class AdminSalonAdapter(
         )
 
         b.btnDeactivateSalon.setOnClickListener { onToggleActive(salon) }
+
+        // Open salon detail view on tile click
+        b.root.setOnClickListener { onSalonClicked(salon) }
     }
 
     override fun getItemCount() = salons.size

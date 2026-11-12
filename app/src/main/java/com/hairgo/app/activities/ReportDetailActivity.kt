@@ -1,11 +1,19 @@
 ﻿package com.hairgo.app.activities
 
+import android.app.Dialog
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Base64
 import android.view.View
+import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.bumptech.glide.Glide
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.hairgo.app.R
@@ -81,7 +89,7 @@ class ReportDetailActivity : AppCompatActivity() {
                     ?: getString(R.string.admin_reporter_unknown)
                 reporterEmail = snapshot.getString("userEmail")
                     ?: snapshot.getString("userEmailAddress")
-                    ?: ""
+                            ?: ""
                 currentStatus = normalizeStatus(snapshot.getString("status"))
                 resolutionNote = snapshot.getString("resolutionNote")
 
@@ -96,6 +104,14 @@ class ReportDetailActivity : AppCompatActivity() {
                     ?.takeIf { it.isNotBlank() }
                     ?: getString(R.string.admin_report_no_description)
 
+                // Load Evidence / Screenshots (Handles URLs and Base64 encoded strings)
+                val images = screenshotValues(snapshot)
+                if (images.isNotEmpty()) {
+                    showScreenshots(images)
+                } else {
+                    binding.layoutEvidence.visibility = View.GONE
+                }
+
                 loadTargetAccount()
             }
             .addOnFailureListener { e ->
@@ -106,6 +122,108 @@ class ReportDetailActivity : AppCompatActivity() {
                 ).show()
                 finish()
             }
+    }
+
+    private fun screenshotValues(snapshot: com.google.firebase.firestore.DocumentSnapshot): List<String> {
+        val raw = snapshot.get("screenshots") ?: snapshot.get("evidenceUrl") ?: snapshot.get("imageUrl") ?: snapshot.get("photoUrl")
+        val values = when (raw) {
+            is List<*> -> raw.mapNotNull { it as? String }
+            is String -> listOf(raw)
+            else -> emptyList()
+        }
+        return values.map { it.trim() }.filter { it.isNotEmpty() }
+    }
+
+    private fun showScreenshots(images: List<String>) {
+        binding.layoutEvidence.visibility = View.VISIBLE
+        val parent = binding.layoutEvidence
+        for (i in parent.childCount - 1 downTo 0) {
+            if (parent.getChildAt(i).tag == "extra_evidence") {
+                parent.removeViewAt(i)
+            }
+        }
+        bindScreenshot(binding.ivEvidence, images.first())
+        for (encoded in images.drop(1)) {
+            val image = ImageView(this)
+            val size = (120 * resources.displayMetrics.density).toInt()
+            val params = LinearLayout.LayoutParams(size, size)
+            params.topMargin = (8 * resources.displayMetrics.density).toInt()
+            image.layoutParams = params
+            image.tag = "extra_evidence"
+            image.scaleType = ImageView.ScaleType.FIT_CENTER
+            image.setBackgroundColor(android.graphics.Color.parseColor("#F1F1F1"))
+            parent.addView(image)
+            bindScreenshot(image, encoded)
+        }
+    }
+
+    private fun bindScreenshot(image: ImageView, value: String) {
+        if (value.startsWith("http://") || value.startsWith("https://")) {
+            image.scaleType = ImageView.ScaleType.CENTER_CROP
+            Glide.with(this)
+                .load(value)
+                .placeholder(R.color.grey_border)
+                .error(R.drawable.ic_warning)
+                .into(image)
+            image.setOnClickListener { showEnlargedImageDialog(value) }
+            return
+        }
+        val bitmap = decodeScreenshot(value)
+        if (bitmap == null) {
+            image.setImageResource(R.drawable.ic_warning)
+            image.setOnClickListener(null)
+            return
+        }
+        image.scaleType = ImageView.ScaleType.FIT_CENTER
+        image.setImageBitmap(bitmap)
+        image.setOnClickListener { showEnlargedBitmap(bitmap) }
+    }
+
+    private fun decodeScreenshot(encoded: String): Bitmap? {
+        return try {
+            val data = encoded.substringAfter("base64,", encoded)
+            val bytes = Base64.decode(data, Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun showEnlargedBitmap(bitmap: Bitmap) {
+        val dialog = Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+        val fullScreenImageView = ImageView(this)
+        fullScreenImageView.layoutParams = ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        fullScreenImageView.scaleType = ImageView.ScaleType.FIT_CENTER
+        fullScreenImageView.setBackgroundColor(android.graphics.Color.BLACK)
+        fullScreenImageView.setImageBitmap(bitmap)
+        fullScreenImageView.setOnClickListener { dialog.dismiss() }
+        dialog.setContentView(fullScreenImageView)
+        dialog.show()
+    }
+
+    private fun showEnlargedImageDialog(imageUrl: String) {
+        val dialog = Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+        val fullScreenImageView = ImageView(this)
+        fullScreenImageView.layoutParams = ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        fullScreenImageView.scaleType = ImageView.ScaleType.FIT_CENTER
+        fullScreenImageView.setBackgroundColor(android.graphics.Color.BLACK)
+
+        Glide.with(this)
+            .load(imageUrl)
+            .into(fullScreenImageView)
+
+        fullScreenImageView.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.setContentView(fullScreenImageView)
+        dialog.show()
     }
 
     private fun loadTargetAccount() {
@@ -191,12 +309,6 @@ class ReportDetailActivity : AppCompatActivity() {
         binding.layoutActions.visibility = if (handled) View.GONE else View.VISIBLE
         binding.tvActionsLabel.visibility = if (handled) View.GONE else View.VISIBLE
 
-        val salonReport = reportType == "salon"
-        binding.btnSuspend.visibility = if (salonReport) View.VISIBLE else View.GONE
-        binding.btnWarning.visibility = if (salonReport) View.VISIBLE else View.GONE
-        binding.btnMarkInReview.visibility =
-            if (currentStatus == "pending") View.VISIBLE else View.GONE
-
         setActionsEnabled(actionsEnabled)
     }
 
@@ -237,8 +349,12 @@ class ReportDetailActivity : AppCompatActivity() {
                 }
 
                 setActionsEnabled(false)
+                val updates = mapOf<String, Any>(
+                    "isSuspended" to true,
+                    "isActive" to false
+                )
                 db.collection("users").document(ownerId)
-                    .update("isSuspended", true)
+                    .update(updates)
                     .addOnSuccessListener {
                         updateReport(
                             status = "resolved",
@@ -405,7 +521,6 @@ class ReportDetailActivity : AppCompatActivity() {
         }
     }
 
-
     private fun fullName(name: String?, surname: String?, fallback: String): String {
         val combined = listOf(name.orEmpty(), surname.orEmpty())
             .map { it.trim() }
@@ -414,4 +529,3 @@ class ReportDetailActivity : AppCompatActivity() {
         return combined.ifEmpty { fallback }
     }
 }
-

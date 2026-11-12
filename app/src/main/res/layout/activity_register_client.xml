@@ -94,7 +94,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="6dp"
-                android:text="Where you stay"
+                android:text="Enter your location"
                 android:textColor="@color/heading"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -120,38 +120,6 @@
                 android:textColor="@color/error"
                 android:textSize="12sp"
                 android:visibility="gone" />
-
-            <!-- Language -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="6dp"
-                android:text="Select language"
-                android:textColor="@color/heading"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilLanguage"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                app:boxCornerRadiusBottomEnd="16dp"
-                app:boxCornerRadiusBottomStart="16dp"
-                app:boxCornerRadiusTopEnd="16dp"
-                app:boxCornerRadiusTopStart="16dp"
-                app:boxStrokeColor="@color/teal"
-                app:hintEnabled="false">
-
-                <AutoCompleteTextView
-                    android:id="@+id/actvLanguage"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="e.g. isiZulu"
-                    android:inputType="none"
-                    android:textColorHint="@color/grey_medium" />
-            </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Email -->
             <TextView
@@ -337,6 +305,36 @@
                     android:layout_height="wrap_content"
                     android:inputType="textPassword" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Centered Optional Fingerprint Setup Option -->
+            <LinearLayout
+                android:id="@+id/layoutBiometricContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvBiometricLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Tap to link fingerprint login (optional)"
+                    android:textColor="@color/grey_medium"
+                    android:textSize="13sp" />
+
+                <ImageView
+                    android:id="@+id/btnEnableBiometric"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:contentDescription="Enable Fingerprint Login"
+                    android:focusable="true"
+                    android:src="@drawable/ic_fingerprint_auth" />
+            </LinearLayout>
+
 
             <!-- Register Button -->
             <com.google.android.material.button.MaterialButton

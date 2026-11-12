@@ -1,5 +1,6 @@
 package com.hairgo.app.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +12,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.DocumentSnapshot
 import com.hairgo.app.R
+import com.hairgo.app.activities.SalonDetailActivity // Make sure this matches your detail activity class name
 import com.hairgo.app.adapters.AdminSalonAdapter
 import com.hairgo.app.databinding.AdminFragmentSalonsBinding
 import com.hairgo.app.models.AdminSalon
@@ -37,9 +39,20 @@ class AdminSalonsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = AdminSalonAdapter(emptyList()) { salon ->
-            toggleSalonActive(salon)
-        }
+        adapter = AdminSalonAdapter(
+            salons = emptyList(),
+            onToggleActive = { salon ->
+                toggleSalonActive(salon)
+            },
+            onSalonClicked = { salon ->
+                val intent = Intent(requireContext(), SalonDetailActivity::class.java).apply {
+                    putExtra("salonId", salon.id)
+                    putExtra("ownerId", salon.ownerId)
+                    putExtra("salonName", salon.name)
+                }
+                startActivity(intent)
+            }
+        )
 
         binding.rvSalons.layoutManager = LinearLayoutManager(requireContext())
         binding.rvSalons.adapter = adapter
