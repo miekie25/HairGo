@@ -1,35 +1,41 @@
 package com.hairgo.app.adapters;
 
-import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
-import com.hairgo.app.utils.ImageCompressor;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.hairgo.app.R;
+import com.hairgo.app.activities.BookAppointmentActivity;
+import com.hairgo.app.activities.ServicePhotoViewerActivity;
 import com.hairgo.app.models.ServiceDetail;
 import com.hairgo.app.utils.ServiceImages;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * The salon page's services: one big card per service, with its photo on top, the price and
+ * duration under it, and a Book button. Tapping the photo opens a full-screen gallery.
+ */
 public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceViewHolder> {
+
+    /**
+     * How sharp the card photos are decoded. Every card on the page loads at once, so this is
+     * sharp enough for a full-width card without making a long list heavy on memory.
+     */
+    private static final int CARD_IMAGE_DIMENSION = 800;
 
     private final List<ServiceDetail> services;
     private final String salonId;
@@ -42,7 +48,8 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
     @NonNull
     @Override
     public ServiceViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_service, parent, false);
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_service_card, parent, false);
         return new ServiceViewHolder(view);
     }
 
@@ -51,131 +58,100 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
         ServiceDetail service = services.get(position);
         Context context = holder.itemView.getContext();
 
-        holder.tvServiceName.setText(service.getName());
+        holder.tvName.setText(service.getName());
 
-        // Price chip
-        String priceText;
-        if (service.hasPrice()) {
-            priceText = context.getString(R.string.service_price_rand, formatPrice(service.getPrice()));
-        } else {
-            priceText = context.getString(R.string.service_price_not_set);
-        }
-        holder.tvServicePrice.setText(priceText);
+        holder.tvPrice.setText(service.hasPrice()
+                ? context.getString(R.string.service_price_rand, formatPrice(service.getPrice()))
+                : context.getString(R.string.service_price_not_set));
 
-        // Duration chip
-        String durationText = context.getString(R.string.service_duration_minutes, service.getDurationMinutes());
-        holder.tvServiceDuration.setText(durationText);
+        holder.tvDuration.setText(context.getString(
+                R.string.service_duration_minutes, service.getDurationMinutes()));
 
-        bindServiceImage(holder, service);
+        holder.btnBook.setOnClickListener(v -> openBooking(v.getContext(), service.getName()));
+
+        bindImage(holder, service);
     }
 
-    private void bindServiceImage(ServiceViewHolder holder, ServiceDetail service) {
+    private void bindImage(ServiceViewHolder holder, ServiceDetail service) {
         String imageId = service.getImageId();
         long imageVersion = service.getImageVersion();
         if (salonId == null || imageId == null) {
-            holder.clearServiceImage();
-            holder.ivServiceImage.setOnClickListener(null);
+            holder.hideImage();
             return;
         }
 
+        // A recycled card may still have an older request in flight; the key tells them apart.
         String requestKey = salonId + "/" + imageId + "@" + imageVersion;
-        holder.ivServiceImage.setTag(R.id.ivServiceImage, requestKey);
-        holder.showServiceImagePlaceholder();
+        holder.ivImage.setTag(R.id.ivServiceCardImage, requestKey);
+        holder.showLoading();
 
-        ServiceImages.load(salonId, imageId, imageVersion, bitmap -> {
-            if (!requestKey.equals(holder.ivServiceImage.getTag(R.id.ivServiceImage))) {
+        ServiceImages.load(salonId, imageId, imageVersion, CARD_IMAGE_DIMENSION, bitmap -> {
+            if (!requestKey.equals(holder.ivImage.getTag(R.id.ivServiceCardImage))) {
                 return;
             }
             if (bitmap == null) {
-                holder.clearServiceImage();
+                holder.hideImage();
             } else {
-                holder.showServiceImage(bitmap);
+                holder.showImage(bitmap);
             }
         });
 
-        holder.ivServiceImage.setOnClickListener(v -> {
-            if (!requestKey.equals(holder.ivServiceImage.getTag(R.id.ivServiceImage))) {
-                return;
-            }
-            openImagePreview(holder.ivServiceImage.getContext(), salonId, imageId, imageVersion);
-        });
+        holder.imageFrame.setOnClickListener(v -> openViewer(v.getContext(), service));
     }
 
-    private void openImagePreview(Context context, String salonId, String imageId,
-                                  long imageVersion) {
-        Dialog dialog = new Dialog(context);
-        FrameLayout root = new FrameLayout(context);
-        root.setBackgroundColor(Color.parseColor("#80000000"));
+    /** Opens the booking screen with this service already ticked. */
+    private void openBooking(Context context, String serviceName) {
+        Intent intent = new Intent(context, BookAppointmentActivity.class);
+        intent.putExtra("salonId", salonId);
+        intent.putExtra("preselectServiceName", serviceName);
+        context.startActivity(intent);
+    }
 
-        int pad = dp(context, 24);
-        android.util.DisplayMetrics metrics = context.getResources().getDisplayMetrics();
-        int maxSize = Math.max(120, Math.min(metrics.widthPixels, metrics.heightPixels) - dp(context, 48));
+    /** Opens the full-screen gallery of this salon's service photos, on the tapped one. */
+    private void openViewer(Context context, ServiceDetail tapped) {
+        ArrayList<String> names = new ArrayList<>();
+        ArrayList<String> imageIds = new ArrayList<>();
+        List<Long> versions = new ArrayList<>();
+        List<Double> prices = new ArrayList<>();
+        List<Integer> durations = new ArrayList<>();
+        int startPosition = 0;
 
-        FrameLayout.LayoutParams imageParams = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        imageParams.gravity = Gravity.CENTER;
-        imageParams.setMargins(pad, pad, pad, pad);
-
-        ImageView imageView = new ImageView(context);
-        imageView.setAdjustViewBounds(true);
-        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        imageView.setMaxWidth(maxSize);
-        imageView.setMaxHeight(maxSize);
-        imageView.setVisibility(View.GONE);
-        imageView.setOnClickListener(v -> { });
-        root.addView(imageView, imageParams);
-
-        FrameLayout.LayoutParams progressParams = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        progressParams.gravity = Gravity.CENTER;
-        ProgressBar progress = new ProgressBar(context);
-        root.addView(progress, progressParams);
-
-        ImageButton closeButton = new ImageButton(context);
-        closeButton.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
-        closeButton.setBackgroundColor(Color.TRANSPARENT);
-        closeButton.setColorFilter(Color.WHITE);
-        FrameLayout.LayoutParams closeParams = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        closeParams.gravity = Gravity.TOP | Gravity.END;
-        closeParams.setMargins(0, pad / 2, pad / 2, 0);
-        root.addView(closeButton, closeParams);
-
-        dialog.setContentView(root);
-        Window window = dialog.getWindow();
-        if (window != null) {
-            window.setLayout(WindowManager.LayoutParams.MATCH_PARENT,
-                    WindowManager.LayoutParams.MATCH_PARENT);
-            window.setBackgroundDrawable(
-                    new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
-            window.setDimAmount(0.25f);
+        for (ServiceDetail service : services) {
+            if (service.getImageId() == null) continue;
+            if (service == tapped) startPosition = names.size();
+            names.add(service.getName());
+            imageIds.add(service.getImageId());
+            versions.add(service.getImageVersion());
+            prices.add(service.hasPrice() ? service.getPrice() : Double.NaN);
+            durations.add(service.getDurationMinutes());
         }
-        dialog.setCancelable(true);
-        dialog.setCanceledOnTouchOutside(true);
+        if (names.isEmpty()) return;
 
-        final boolean[] dismissed = {false};
-        dialog.setOnDismissListener(d -> dismissed[0] = true);
-        closeButton.setOnClickListener(v -> dialog.dismiss());
-        root.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
+        long[] versionArray = new long[versions.size()];
+        double[] priceArray = new double[prices.size()];
+        int[] durationArray = new int[durations.size()];
+        for (int i = 0; i < names.size(); i++) {
+            versionArray[i] = versions.get(i);
+            priceArray[i] = prices.get(i);
+            durationArray[i] = durations.get(i);
+        }
 
-        ServiceImages.load(salonId, imageId, imageVersion,
-                ImageCompressor.MAX_DIMENSION, bitmap -> {
-                    if (dismissed[0] || !dialog.isShowing()) {
-                        return;
-                    }
-                    progress.setVisibility(View.GONE);
-                    if (bitmap != null) {
-                        imageView.setImageBitmap(bitmap);
-                        imageView.setVisibility(View.VISIBLE);
-                    } else {
-                        dialog.dismiss();
-                    }
-                });
+        Intent intent = new Intent(context, ServicePhotoViewerActivity.class);
+        intent.putExtra(ServicePhotoViewerActivity.EXTRA_SALON_ID, salonId);
+        intent.putStringArrayListExtra(ServicePhotoViewerActivity.EXTRA_NAMES, names);
+        intent.putStringArrayListExtra(ServicePhotoViewerActivity.EXTRA_IMAGE_IDS, imageIds);
+        intent.putExtra(ServicePhotoViewerActivity.EXTRA_VERSIONS, versionArray);
+        intent.putExtra(ServicePhotoViewerActivity.EXTRA_PRICES, priceArray);
+        intent.putExtra(ServicePhotoViewerActivity.EXTRA_DURATIONS, durationArray);
+        intent.putExtra(ServicePhotoViewerActivity.EXTRA_POSITION, startPosition);
+        context.startActivity(intent);
     }
 
-    private static int dp(Context context, int value) {
-        return Math.round(value * context.getResources().getDisplayMetrics().density);
+    @Override
+    public void onViewRecycled(@NonNull ServiceViewHolder holder) {
+        // Let go of the photo so a long list does not hold on to memory it is not showing.
+        holder.ivImage.setImageBitmap(null);
+        super.onViewRecycled(holder);
     }
 
     @Override
@@ -195,46 +171,43 @@ public class ServiceAdapter extends RecyclerView.Adapter<ServiceAdapter.ServiceV
     }
 
     static class ServiceViewHolder extends RecyclerView.ViewHolder {
-        TextView tvServiceName;
-        TextView tvServicePrice;
-        TextView tvServiceDuration;
-        ImageView ivServiceIcon;
-        ShapeableImageView ivServiceImage;
+        final FrameLayout imageFrame;
+        final ShapeableImageView ivImage;
+        final ProgressBar progress;
+        final TextView tvName;
+        final TextView tvPrice;
+        final TextView tvDuration;
+        final MaterialButton btnBook;
 
         ServiceViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvServiceName = itemView.findViewById(R.id.tvServiceName);
-            tvServicePrice = itemView.findViewById(R.id.tvServicePrice);
-            tvServiceDuration = itemView.findViewById(R.id.tvServiceDuration);
-            ivServiceIcon = itemView.findViewById(R.id.ivServiceIcon);
-            ivServiceImage = itemView.findViewById(R.id.ivServiceImage);
+            imageFrame = itemView.findViewById(R.id.flServiceCardImage);
+            ivImage = itemView.findViewById(R.id.ivServiceCardImage);
+            progress = itemView.findViewById(R.id.pbServiceCardImage);
+            tvName = itemView.findViewById(R.id.tvServiceCardName);
+            tvPrice = itemView.findViewById(R.id.tvServiceCardPrice);
+            tvDuration = itemView.findViewById(R.id.tvServiceCardDuration);
+            btnBook = itemView.findViewById(R.id.btnBookService);
         }
 
-        void showServiceImagePlaceholder() {
-            ivServiceImage.setVisibility(View.VISIBLE);
-            ivServiceImage.setBackgroundResource(R.drawable.bg_thumb_placeholder);
-            int padding = dp(14);
-            ivServiceImage.setPadding(padding, padding, padding, padding);
-            ivServiceImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-            ivServiceImage.setImageResource(R.drawable.ic_image_placeholder);
+        void showLoading() {
+            imageFrame.setVisibility(View.VISIBLE);
+            progress.setVisibility(View.VISIBLE);
+            ivImage.setImageBitmap(null);
         }
 
-        void showServiceImage(Bitmap bitmap) {
-            ivServiceImage.setVisibility(View.VISIBLE);
-            ivServiceImage.setPadding(0, 0, 0, 0);
-            ivServiceImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            ivServiceImage.setImageBitmap(bitmap);
+        void showImage(Bitmap bitmap) {
+            imageFrame.setVisibility(View.VISIBLE);
+            progress.setVisibility(View.GONE);
+            ivImage.setImageBitmap(bitmap);
         }
 
-        void clearServiceImage() {
-            ivServiceImage.setTag(R.id.ivServiceImage, null);
-            ivServiceImage.setOnClickListener(null);
-            ivServiceImage.setImageBitmap(null);
-            ivServiceImage.setVisibility(View.GONE);
-        }
-
-        private int dp(int value) {
-            return Math.round(value * itemView.getResources().getDisplayMetrics().density);
+        /** No photo (or it failed to load): the card shrinks to just the name, price and Book. */
+        void hideImage() {
+            ivImage.setTag(R.id.ivServiceCardImage, null);
+            ivImage.setImageBitmap(null);
+            imageFrame.setOnClickListener(null);
+            imageFrame.setVisibility(View.GONE);
         }
     }
 }

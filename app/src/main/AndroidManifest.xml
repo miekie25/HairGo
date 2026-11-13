@@ -171,6 +171,7 @@
             android:name=".activities.LocationPickerActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".activities.ServicePhotoViewerActivity" android:exported="false" />
 
     </application>
 

@@ -289,7 +289,18 @@ public class BookAppointmentActivity extends AppCompatActivity {
             findViewById(R.id.tvNotesLabel).setVisibility(View.GONE);
             etNotes.setVisibility(View.GONE);
         }
+        // Opened from a service's "Book" button or photo gallery: tick that service for the
+        // client so they only have to pick a date and time.
+        if (!isEditing()) {
+            String preselect = getIntent().getStringExtra("preselectServiceName");
+            ServiceDetail match = preselect == null
+                    ? null : findServiceByName(availableServices, preselect);
+            if (match != null) {
+                selectedServices.add(match);
+            }
+        }
         updateServiceSummary();
+
 
         findViewById(R.id.btnConfirmBooking).setOnClickListener(v -> confirmBooking(salon));
     }
