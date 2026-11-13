@@ -53,6 +53,7 @@ public class OwnerBookingsFragment extends Fragment {
     public static final int FILTER_PAST = 3;
     public static final int FILTER_TODAY = 4;
     public static final int FILTER_COMPLETED = 5;
+    public static final int FILTER_OUTSTANDING = 6;
 
     /** Everything loaded for the selected salon. */
     private final List<OwnerBooking> allBookings = new ArrayList<>();
@@ -142,6 +143,7 @@ public class OwnerBookingsFragment extends Fragment {
 
     private int filterForChip(int chipId) {
         if (chipId == R.id.chipPending) return FILTER_PENDING;
+        if (chipId == R.id.chipOutstanding) return FILTER_OUTSTANDING;
         if (chipId == R.id.chipUpcoming) return FILTER_UPCOMING;
         if (chipId == R.id.chipPast) return FILTER_PAST;
         if (chipId == R.id.chipToday) return FILTER_TODAY;
@@ -156,6 +158,9 @@ public class OwnerBookingsFragment extends Fragment {
                 break;
             case FILTER_PENDING:
                 group.check(R.id.chipPending);
+                break;
+            case FILTER_OUTSTANDING:
+                group.check(R.id.chipOutstanding);
                 break;
             case FILTER_UPCOMING:
                 group.check(R.id.chipUpcoming);
@@ -322,6 +327,8 @@ public class OwnerBookingsFragment extends Fragment {
         switch (currentFilter) {
             case FILTER_PENDING:
                 return "pending".equals(booking.getStatus());
+            case FILTER_OUTSTANDING:
+                return booking.hasOutstandingBalance();
             case FILTER_UPCOMING:
                 return booking.isActiveUpcoming();
             case FILTER_PAST:
@@ -346,6 +353,8 @@ public class OwnerBookingsFragment extends Fragment {
         switch (currentFilter) {
             case FILTER_PENDING:
                 return "No pending requests";
+            case FILTER_OUTSTANDING:
+                return "No bookings with outstanding balances";
             case FILTER_UPCOMING:
                 return "No upcoming bookings";
             case FILTER_PAST:

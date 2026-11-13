@@ -100,8 +100,10 @@ public class OwnerHomeFragment extends Fragment {
                         Double outstanding = payment.getAmountOutstanding();
                         if (outstanding != null && outstanding > 0) {
                             outstandingBalance = outstandingBalance.add(BigDecimal.valueOf(outstanding));
-                            bookingsWithOutstanding++;
                         }
+                    }
+                    if (booking.hasOutstandingBalance()) {
+                        bookingsWithOutstanding++;
                     }
                 }
                 setText(R.id.tvTodayBookingsCount, String.valueOf(today));
@@ -165,7 +167,7 @@ public class OwnerHomeFragment extends Fragment {
         view.findViewById(R.id.cardOutstandingBalance).setOnClickListener(v ->
                 openReportsWithFocus(OwnerReportsFragment.FOCUS_OUTSTANDING_BALANCE));
         view.findViewById(R.id.cardBookingsWithOutstanding).setOnClickListener(v ->
-                openReportsWithFocus(OwnerReportsFragment.FOCUS_BOOKINGS_OUTSTANDING));
+                openBookingsWithFilter(OwnerBookingsFragment.FILTER_OUTSTANDING));
     }
 
     private void openBookingsWithFilter(int filter) {

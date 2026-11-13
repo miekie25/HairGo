@@ -196,4 +196,12 @@ public class OwnerBooking {
     }
 
     public PaymentDetails getPaymentDetails() { return paymentDetails; }
+
+    /** True when this booking still has an unpaid or partially paid balance. */
+    public boolean hasOutstandingBalance() {
+        PaymentDetails payment = getPaymentDetails();
+        if (payment == null) return false;
+        Double outstanding = payment.getAmountOutstanding();
+        return outstanding != null && outstanding > 0;
+    }
 }
