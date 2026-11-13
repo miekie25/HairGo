@@ -391,6 +391,8 @@
 
     <!-- Admin -->
     <string name="admin_dashboard_title">Ukuphatha</string>
+    <string name="admin_welcome_back">Wamukelekile futhi, %1$s</string>
+    <string name="admin_dashboard_subtitle">Ukuphatha nokuqondisa uhlelo</string>
     <string name="nav_overview">Ukubuka konke</string>
     <string name="nav_users">Abasebenzisi</string>
     <string name="nav_salons">Izitendi</string>

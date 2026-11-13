@@ -103,8 +103,12 @@ class AdminDashboardActivity : AppCompatActivity() {
                     return
                 }
 
-                val displayName = if (name.isNullOrEmpty()) "Admin" else name
-                tvAdminName?.text = "Welcome $displayName 👋"
+                val displayName = name?.trim().orEmpty()
+                tvAdminName?.text = if (displayName.isEmpty()) {
+                    getString(R.string.dashboard_welcome_default)
+                } else {
+                    getString(R.string.admin_welcome_back, displayName)
+                }
 
                 // Default landing tab is Overview (Home)
                 val targetTab = savedInstanceState?.getInt(
