@@ -16,7 +16,9 @@ import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.ListenerRegistration
 import com.hairgo.app.R
+import com.hairgo.app.activities.AdminFirestoreListenerOwner
 import com.hairgo.app.activities.UserDetailActivity
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -33,7 +35,7 @@ data class AdminUserModel(
     val createdAtMs: Long = 0L
 )
 
-class AdminUsersFragment : Fragment() {
+class AdminUsersFragment : Fragment(), AdminFirestoreListenerOwner {
 
     private lateinit var toggleGroupUserRole: MaterialButtonToggleGroup
     private lateinit var btnUserSortOption: MaterialButton
@@ -43,6 +45,7 @@ class AdminUsersFragment : Fragment() {
     private val db = FirebaseFirestore.getInstance()
     private val allUsersList = mutableListOf<AdminUserModel>()
     private lateinit var usersAdapter: AdminUsersAdapter
+    private var usersListener: ListenerRegistration? = null
 
     private var currentRoleFilter = "all"
     private var currentSortMode = SortMode.DATE_NEWEST
@@ -125,20 +128,25 @@ class AdminUsersFragment : Fragment() {
     }
 
     private fun fetchUsersFromFirestore() {
-        db.collection("users")
+        usersListener?.remove()
+        usersListener = db.collection("users")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    context?.let {
-                        Toast.makeText(
-                            it,
-                            getString(R.string.admin_error_load, error.message ?: ""),
-                            Toast.LENGTH_SHORT
-                        ).show()
+                    if (isAdded && view != null && FirebaseAuth.getInstance().currentUser != null) {
+                        context?.let {
+                            Toast.makeText(
+                                it,
+                                getString(R.string.admin_error_load, error.message ?: ""),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                     return@addSnapshotListener
                 }
 
-                if (snapshot == null) return@addSnapshotListener
+                if (snapshot == null || !isAdded || view == null) {
+                    return@addSnapshotListener
+                }
 
                 allUsersList.clear()
                 allUsersList.addAll(
@@ -148,6 +156,16 @@ class AdminUsersFragment : Fragment() {
                 )
                 applyFilterAndSort()
             }
+    }
+
+    override fun detachFirestoreListeners() {
+        usersListener?.remove()
+        usersListener = null
+    }
+
+    override fun onDestroyView() {
+        detachFirestoreListeners()
+        super.onDestroyView()
     }
 
     private fun toUser(doc: DocumentSnapshot): AdminUserModel {

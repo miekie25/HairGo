@@ -8,18 +8,20 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.DocumentSnapshot
 import com.hairgo.app.R
 import com.hairgo.app.activities.AdminDashboardActivity
+import com.hairgo.app.activities.AdminFirestoreListenerOwner
 import com.hairgo.app.activities.ReportDetailActivity
 import com.hairgo.app.activities.UserDetailActivity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class OverviewFragment : Fragment() {
+class OverviewFragment : Fragment(), AdminFirestoreListenerOwner {
 
     private data class UserPreview(
         val id: String,
@@ -87,9 +89,13 @@ class OverviewFragment : Fragment() {
         observeReports()
     }
 
-    override fun onDestroyView() {
+    override fun detachFirestoreListeners() {
         listeners.forEach { it.remove() }
         listeners.clear()
+    }
+
+    override fun onDestroyView() {
+        detachFirestoreListeners()
         super.onDestroyView()
     }
 
@@ -409,6 +415,7 @@ class OverviewFragment : Fragment() {
     }
 
     private fun showError(message: String?) {
+        if (!isAdded || view == null || FirebaseAuth.getInstance().currentUser == null) return
         val safeContext = context ?: return
         Toast.makeText(
             safeContext,

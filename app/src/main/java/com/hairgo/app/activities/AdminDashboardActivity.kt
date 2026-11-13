@@ -68,8 +68,16 @@ class AdminDashboardActivity : AppCompatActivity() {
 
     private fun setupLogoutButton() {
         btnLogout?.setOnClickListener {
+            detachAdminFirestoreListeners()
             authManager.signOut()
             redirectToWelcome()
+        }
+    }
+
+    private fun detachAdminFirestoreListeners() {
+        supportFragmentManager.executePendingTransactions()
+        supportFragmentManager.fragments.forEach { fragment ->
+            (fragment as? AdminFirestoreListenerOwner)?.detachFirestoreListeners()
         }
     }
 
@@ -177,4 +185,8 @@ class AdminDashboardActivity : AppCompatActivity() {
         private const val KEY_TYPE_BACKFILL_DONE = "reports_type_backfilled"
         private const val TAG_BACKFILL = "ReportBackfill"
     }
+}
+
+interface AdminFirestoreListenerOwner {
+    fun detachFirestoreListeners()
 }

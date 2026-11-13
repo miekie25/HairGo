@@ -13,10 +13,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.hairgo.app.R
+import com.hairgo.app.activities.AdminFirestoreListenerOwner
 import com.hairgo.app.activities.ReportDetailActivity
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -34,7 +36,7 @@ data class AdminReportModel(
     val createdAtMs: Long = 0L
 )
 
-class ReportsFragment : Fragment() {
+class ReportsFragment : Fragment(), AdminFirestoreListenerOwner {
 
     private var toggleGroupStatus: MaterialButtonToggleGroup? = null
     private var btnReportSortOrder: MaterialButton? = null
@@ -108,7 +110,7 @@ class ReportsFragment : Fragment() {
     }
 
     private fun fetchReportsFromFirestore() {
-        reportsListener?.remove()
+        detachFirestoreListeners()
 
         reportsListener = db.collection("reports")
             .addSnapshotListener { snapshot, error ->
@@ -116,14 +118,16 @@ class ReportsFragment : Fragment() {
                 if (!isAdded) return@addSnapshotListener
 
                 if (error != null) {
-                    Toast.makeText(
-                        requireContext(),
-                        getString(
-                            R.string.admin_error_load,
-                            error.message ?: ""
-                        ),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    if (view != null && FirebaseAuth.getInstance().currentUser != null) {
+                        Toast.makeText(
+                            requireContext(),
+                            getString(
+                                R.string.admin_error_load,
+                                error.message ?: ""
+                            ),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
 
                     return@addSnapshotListener
                 }
@@ -294,9 +298,13 @@ class ReportsFragment : Fragment() {
         ).format(Date(timeMs))
     }
 
-    override fun onDestroyView() {
+    override fun detachFirestoreListeners() {
         reportsListener?.remove()
         reportsListener = null
+    }
+
+    override fun onDestroyView() {
+        detachFirestoreListeners()
 
         toggleGroupStatus = null
         btnReportSortOrder = null

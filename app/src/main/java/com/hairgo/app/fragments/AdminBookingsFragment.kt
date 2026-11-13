@@ -12,9 +12,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.ListenerRegistration
 import com.hairgo.app.R
+import com.hairgo.app.activities.AdminFirestoreListenerOwner
 import com.hairgo.app.firebase.BookingManager
 import com.hairgo.app.utils.CompletionReminderManager
 import com.hairgo.app.utils.ReminderScheduler
@@ -34,7 +37,7 @@ data class AdminBookingModel(
     val dateTimeMs: Long = 0L
 )
 
-class AdminBookingsFragment : Fragment() {
+class AdminBookingsFragment : Fragment(), AdminFirestoreListenerOwner {
 
     private lateinit var toggleGroupBookingStatus: MaterialButtonToggleGroup
     private lateinit var btnSortOrder: MaterialButton
@@ -44,6 +47,7 @@ class AdminBookingsFragment : Fragment() {
     private val db = FirebaseFirestore.getInstance()
     private val bookingManager = BookingManager()
     private val allBookingsList = mutableListOf<AdminBookingModel>()
+    private var bookingsListener: ListenerRegistration? = null
 
     private var currentSortMode = SortMode.DATE_NEWEST
     private var currentFilterStatus = "all"
@@ -115,20 +119,25 @@ class AdminBookingsFragment : Fragment() {
     }
 
     private fun fetchBookingsFromFirestore() {
-        db.collection("bookings")
+        bookingsListener?.remove()
+        bookingsListener = db.collection("bookings")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    context?.let { ctx ->
-                        Toast.makeText(
-                            ctx,
-                            getString(R.string.admin_error_load, error.message ?: ""),
-                            Toast.LENGTH_SHORT
-                        ).show()
+                    if (isAdded && view != null && FirebaseAuth.getInstance().currentUser != null) {
+                        context?.let { ctx ->
+                            Toast.makeText(
+                                ctx,
+                                getString(R.string.admin_error_load, error.message ?: ""),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                     return@addSnapshotListener
                 }
 
-                if (snapshot == null || !isAdded) return@addSnapshotListener
+                if (snapshot == null || !isAdded || view == null) {
+                    return@addSnapshotListener
+                }
 
                 allBookingsList.clear()
                 allBookingsList.addAll(
@@ -144,6 +153,16 @@ class AdminBookingsFragment : Fragment() {
                 )
                 applyFilterAndSort()
             }
+    }
+
+    override fun detachFirestoreListeners() {
+        bookingsListener?.remove()
+        bookingsListener = null
+    }
+
+    override fun onDestroyView() {
+        detachFirestoreListeners()
+        super.onDestroyView()
     }
 
     private fun toBooking(doc: DocumentSnapshot): AdminBookingModel {

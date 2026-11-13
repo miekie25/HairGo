@@ -8,17 +8,19 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.DocumentSnapshot
 import com.hairgo.app.R
+import com.hairgo.app.activities.AdminFirestoreListenerOwner
 import com.hairgo.app.activities.SalonDetailActivity // Make sure this matches your detail activity class name
 import com.hairgo.app.adapters.AdminSalonAdapter
 import com.hairgo.app.databinding.AdminFragmentSalonsBinding
 import com.hairgo.app.models.AdminSalon
 import java.util.Locale
 
-class AdminSalonsFragment : Fragment() {
+class AdminSalonsFragment : Fragment(), AdminFirestoreListenerOwner {
 
     private var _binding: AdminFragmentSalonsBinding? = null
     private val binding get() = _binding!!
@@ -64,12 +66,18 @@ class AdminSalonsFragment : Fragment() {
         db.collection("users")
             .get()
             .addOnSuccessListener { snapshot ->
+                if (!isAdded || _binding == null || FirebaseAuth.getInstance().currentUser == null) {
+                    return@addOnSuccessListener
+                }
                 for (doc in snapshot.documents) {
                     ownerNames[doc.id] = fullName(doc)
                 }
                 observeSalons()
             }
             .addOnFailureListener { e ->
+                if (!isAdded || _binding == null || FirebaseAuth.getInstance().currentUser == null) {
+                    return@addOnFailureListener
+                }
                 context?.let {
                     Toast.makeText(
                         it,
@@ -81,19 +89,25 @@ class AdminSalonsFragment : Fragment() {
     }
 
     private fun observeSalons() {
-        salonListener?.remove()
+        detachFirestoreListeners()
         salonListener = db.collection("salons")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Toast.makeText(
-                        context,
-                        getString(R.string.admin_error_load, error.message ?: ""),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    if (isAdded && _binding != null &&
+                        FirebaseAuth.getInstance().currentUser != null
+                    ) {
+                        Toast.makeText(
+                            context,
+                            getString(R.string.admin_error_load, error.message ?: ""),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                     return@addSnapshotListener
                 }
 
-                if (snapshot == null) return@addSnapshotListener
+                if (snapshot == null || !isAdded || _binding == null) {
+                    return@addSnapshotListener
+                }
 
                 salons.clear()
                 salons.addAll(
@@ -169,9 +183,13 @@ class AdminSalonsFragment : Fragment() {
         }
     }
 
-    override fun onDestroyView() {
+    override fun detachFirestoreListeners() {
         salonListener?.remove()
         salonListener = null
+    }
+
+    override fun onDestroyView() {
+        detachFirestoreListeners()
         super.onDestroyView()
         _binding = null
     }
