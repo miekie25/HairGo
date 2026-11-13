@@ -16,58 +16,60 @@
         android:paddingBottom="8dp">
 
         <!-- Status Filter Toggles -->
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/toggleGroupStatus"
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:selectionRequired="true"
-            app:singleSelection="true">
+            android:scrollbars="none">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnFilterPending"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:text="@string/admin_filter_incoming"
-                android:textAllCaps="false"
-                android:textSize="11sp"
-                app:strokeColor="@color/navy" />
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggleGroupStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:selectionRequired="true"
+                app:singleSelection="true">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnFilterReviewed"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:text="@string/admin_filter_in_review"
-                android:textAllCaps="false"
-                android:textSize="11sp"
-                app:strokeColor="@color/grey_border" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFilterPending"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:text="@string/admin_filter_incoming"
+                    android:textAllCaps="false"
+                    android:textSize="12sp"
+                    app:strokeColor="@color/navy" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnFilterDismissed"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:text="@string/admin_filter_resolved"
-                android:textAllCaps="false"
-                android:textSize="11sp"
-                app:strokeColor="@color/grey_border" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFilterReviewed"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:text="@string/admin_filter_in_review"
+                    android:textAllCaps="false"
+                    android:textSize="12sp"
+                    app:strokeColor="@color/grey_border" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnFilterClosed"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:text="@string/admin_filter_closed"
-                android:textAllCaps="false"
-                android:textSize="11sp"
-                app:strokeColor="@color/grey_border" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFilterDismissed"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:text="@string/admin_filter_resolved"
+                    android:textAllCaps="false"
+                    android:textSize="12sp"
+                    app:strokeColor="@color/grey_border" />
 
-        </com.google.android.material.button.MaterialButtonToggleGroup>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFilterClosed"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:text="@string/admin_filter_closed"
+                    android:textAllCaps="false"
+                    android:textSize="12sp"
+                    app:strokeColor="@color/grey_border" />
+
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+        </HorizontalScrollView>
 
         <!-- Sorting Selector -->
         <RelativeLayout
