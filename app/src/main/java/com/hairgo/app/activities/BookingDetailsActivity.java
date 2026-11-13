@@ -1,7 +1,9 @@
 package com.hairgo.app.activities;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.CalendarContract;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageButton;
@@ -37,6 +39,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 public class BookingDetailsActivity extends AppCompatActivity {
 
@@ -48,6 +51,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
     private androidx.appcompat.widget.AppCompatButton btnMessageSalon;
     private androidx.appcompat.widget.AppCompatButton btnCancelBooking;
     private androidx.appcompat.widget.AppCompatButton btnEditBooking;
+    private androidx.appcompat.widget.AppCompatButton btnAddToCalendar;
     private androidx.appcompat.widget.AppCompatButton btnLeaveReview;
     private androidx.appcompat.widget.AppCompatButton btnReportSalon;
     private ProgressBar progress;
@@ -57,6 +61,8 @@ public class BookingDetailsActivity extends AppCompatActivity {
     private String currentStatus;
     private String bookingId;
     private String currentSalonId;
+    private String currentSalonLocation;
+    private Booking currentBooking;
     private ShapeableImageView ivSalonPhoto;
     private TextView tvPaymentBadge;
     private TextView tvTotalLabel;
@@ -199,15 +205,19 @@ public class BookingDetailsActivity extends AppCompatActivity {
         btnCancelBooking = findViewById(R.id.btnCancelBooking);
         btnMessageSalon = findViewById(R.id.btnMessageSalon);
         btnEditBooking = findViewById(R.id.btnEditBooking);
+        btnAddToCalendar = findViewById(R.id.btnAddToCalendar);
         btnLeaveReview = findViewById(R.id.btnLeaveReview);
         btnReportSalon = findViewById(R.id.btnReportSalon);
         ivSalonPhoto = findViewById(R.id.ivSalonPhoto);
         tvPaymentBadge = findViewById(R.id.tvPaymentBadge);
         tvTotalLabel = findViewById(R.id.tvTotalLabel);
         currentSalonId = booking.getSalonId();
+        currentSalonLocation = null;
+        currentBooking = booking;
 
         btnLeaveReview.setOnClickListener(v -> showLeaveReview());
         btnEditBooking.setOnClickListener(v -> onEditClicked(booking));
+        btnAddToCalendar.setOnClickListener(v -> openCalendarEvent());
         btnReportSalon.setOnClickListener(v -> showReportSalon(booking));
         btnMessageSalon.setOnClickListener(v -> openChat());
 
@@ -245,6 +255,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
         updateCancelButtonVisibility(currentStatus);
         updateExpiredNote(currentStatus);
         updateEditButton(currentStatus);
+        updateCalendarButtonVisibility();
         refreshReviewButton();
 
         btnCancelBooking.setOnClickListener(v -> showCancelConfirmation());
@@ -269,6 +280,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(String errorMessage) {
+                currentSalonLocation = null;
                 tvSalonLocation.setVisibility(View.GONE);
             }
         });
@@ -276,10 +288,12 @@ public class BookingDetailsActivity extends AppCompatActivity {
 
     private void bindLocation(String location) {
         if (location == null || location.trim().isEmpty()) {
+            currentSalonLocation = null;
             tvSalonLocation.setVisibility(View.GONE);
             return;
         }
 
+        currentSalonLocation = location.trim();
         tvSalonLocation.setText(location);
         tvSalonLocation.setOnClickListener(v -> MapsHelper.openLocation(this, location));
         tvSalonLocation.setVisibility(View.VISIBLE);
@@ -454,6 +468,60 @@ public class BookingDetailsActivity extends AppCompatActivity {
                 : R.string.btn_edit_booking);
     }
 
+    private void updateCalendarButtonVisibility() {
+        boolean canAddToCalendar = "confirmed".equals(currentStatus)
+                && currentBooking != null
+                && currentBooking.getDateTime() != null;
+        btnAddToCalendar.setVisibility(canAddToCalendar ? View.VISIBLE : View.GONE);
+    }
+
+    private void openCalendarEvent() {
+        if (!"confirmed".equals(currentStatus)
+                || currentBooking == null
+                || currentBooking.getDateTime() == null) {
+            return;
+        }
+
+        String salonName = currentBooking.getSalonName() == null
+                ? ""
+                : currentBooking.getSalonName();
+        String serviceLabel = currentBooking.getServiceLabel();
+        if (TextUtils.isEmpty(serviceLabel)) {
+            serviceLabel = getString(R.string.label_service);
+        }
+        String bookingReference = currentBooking.getBookingId() == null
+                ? ""
+                : currentBooking.getBookingId();
+
+        String description = getString(R.string.calendar_event_description,
+                serviceLabel, salonName, bookingReference);
+        String notes = currentBooking.getNotes();
+        if (!TextUtils.isEmpty(notes)) {
+            description += "\n" + getString(R.string.calendar_event_notes, notes.trim());
+        }
+
+        Intent intent = new Intent(Intent.ACTION_INSERT)
+                .setData(CalendarContract.Events.CONTENT_URI)
+                .putExtra(CalendarContract.Events.TITLE,
+                        getString(R.string.calendar_event_title, salonName))
+                .putExtra(CalendarContract.Events.DESCRIPTION, description)
+                .putExtra(CalendarContract.Events.EVENT_LOCATION,
+                        currentSalonLocation == null ? "" : currentSalonLocation)
+                .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME,
+                        currentBooking.getDateTime().getTime())
+                .putExtra(CalendarContract.EXTRA_EVENT_END_TIME,
+                        currentBooking.getEndTimeMillis())
+                .putExtra(CalendarContract.Events.EVENT_TIMEZONE,
+                        TimeZone.getDefault().getID());
+
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            Snackbars.show(findViewById(android.R.id.content),
+                    R.string.calendar_app_not_found);
+        }
+    }
+
     private void onEditClicked(Booking booking) {
         if ("confirmed".equals(currentStatus)) {
             new AlertDialog.Builder(this)
@@ -617,6 +685,7 @@ public class BookingDetailsActivity extends AppCompatActivity {
                 updateStatusBadge(currentStatus);
                 updateCancelButtonVisibility(currentStatus);
                 updateEditButton(currentStatus);
+                updateCalendarButtonVisibility();
                 btnCancelBooking.setEnabled(true);
                 // Drop any pending reminders for a booking that is now cancelled.
                 ReminderScheduler.cancel(BookingDetailsActivity.this, bookingId);

@@ -120,6 +120,17 @@ public class Booking {
     public Double getTotalPrice() { return totalPrice; }
     public int getTotalDurationMinutes() { return totalDurationMinutes; }
 
+    public int getEffectiveDurationMinutes() {
+        if (totalDurationMinutes > 0) return totalDurationMinutes;
+        int fromDetails = sumDuration(serviceDetails);
+        return fromDetails > 0 ? fromDetails : ServiceDetail.DEFAULT_DURATION_MINUTES;
+    }
+
+    public long getEndTimeMillis() {
+        if (dateTime == null) return 0L;
+        return dateTime.getTime() + getEffectiveDurationMinutes() * 60_000L;
+    }
+
     // True if some of the booked services have no price, so the total is partial.
     public boolean hasUnpricedServices() {
         for (ServiceDetail detail : getServiceDetails()) {

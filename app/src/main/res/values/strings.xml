@@ -122,6 +122,11 @@
     <string name="cancel_booking_confirm_title">Cancel this booking?</string>
     <string name="cancel_booking_confirm_message">This will let the salon know you can\'t make it. This can\'t be undone.</string>
     <string name="btn_keep_booking">Keep Booking</string>
+    <string name="btn_add_to_calendar">Add to Calendar</string>
+    <string name="calendar_event_title">HairGo – %1$s</string>
+    <string name="calendar_event_description">Service: %1$s\nSalon: %2$s\nBooking reference: %3$s</string>
+    <string name="calendar_event_notes">Notes: %1$s</string>
+    <string name="calendar_app_not_found">No calendar app is available on this device.</string>
 
     <!-- Still used by BookingDetailsActivity, which has not been moved off demo data yet. -->
     <string name="booking_cancelled_demo">Booking cancelled — this is a demo, real soft-delete wiring comes in Phase 2.</string>

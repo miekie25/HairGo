@@ -122,6 +122,11 @@
     <string name="cancel_booking_confirm_title">Uyakukhansela lokhu kubhuka?</string>
     <string name="cancel_booking_confirm_message">Lokhu kuzokwazisa isitendi ukuthi ngeke ukwazi ukuza. Lokhu ngeke kubuyiselwe emuva.</string>
     <string name="btn_keep_booking">Gcina Ukubhuka</string>
+    <string name="btn_add_to_calendar">Engeza Kukhalenda</string>
+    <string name="calendar_event_title">HairGo – %1$s</string>
+    <string name="calendar_event_description">Insizakalo: %1$s\nIsitendi: %2$s\nInombolo yokubhuka: %3$s</string>
+    <string name="calendar_event_notes">Izinothi: %1$s</string>
+    <string name="calendar_app_not_found">Ayikho i-app yekhalenda etholakalayo kule divayisi.</string>
 
     <string name="booking_cancelled_demo">Ukubhuka kukhanseliwe — lokhu kungumbukiso, ukususwa kwangempela kuza esigabeni sesi-2.</string>
     <string name="booking_cancelled">Ukubhuka kukhanseliwe.</string>
