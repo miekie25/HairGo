@@ -26,6 +26,7 @@ import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.fragments.ReportProblemBottomSheet;
 import com.hairgo.app.models.Salon;
 import com.hairgo.app.models.ServiceDetail;
+import com.hairgo.app.utils.MapsHelper;
 import com.hairgo.app.utils.ReviewLoader;
 import com.hairgo.app.utils.SalonHours;
 import com.hairgo.app.utils.SalonPhotos;
@@ -154,10 +155,11 @@ public class SalonProfileActivity extends AppCompatActivity {
 
         TextView tvSalonName = findViewById(R.id.tvSalonName);
         TextView tvSalonLocation = findViewById(R.id.tvSalonLocation);
+        View llLocation = findViewById(R.id.llLocation);
         TextView tvSalonRating = findViewById(R.id.tvSalonRating);
 
         tvSalonName.setText(salon.getName());
-        tvSalonLocation.setText(salon.getLocation());
+        bindLocation(llLocation, tvSalonLocation, salon.getLocation());
         tvSalonRating.setText(String.format(Locale.getDefault(), "%.1f", salon.getAvgRating()));
 
         RecyclerView rvServices = findViewById(R.id.rvServices);
@@ -177,6 +179,22 @@ public class SalonProfileActivity extends AppCompatActivity {
                 ReportProblemBottomSheet
                         .newInstanceForSalon(salon.getSalonId(), salon.getName(), null)
                         .show(getSupportFragmentManager(), "report_problem"));
+    }
+
+    /**
+     * Shows the salon's location and opens it in Google Maps when tapped, using
+     * the same helper as the client booking details screen. The row is hidden
+     * when the salon has no location, so an empty value never opens Maps.
+     */
+    private void bindLocation(View locationRow, TextView locationText, String location) {
+        if (location == null || location.trim().isEmpty()) {
+            locationRow.setVisibility(View.GONE);
+            return;
+        }
+
+        locationText.setText(location);
+        locationText.setOnClickListener(v -> MapsHelper.openLocation(this, location));
+        locationRow.setVisibility(View.VISIBLE);
     }
 
     private void setupReviewPreview(String salonId, double storedAvgRating) {
