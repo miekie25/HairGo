@@ -2,6 +2,8 @@ package com.hairgo.app.fragments
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,6 +20,7 @@ import com.hairgo.app.activities.SalonDetailActivity // Make sure this matches y
 import com.hairgo.app.adapters.AdminSalonAdapter
 import com.hairgo.app.databinding.AdminFragmentSalonsBinding
 import com.hairgo.app.models.AdminSalon
+import com.hairgo.app.utils.FuzzySearch
 import java.util.Locale
 
 class AdminSalonsFragment : Fragment(), AdminFirestoreListenerOwner {
@@ -29,6 +32,8 @@ class AdminSalonsFragment : Fragment(), AdminFirestoreListenerOwner {
     private val db = FirebaseFirestore.getInstance()
     private var salonListener: ListenerRegistration? = null
     private val ownerNames = mutableMapOf<String, String>()
+    private val ownerEmails = mutableMapOf<String, String>()
+    private val ownerPhones = mutableMapOf<String, String>()
     private val salons = mutableListOf<AdminSalon>()
 
     override fun onCreateView(
@@ -59,7 +64,20 @@ class AdminSalonsFragment : Fragment(), AdminFirestoreListenerOwner {
         binding.rvSalons.layoutManager = LinearLayoutManager(requireContext())
         binding.rvSalons.adapter = adapter
 
+        setupSearch()
         loadOwnerNamesThenSalons()
+    }
+
+    private fun setupSearch() {
+        binding.etSalonSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                applyFilterAndSort()
+            }
+        })
     }
 
     private fun loadOwnerNamesThenSalons() {
@@ -71,6 +89,10 @@ class AdminSalonsFragment : Fragment(), AdminFirestoreListenerOwner {
                 }
                 for (doc in snapshot.documents) {
                     ownerNames[doc.id] = fullName(doc)
+                    ownerEmails[doc.id] = doc.getString("email").orEmpty()
+                    ownerPhones[doc.id] = doc.getString("phoneNumber")
+                        ?: doc.getString("phone")
+                        ?: ""
                 }
                 observeSalons()
             }
@@ -114,12 +136,9 @@ class AdminSalonsFragment : Fragment(), AdminFirestoreListenerOwner {
                     snapshot.documents
                         .filter { it.getBoolean("isDeleted") != true }
                         .map { toSalon(it) }
-                        .sortedBy { it.name.lowercase(Locale.getDefault()) }
                 )
 
-                adapter.updateData(salons)
-                binding.tvEmptySalons.visibility =
-                    if (salons.isEmpty()) View.VISIBLE else View.GONE
+                applyFilterAndSort()
             }
     }
 
@@ -138,10 +157,57 @@ class AdminSalonsFragment : Fragment(), AdminFirestoreListenerOwner {
             ownerName = ownerNames[ownerId] ?: getString(R.string.admin_owner_unknown),
             area = doc.getString("location")
                 ?: doc.getString("area")
+                ?: doc.getString("address")
                 ?: "",
             isActive = doc.getBoolean("isActive") != false,
-            serviceCount = services.size
+            serviceCount = services.size,
+            email = doc.getString("email")
+                ?: doc.getString("ownerEmail")
+                ?: ownerEmails[ownerId]
+                ?: "",
+            phone = doc.getString("phone")
+                ?: doc.getString("phoneNumber")
+                ?: ownerPhones[ownerId]
+                ?: ""
         )
+    }
+
+    private fun applyFilterAndSort() {
+        val query = binding.etSalonSearch.text?.toString()?.trim().orEmpty()
+        val filtered = if (query.isEmpty()) {
+            salons
+        } else {
+            salons.filter { matchesSearch(it, query) }
+        }
+
+        val sorted = filtered.sortedBy { it.name.lowercase(Locale.getDefault()) }
+        adapter.updateData(sorted)
+        binding.tvEmptySalons.visibility = if (sorted.isEmpty()) View.VISIBLE else View.GONE
+    }
+
+    /** Matches the trimmed query against the salon name, area, email and phone. */
+    private fun matchesSearch(salon: AdminSalon, query: String): Boolean {
+        if (FuzzySearch.score(query, salon.name) > 0) return true
+        if (FuzzySearch.score(query, salon.area) > 0) return true
+        if (FuzzySearch.score(query, salon.email) > 0) return true
+        return matchesPhone(query, salon.phone)
+    }
+
+    /**
+     * Phones may be stored normalized (for example +27821234567), so partial
+     * searches such as 082123, 2782123 and +2782123 all match the same number.
+     */
+    private fun matchesPhone(query: String, phone: String): Boolean {
+        if (phone.isBlank()) return false
+        if (FuzzySearch.score(query, phone) > 0) return true
+
+        val queryDigits = query.filter { it.isDigit() }
+        val phoneDigits = phone.filter { it.isDigit() }
+        if (queryDigits.isEmpty() || phoneDigits.isEmpty()) return false
+
+        if (phoneDigits.contains(queryDigits)) return true
+        return queryDigits.startsWith("0") &&
+                phoneDigits.contains("27" + queryDigits.substring(1))
     }
 
     private fun toggleSalonActive(salon: AdminSalon) {
@@ -154,7 +220,7 @@ class AdminSalonsFragment : Fragment(), AdminFirestoreListenerOwner {
             .update("isActive", newValue)
             .addOnSuccessListener {
                 salon.isActive = newValue
-                adapter.updateData(salons)
+                applyFilterAndSort()
                 Toast.makeText(
                     context,
                     getString(R.string.admin_salon_status_changed, salon.name, action),

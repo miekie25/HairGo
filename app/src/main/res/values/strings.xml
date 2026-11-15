@@ -506,6 +506,7 @@
     <string name="admin_filter_owners">Owners</string>
     <string name="admin_filter_admins">Admins</string>
     <string name="admin_users_empty">No users found</string>
+    <string name="hint_search_users">Search users by name, email or phone</string>
     <string name="admin_sort_by">Sort by:</string>
     <string name="admin_sort_by_date">Sort by Date:</string>
     <string name="admin_sort_date_newest">Date: Newest First</string>

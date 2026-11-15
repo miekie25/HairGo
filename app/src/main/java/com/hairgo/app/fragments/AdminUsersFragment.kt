@@ -2,9 +2,12 @@
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -20,6 +23,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.hairgo.app.R
 import com.hairgo.app.activities.AdminFirestoreListenerOwner
 import com.hairgo.app.activities.UserDetailActivity
+import com.hairgo.app.utils.FuzzySearch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -39,6 +43,7 @@ class AdminUsersFragment : Fragment(), AdminFirestoreListenerOwner {
 
     private lateinit var toggleGroupUserRole: MaterialButtonToggleGroup
     private lateinit var btnUserSortOption: MaterialButton
+    private lateinit var etUserSearch: EditText
     private lateinit var rvUsers: RecyclerView
     private lateinit var tvEmptyUsers: TextView
 
@@ -67,12 +72,14 @@ class AdminUsersFragment : Fragment(), AdminFirestoreListenerOwner {
 
         toggleGroupUserRole = view.findViewById(R.id.toggleGroupUserRole)
         btnUserSortOption = view.findViewById(R.id.btnUserSortOption)
+        etUserSearch = view.findViewById(R.id.etUserSearch)
         rvUsers = view.findViewById(R.id.rvUsers)
         tvEmptyUsers = view.findViewById(R.id.tvEmptyUsers)
 
         setupRecyclerView()
         setupRoleFilters()
         setupSortSelector()
+        setupSearch()
         fetchUsersFromFirestore()
     }
 
@@ -125,6 +132,18 @@ class AdminUsersFragment : Fragment(), AdminFirestoreListenerOwner {
                 }
                 .show()
         }
+    }
+
+    private fun setupSearch() {
+        etUserSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                applyFilterAndSort()
+            }
+        })
     }
 
     private fun fetchUsersFromFirestore() {
@@ -222,10 +241,17 @@ class AdminUsersFragment : Fragment(), AdminFirestoreListenerOwner {
     }
 
     private fun applyFilterAndSort() {
-        val filtered = if (currentRoleFilter == "all") {
+        val roleFiltered = if (currentRoleFilter == "all") {
             allUsersList
         } else {
             allUsersList.filter { it.role == currentRoleFilter }
+        }
+
+        val query = etUserSearch.text?.toString()?.trim().orEmpty()
+        val filtered = if (query.isEmpty()) {
+            roleFiltered
+        } else {
+            roleFiltered.filter { matchesSearch(it, query) }
         }
 
         val sorted = when (currentSortMode) {
@@ -239,6 +265,30 @@ class AdminUsersFragment : Fragment(), AdminFirestoreListenerOwner {
 
         usersAdapter.updateData(sorted)
         tvEmptyUsers.visibility = if (sorted.isEmpty()) View.VISIBLE else View.GONE
+    }
+
+    /** Matches the trimmed query against the user's name, email and phone. */
+    private fun matchesSearch(user: AdminUserModel, query: String): Boolean {
+        if (FuzzySearch.score(query, user.userName) > 0) return true
+        if (FuzzySearch.score(query, user.email) > 0) return true
+        return matchesPhone(query, user.phone)
+    }
+
+    /**
+     * Phones are stored normalized (for example +27821234567), so partial
+     * searches such as 082123, 2782123 and +2782123 all match the same number.
+     */
+    private fun matchesPhone(query: String, phone: String): Boolean {
+        if (phone.isBlank()) return false
+        if (FuzzySearch.score(query, phone) > 0) return true
+
+        val queryDigits = query.filter { it.isDigit() }
+        val phoneDigits = phone.filter { it.isDigit() }
+        if (queryDigits.isEmpty() || phoneDigits.isEmpty()) return false
+
+        if (phoneDigits.contains(queryDigits)) return true
+        return queryDigits.startsWith("0") &&
+                phoneDigits.contains("27" + queryDigits.substring(1))
     }
 
     private fun openUserDetail(user: AdminUserModel) {

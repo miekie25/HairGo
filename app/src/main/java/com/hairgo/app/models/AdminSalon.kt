@@ -7,5 +7,7 @@ data class AdminSalon(
     val ownerName: String,
     val area: String,
     var isActive: Boolean = true,
-    val serviceCount: Int = 0
+    val serviceCount: Int = 0,
+    val email: String = "",
+    val phone: String = ""
 )

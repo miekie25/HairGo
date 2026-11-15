@@ -503,6 +503,7 @@
     <string name="admin_filter_owners">Abanikazi</string>
     <string name="admin_filter_admins">Abaphathi</string>
     <string name="admin_users_empty">Abasebenzisi abatholakalanga</string>
+    <string name="hint_search_users">Sesha abasebenzisi, i-imeyili noma ucingo</string>
     <string name="admin_sort_by">Hlela ngo:</string>
     <string name="admin_sort_by_date">Hlela Ngosuku:</string>
     <string name="admin_sort_date_newest">Usuku: Okusha Kuqala</string>
