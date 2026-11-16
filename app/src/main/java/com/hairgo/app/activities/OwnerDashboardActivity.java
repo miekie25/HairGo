@@ -32,6 +32,7 @@ import com.hairgo.app.firebase.OwnerManager;
 import com.hairgo.app.firebase.SalonManager;
 import com.hairgo.app.fragments.MessagesFragment;
 import com.hairgo.app.fragments.OwnerBookingsFragment;
+import com.hairgo.app.fragments.OwnerCalendarFragment;
 import com.hairgo.app.fragments.OwnerHomeFragment;
 import com.hairgo.app.fragments.OwnerProfileFragment;
 import com.hairgo.app.fragments.OwnerReportsFragment;
@@ -43,6 +44,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 public class OwnerDashboardActivity extends AppCompatActivity {
 
@@ -117,7 +119,6 @@ public class OwnerDashboardActivity extends AppCompatActivity {
         tvSalonPicker = findViewById(R.id.tvSalonPicker);
         progress = findViewById(R.id.progressOwner);
         bottomNav = findViewById(R.id.ownerBottomNav);
-
         tvSalonPicker.setOnClickListener(v -> showSalonPicker());
 
         bottomNav.setOnItemSelectedListener(item -> {
@@ -139,7 +140,7 @@ public class OwnerDashboardActivity extends AppCompatActivity {
     private void verifyOwnerThenLoad() {
         progress.setVisibility(View.VISIBLE);
 
-        ownerManager.getOwnerProfile(ownerId, new OwnerManager.OwnerCallback<OwnerManager.OwnerProfile>() {
+        ownerManager.getOwnerProfile(ownerId, new OwnerManager.OwnerCallback<>() {
             @Override
             public void onSuccess(OwnerManager.OwnerProfile profile) {
                 if (isFinishing() || isDestroyed()) return;
@@ -190,13 +191,16 @@ public class OwnerDashboardActivity extends AppCompatActivity {
     /** Sends a signed-in non-owner to the dashboard that belongs to their role. */
     private void redirectByRole(String role) {
         Class<?> target;
-        if ("client".equals(role)) {
-            target = ClientDashboardActivity.class;
-        } else if ("admin".equals(role)) {
-            target = AdminDashboardActivity.class;
-        } else {
-            goToWelcome();
-            return;
+        switch (Objects.requireNonNullElse(role, "")) {
+            case "client":
+                target = ClientDashboardActivity.class;
+                break;
+            case "admin":
+                target = AdminDashboardActivity.class;
+                break;
+            default:
+                goToWelcome();
+                return;
         }
         Intent intent = new Intent(this, target);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -205,7 +209,7 @@ public class OwnerDashboardActivity extends AppCompatActivity {
     }
 
     private void loadSalons() {
-        ownerManager.getSalonsForOwner(ownerId, new OwnerManager.OwnerCallback<List<OwnerSalon>>() {
+        ownerManager.getSalonsForOwner(ownerId, new OwnerManager.OwnerCallback<>() {
             @Override
             public void onSuccess(List<OwnerSalon> salons) {
                 if (isFinishing() || isDestroyed()) return;
@@ -250,6 +254,8 @@ public class OwnerDashboardActivity extends AppCompatActivity {
                 fragment.setArguments(args);
                 pendingBookingsFilter = -1;
             }
+        } else if (tabId == R.id.nav_owner_calendar) {
+            fragment = new OwnerCalendarFragment();
         } else if (tabId == R.id.nav_owner_reports) {
             fragment = new OwnerReportsFragment();
             if (pendingReportsPeriod != -1
@@ -293,9 +299,9 @@ public class OwnerDashboardActivity extends AppCompatActivity {
     private void updateSalonPicker() {
         OwnerSalon selected = OwnerSession.getSelectedSalon();
         if (selected == null) {
-            tvSalonPicker.setText("Add your first salon  +");
+            tvSalonPicker.setText(R.string.owner_add_first_salon);
         } else {
-            tvSalonPicker.setText(selected.getName() + "  ▾");
+            tvSalonPicker.setText(getString(R.string.salon_picker_format, selected.getName()));
         }
     }
 
@@ -307,9 +313,9 @@ public class OwnerDashboardActivity extends AppCompatActivity {
         }
 
         String[] items = new String[salons.size() + 1];
-        for (int i = 0; i < salons.size(); i++) {
-            OwnerSalon salon = salons.get(i);
-            items[i] = salon.getLocation().isEmpty()
+        int index = 0;
+        for (OwnerSalon salon : salons) {
+            items[index++] = salon.getLocation().isEmpty()
                     ? salon.getName()
                     : salon.getName() + " — " + salon.getLocation();
         }
@@ -400,7 +406,7 @@ public class OwnerDashboardActivity extends AppCompatActivity {
                     public void onSuccess(String salonId) {
                         // Reload the list so the new salon appears, then switch to it.
                         ownerManager.getSalonsForOwner(ownerId,
-                                new OwnerManager.OwnerCallback<List<OwnerSalon>>() {
+                                new OwnerManager.OwnerCallback<>() {
                                     @Override
                                     public void onSuccess(List<OwnerSalon> salons) {
                                         if (isFinishing() || isDestroyed()) return;
