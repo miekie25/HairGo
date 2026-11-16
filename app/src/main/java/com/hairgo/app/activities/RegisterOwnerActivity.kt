@@ -417,7 +417,7 @@ class RegisterOwnerActivity : AppCompatActivity() {
 
     private fun navigateToTermsScreen() {
         val email = binding.etEmail.text.toString().trim()
-        val intent = Intent(
+        val termsIntent = Intent(
             this,
             TermsConditionsActivity::class.java
         ).apply {
@@ -442,10 +442,9 @@ class RegisterOwnerActivity : AppCompatActivity() {
             putExtra("latitude", pickedLatitude ?: 0.0)
             putExtra("longitude", pickedLongitude ?: 0.0)
             putExtra("address", pickedAddress ?: "")
-
-
-            startActivity(intent)
         }
+
+        startActivity(termsIntent)
     }
 
     private fun normalizePhone(raw: String): String {
