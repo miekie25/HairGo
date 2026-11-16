@@ -48,9 +48,6 @@ class AdminSalonsFragment : Fragment(), AdminFirestoreListenerOwner {
 
         adapter = AdminSalonAdapter(
             salons = emptyList(),
-            onToggleActive = { salon ->
-                toggleSalonActive(salon)
-            },
             onSalonClicked = { salon ->
                 val intent = Intent(requireContext(), SalonDetailActivity::class.java).apply {
                     putExtra("salonId", salon.id)
