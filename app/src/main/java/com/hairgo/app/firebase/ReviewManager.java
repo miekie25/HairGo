@@ -8,6 +8,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -164,6 +165,36 @@ public class ReviewManager {
                     callback.onSuccess(reviews, query.getMetadata().isFromCache());
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
+     * Reviews a client has submitted, newest first.
+     *
+     * <p>Only clientID is filtered in Firestore (an automatic single-field
+     * index); soft-deleted reviews are dropped in memory. Sorting happens here
+     * because a client's review list is small.
+     */
+    public void getReviewsForClient(String clientId, ReviewListCallback callback) {
+        db.collection("reviews")
+                .whereEqualTo("clientID", clientId)
+                .get()
+                .addOnSuccessListener(query -> {
+                    List<Map<String, Object>> reviews = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : query) {
+                        if (Boolean.TRUE.equals(doc.get("isDeleted"))) continue;
+                        reviews.add(doc.getData());
+                    }
+                    Collections.sort(reviews, (a, b) -> Long.compare(
+                            createdAtMillis(b), createdAtMillis(a)));
+                    callback.onSuccess(reviews, query.getMetadata().isFromCache());
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    private static long createdAtMillis(Map<String, Object> review) {
+        Object value = review == null ? null : review.get("createdAt");
+        return value instanceof com.google.firebase.Timestamp
+                ? ((com.google.firebase.Timestamp) value).toDate().getTime() : 0L;
     }
 
     public void softDeleteReview(String reviewId, String salonId, ReviewCallback callback) {

@@ -536,6 +536,20 @@
     <string name="admin_booking_status_cancelled">Cancelled</string>
     <string name="admin_booking_status_expired">Expired</string>
 
+    <!-- Admin: client details -->
+    <string name="admin_client_stats_title">Booking Statistics</string>
+    <string name="admin_client_recent_bookings">Recent Bookings</string>
+    <string name="admin_client_reviews">Client Reviews</string>
+    <string name="admin_client_reports">Client Reports</string>
+    <string name="admin_client_stats_total">Total</string>
+    <string name="admin_client_stats_upcoming">Upcoming</string>
+    <string name="admin_client_stats_completed">Completed</string>
+    <string name="admin_client_stats_cancelled">Cancelled</string>
+    <string name="admin_client_loading">Loading...</string>
+    <string name="admin_client_no_bookings">No bookings yet.</string>
+    <string name="admin_client_no_reviews">No reviews submitted yet.</string>
+    <string name="admin_client_no_reports">No reports submitted yet.</string>
+
     <!-- Admin: salons -->
     <string name="admin_salons_empty">No salons found</string>
     <string name="admin_salon_owner">Owner: %1$s</string>
