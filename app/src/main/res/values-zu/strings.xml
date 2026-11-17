@@ -665,5 +665,19 @@
     <string name="salon_add_failed">Ayikwazanga ukungeza isitendi: %1$s</string>
     <string name="salon_refresh_failed">Isitendi silondolozwe, kodwa uhlu alukwazanga ukuvuselelwa</string>
 
+    <string name="title_booking_calendar">Ikhalenda Lokubhukha</string>
+    <string name="subtitle_booking_calendar">Buka futhi uphathe ukubhukha kwesaluni yakho</string>
+    <string name="no_bookings_for_day">Akukho ukubhukha kwalolu suku</string>
+    <string name="nav_calendar">Ikhalenda</string>
+
+    <string name="owner_add_first_salon">Engeza isaluni yakho yokuqala</string>
+
+    <string name="salon_picker_format">%1$s</string>
+
+    <string name="owner_zero_bookings">Akukho ukubhukha (0)</string>
+
+    <string name="report_period_all_time">Sonke Isikhathi</string>
+    <string name="reports_focus_message">Kuboniswa izibalo zesikhathi sonke ze-%1$s</string>
+
 
 </resources>

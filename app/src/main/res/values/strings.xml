@@ -668,6 +668,17 @@
     <string name="salon_add_failed">Could not add salon: %1$s</string>
     <string name="salon_refresh_failed">Salon saved, but the list could not refresh</string>
 
+    <string name="title_booking_calendar">Booking Calendar</string>
+    <string name="subtitle_booking_calendar">View and manage your salon bookings</string>
+    <string name="no_bookings_for_day">No bookings for this day</string>
+    <string name="nav_calendar">Calendar</string>
+
+    <string name="owner_add_first_salon">Add your first salon</string>
+
+    <string name="salon_picker_format">%1$s</string>
+
+    <string name="owner_zero_bookings">0 bookings</string>
+
     <string-array name="service_duration_options">
         <item>15 min</item>
         <item>30 min</item>
