@@ -550,6 +550,20 @@
     <string name="admin_client_no_reviews">No reviews submitted yet.</string>
     <string name="admin_client_no_reports">No reports submitted yet.</string>
 
+    <!-- Admin: salon owner details -->
+    <string name="admin_owner_salon_stats_title">Salon Statistics</string>
+    <string name="admin_owner_registered_salons">Registered Salons</string>
+    <string name="admin_owner_booking_activity">Booking Activity</string>
+    <string name="admin_owner_reviews">Reviews Received</string>
+    <string name="admin_owner_reports">Reports</string>
+    <string name="admin_owner_no_salons">No salons registered yet.</string>
+    <string name="admin_owner_no_services">No services listed.</string>
+    <string name="admin_owner_no_bookings">No bookings for this owner\'s salons yet.</string>
+    <string name="admin_owner_no_reviews">No reviews received yet.</string>
+    <string name="admin_owner_no_reports">No reports for this owner\'s salons.</string>
+    <string name="admin_owner_services">Services: %1$s</string>
+    <string name="admin_owner_registered_on">Registered %1$s</string>
+
     <!-- Admin: salons -->
     <string name="admin_salons_empty">No salons found</string>
     <string name="admin_salon_owner">Owner: %1$s</string>

@@ -550,6 +550,28 @@ public class BookingManager {
     }
 
     /**
+     * Every booking for a salon except soft-deleted records that are not
+     * cancellations. Client cancellations are stored as status "cancelled" plus
+     * isDeleted true, so they are kept here for admin reporting.
+     */
+    public void getBookingsForSalonIncludingCancelled(String salonId, BookingListCallback callback) {
+        db.collection("bookings")
+                .whereEqualTo("salonID", salonId)
+                .get()
+                .addOnSuccessListener(query -> {
+                    List<Map<String, Object>> bookings = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : query) {
+                        boolean deleted = Boolean.TRUE.equals(doc.getBoolean("isDeleted"));
+                        String status = doc.getString("status");
+                        if (deleted && !"cancelled".equals(status)) continue;
+                        bookings.add(doc.getData());
+                    }
+                    callback.onSuccess(bookings);
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
      * Real-time version of {@link #getBookingsForSalon}: fires the callback now
      * and again on every change to the salon's bookings, so a new client booking
      * (or a status change) shows up without the owner refreshing.

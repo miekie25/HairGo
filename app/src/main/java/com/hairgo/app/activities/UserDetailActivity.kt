@@ -19,8 +19,10 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.hairgo.app.R
 import com.hairgo.app.firebase.BookingManager
+import com.hairgo.app.firebase.OwnerManager
 import com.hairgo.app.firebase.ReportManager
 import com.hairgo.app.firebase.ReviewManager
+import com.hairgo.app.firebase.SalonManager
 import com.hairgo.app.models.Report
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -32,6 +34,8 @@ class UserDetailActivity : AppCompatActivity() {
     private val bookingManager = BookingManager()
     private val reviewManager = ReviewManager()
     private val reportManager = ReportManager()
+    private val salonManager = SalonManager()
+    private val ownerManager = OwnerManager()
 
     private var recordId: String = ""
     private var ownerUserId: String? = null
@@ -105,7 +109,12 @@ class UserDetailActivity : AppCompatActivity() {
                 }
                 if (isSalonRecord) populateSalonData(doc) else populateUserData(doc)
                 recordLoaded = true
-                if (!isSalonRecord && displayRole == "client") loadClientData()
+                if (!isSalonRecord) {
+                    when (displayRole) {
+                        "client" -> loadClientData()
+                        "owner" -> loadOwnerData()
+                    }
+                }
             }
             .addOnFailureListener { e ->
                 Toast.makeText(this, getString(R.string.admin_error_load, e.message ?: ""), Toast.LENGTH_SHORT).show()
@@ -363,6 +372,488 @@ class UserDetailActivity : AppCompatActivity() {
             row.findViewById<TextView>(R.id.tvClientReportDate).text =
                 formatDate(report.createdAt?.time ?: 0L)
             container.addView(row)
+        }
+    }
+
+    private fun loadOwnerData() {
+        findViewById<View>(R.id.layoutOwnerActivity)?.visibility = View.VISIBLE
+
+        val loading = getString(R.string.admin_client_loading)
+        listOf(
+            R.id.tvOwnerSalonStatsState,
+            R.id.tvOwnerSalonsState,
+            R.id.tvOwnerBookingStatsState,
+            R.id.tvOwnerRecentBookingsState,
+            R.id.tvOwnerReviewsState,
+            R.id.tvOwnerReportsState
+        ).forEach { id ->
+            findViewById<TextView>(id)?.text = loading
+            findViewById<TextView>(id)?.visibility = View.VISIBLE
+        }
+        findViewById<View>(R.id.cardOwnerSalonStats)?.visibility = View.GONE
+        findViewById<View>(R.id.cardOwnerBookingStats)?.visibility = View.GONE
+        listOf(
+            R.id.containerOwnerSalons,
+            R.id.containerOwnerRecentBookings,
+            R.id.containerOwnerReviews,
+            R.id.containerOwnerReports
+        ).forEach { findViewById<LinearLayout>(it)?.removeAllViews() }
+
+        loadOwnerSalons()
+    }
+
+    private fun loadOwnerSalons() {
+        salonManager.getSalonsByOwner(recordId, object : SalonManager.SalonListCallback {
+            override fun onSuccess(salons: List<Map<String, Any>>?) {
+                val rows = salons.orEmpty().map { toOwnerSalon(it) }
+                showOwnerSalons(rows)
+                loadOwnerBookings(rows)
+                loadOwnerReviews(rows)
+                loadOwnerReports(rows)
+            }
+
+            override fun onFailure(errorMessage: String?) {
+                showOwnerLoadError(errorMessage)
+            }
+        })
+    }
+
+    private fun showOwnerLoadError(errorMessage: String?) {
+        val message = getString(R.string.admin_error_load, errorMessage ?: "")
+        listOf(
+            R.id.tvOwnerSalonStatsState,
+            R.id.tvOwnerSalonsState,
+            R.id.tvOwnerBookingStatsState,
+            R.id.tvOwnerRecentBookingsState,
+            R.id.tvOwnerReviewsState,
+            R.id.tvOwnerReportsState
+        ).forEach { id ->
+            findViewById<TextView>(id)?.text = message
+            findViewById<TextView>(id)?.visibility = View.VISIBLE
+        }
+        findViewById<View>(R.id.cardOwnerSalonStats)?.visibility = View.GONE
+        findViewById<View>(R.id.cardOwnerBookingStats)?.visibility = View.GONE
+        listOf(
+            R.id.containerOwnerSalons,
+            R.id.containerOwnerRecentBookings,
+            R.id.containerOwnerReviews,
+            R.id.containerOwnerReports
+        ).forEach { findViewById<LinearLayout>(it)?.removeAllViews() }
+    }
+
+    private fun toOwnerSalon(raw: Map<String, Any>): OwnerSalonRow {
+        val id = (raw["salonID"] as? String) ?: ""
+        val name = (raw["name"] as? String)?.takeIf { it.isNotBlank() }
+            ?: (raw["salonName"] as? String)?.takeIf { it.isNotBlank() }
+            ?: getString(R.string.admin_unknown_salon)
+        val location = (raw["location"] as? String)?.takeIf { it.isNotBlank() }
+            ?: (raw["area"] as? String)?.takeIf { it.isNotBlank() }
+            ?: (raw["address"] as? String)?.takeIf { it.isNotBlank() }
+            ?: getString(R.string.admin_not_provided)
+        val services = SalonManager.getServiceDetails(raw)
+            .map { it.name }
+            .filter { it.isNotBlank() }
+            .joinToString(", ")
+            .ifBlank { getString(R.string.admin_owner_no_services) }
+        val createdAt = (raw["createdAt"] as? Timestamp)?.toDate()?.time
+            ?: (raw["createdAtMs"] as? Number)?.toLong()
+            ?: 0L
+        return OwnerSalonRow(id, name, location, services, ownerSalonStatus(raw), createdAt)
+    }
+
+    private fun ownerSalonStatus(raw: Map<String, Any>): String {
+        val approval = ((raw["approvalStatus"] as? String) ?: (raw["status"] as? String))
+            ?.trim()
+            ?.lowercase(Locale.getDefault())
+        val approved = raw["isApproved"] as? Boolean
+        return when {
+            approval == "pending" || approval == "awaiting" ||
+                approval == "awaiting_approval" || approved == false -> "pending"
+            raw["isActive"] == false || approval == "inactive" ||
+                approval == "suspended" || approval == "rejected" -> "inactive"
+            else -> "active"
+        }
+    }
+
+    private fun showOwnerSalons(salons: List<OwnerSalonRow>) {
+        val statsState = findViewById<TextView>(R.id.tvOwnerSalonStatsState)
+        val card = findViewById<View>(R.id.cardOwnerSalonStats)
+        val listState = findViewById<TextView>(R.id.tvOwnerSalonsState)
+        val container = findViewById<LinearLayout>(R.id.containerOwnerSalons) ?: return
+        container.removeAllViews()
+
+        if (salons.isEmpty()) {
+            val empty = getString(R.string.admin_owner_no_salons)
+            statsState?.text = empty
+            statsState?.visibility = View.VISIBLE
+            listState?.text = empty
+            listState?.visibility = View.VISIBLE
+            card?.visibility = View.GONE
+            return
+        }
+
+        statsState?.visibility = View.GONE
+        listState?.visibility = View.GONE
+        card?.visibility = View.VISIBLE
+        findViewById<TextView>(R.id.tvSalonStatTotal)?.text = salons.size.toString()
+        findViewById<TextView>(R.id.tvSalonStatActive)?.text =
+            salons.count { it.status == "active" }.toString()
+        findViewById<TextView>(R.id.tvSalonStatPending)?.text =
+            salons.count { it.status == "pending" }.toString()
+        findViewById<TextView>(R.id.tvSalonStatInactive)?.text =
+            salons.count { it.status == "inactive" }.toString()
+
+        salons.sortedBy { it.name.lowercase(Locale.getDefault()) }.forEach { salon ->
+            val row = layoutInflater.inflate(R.layout.item_owner_salon, container, false)
+            row.findViewById<TextView>(R.id.tvOwnerSalonName).text = salon.name
+            row.findViewById<TextView>(R.id.tvOwnerSalonLocation).text = salon.location
+            row.findViewById<TextView>(R.id.tvOwnerSalonServices).text =
+                getString(R.string.admin_owner_services, salon.services)
+            row.findViewById<TextView>(R.id.tvOwnerSalonDate).text =
+                getString(R.string.admin_owner_registered_on, formatDate(salon.createdAtMs))
+            val badge = row.findViewById<TextView>(R.id.tvOwnerSalonStatus)
+            badge.text = salonStatusLabel(salon.status)
+            badge.setBackgroundResource(salonStatusBackground(salon.status))
+            badge.setTextColor(getColor(salonStatusTextColor(salon.status)))
+            container.addView(row)
+        }
+    }
+
+    private fun salonStatusLabel(status: String): String {
+        return when (status) {
+            "pending" -> getString(R.string.admin_status_pending)
+            "inactive" -> getString(R.string.admin_status_inactive)
+            else -> getString(R.string.admin_status_active)
+        }
+    }
+
+    private fun salonStatusBackground(status: String): Int {
+        return when (status) {
+            "pending" -> R.drawable.bg_badge_orange
+            "inactive" -> R.drawable.bg_badge_pill
+            else -> R.drawable.bg_badge_green
+        }
+    }
+
+    private fun salonStatusTextColor(status: String): Int {
+        return when (status) {
+            "pending" -> R.color.warning_dark
+            "inactive" -> R.color.text_hint
+            else -> R.color.success_green
+        }
+    }
+
+    private fun loadOwnerBookings(salons: List<OwnerSalonRow>) {
+        val statsState = findViewById<TextView>(R.id.tvOwnerBookingStatsState)
+        val recentState = findViewById<TextView>(R.id.tvOwnerRecentBookingsState)
+        findViewById<View>(R.id.cardOwnerBookingStats)?.visibility = View.GONE
+        findViewById<LinearLayout>(R.id.containerOwnerRecentBookings)?.removeAllViews()
+        statsState?.text = getString(R.string.admin_client_loading)
+        statsState?.visibility = View.VISIBLE
+        recentState?.text = getString(R.string.admin_client_loading)
+        recentState?.visibility = View.VISIBLE
+
+        if (salons.isEmpty()) {
+            showOwnerBookingsEmpty()
+            return
+        }
+
+        val salonNames = salons.associate { it.id to it.name }
+        val rows = mutableListOf<OwnerBookingRow>()
+        var remaining = salons.size
+        var failed = false
+
+        salons.forEach { salon ->
+            bookingManager.getBookingsForSalonIncludingCancelled(
+                salon.id,
+                object : BookingManager.BookingListCallback {
+                    override fun onSuccess(bookings: List<Map<String, Any>>?) {
+                        bookings.orEmpty().forEach { raw ->
+                            rows.add(toOwnerBooking(raw, salonNames[salon.id]))
+                        }
+                        remaining--
+                        if (remaining == 0 && !failed) finishOwnerBookings(rows)
+                    }
+
+                    override fun onFailure(errorMessage: String?) {
+                        if (failed) return
+                        failed = true
+                        showOwnerBookingsError(errorMessage)
+                    }
+                }
+            )
+        }
+    }
+
+    private fun toOwnerBooking(raw: Map<String, Any>, salonName: String?): OwnerBookingRow {
+        val clientId = (raw["clientID"] as? String) ?: ""
+        val clientName = (raw["clientName"] as? String)?.takeIf { it.isNotBlank() } ?: ""
+        val name = (raw["salonName"] as? String)?.takeIf { it.isNotBlank() }
+            ?: salonName
+            ?: getString(R.string.admin_unknown_salon)
+        val names = (raw["serviceNames"] as? List<*>)
+            ?.mapNotNull { it?.toString()?.takeIf { item -> item.isNotBlank() } }
+            .orEmpty()
+        val serviceName = names.joinToString(", ").ifBlank {
+            (raw["serviceName"] as? String)?.takeIf { it.isNotBlank() }
+                ?: getString(R.string.admin_hair_service)
+        }
+        val dateTime = (raw["dateTime"] as? Timestamp)?.toDate()?.time ?: 0L
+        val status = (raw["status"] as? String)?.lowercase(Locale.getDefault()) ?: "pending"
+        return OwnerBookingRow(clientId, clientName, name, serviceName, dateTime, status)
+    }
+
+    private fun finishOwnerBookings(rows: List<OwnerBookingRow>) {
+        val missingIds = rows.filter { it.clientName.isBlank() && it.clientId.isNotBlank() }
+            .map { it.clientId }
+            .toSet()
+        resolveClientNames(missingIds) { names ->
+            val resolved = rows.map { row ->
+                if (row.clientName.isBlank() && names[row.clientId] != null) {
+                    row.copy(clientName = names.getValue(row.clientId))
+                } else {
+                    row
+                }
+            }
+            showOwnerBookingStats(resolved)
+            showOwnerRecentBookings(
+                resolved.sortedByDescending { it.dateTimeMs }.take(MAX_CLIENT_ITEMS)
+            )
+        }
+    }
+
+    private fun showOwnerBookingStats(bookings: List<OwnerBookingRow>) {
+        val statsState = findViewById<TextView>(R.id.tvOwnerBookingStatsState)
+        val card = findViewById<View>(R.id.cardOwnerBookingStats)
+        if (bookings.isEmpty()) {
+            showOwnerBookingsEmpty()
+            return
+        }
+
+        findViewById<TextView>(R.id.tvOwnerBookingStatTotal)?.text = bookings.size.toString()
+        findViewById<TextView>(R.id.tvOwnerBookingStatUpcoming)?.text = bookings.count {
+            it.status == "pending" || it.status == "confirmed"
+        }.toString()
+        findViewById<TextView>(R.id.tvOwnerBookingStatCompleted)?.text =
+            bookings.count { it.status == "completed" }.toString()
+        findViewById<TextView>(R.id.tvOwnerBookingStatCancelled)?.text =
+            bookings.count { it.status == "cancelled" }.toString()
+        statsState?.visibility = View.GONE
+        card?.visibility = View.VISIBLE
+    }
+
+    private fun showOwnerRecentBookings(bookings: List<OwnerBookingRow>) {
+        val container = findViewById<LinearLayout>(R.id.containerOwnerRecentBookings) ?: return
+        val state = findViewById<TextView>(R.id.tvOwnerRecentBookingsState)
+        container.removeAllViews()
+        if (bookings.isEmpty()) {
+            state?.text = getString(R.string.admin_owner_no_bookings)
+            state?.visibility = View.VISIBLE
+            return
+        }
+
+        state?.visibility = View.GONE
+        bookings.forEach { booking ->
+            val row = layoutInflater.inflate(R.layout.item_owner_booking, container, false)
+            row.findViewById<TextView>(R.id.tvOwnerBookingClient).text =
+                booking.clientName.ifBlank { getString(R.string.admin_unknown_client) }
+            row.findViewById<TextView>(R.id.tvOwnerBookingSalon).text = booking.salonName
+            row.findViewById<TextView>(R.id.tvOwnerBookingService).text = booking.serviceName
+            row.findViewById<TextView>(R.id.tvOwnerBookingDate).text =
+                formatDateTime(booking.dateTimeMs)
+            val badge = row.findViewById<TextView>(R.id.tvOwnerBookingStatus)
+            badge.text = bookingStatusLabel(booking.status)
+            badge.setBackgroundResource(bookingStatusBackground(booking.status))
+            badge.setTextColor(getColor(bookingStatusTextColor(booking.status)))
+            container.addView(row)
+        }
+    }
+
+    private fun showOwnerBookingsEmpty() {
+        val message = getString(R.string.admin_owner_no_bookings)
+        findViewById<TextView>(R.id.tvOwnerBookingStatsState)?.text = message
+        findViewById<TextView>(R.id.tvOwnerBookingStatsState)?.visibility = View.VISIBLE
+        findViewById<TextView>(R.id.tvOwnerRecentBookingsState)?.text = message
+        findViewById<TextView>(R.id.tvOwnerRecentBookingsState)?.visibility = View.VISIBLE
+        findViewById<View>(R.id.cardOwnerBookingStats)?.visibility = View.GONE
+        findViewById<LinearLayout>(R.id.containerOwnerRecentBookings)?.removeAllViews()
+    }
+
+    private fun showOwnerBookingsError(errorMessage: String?) {
+        val message = getString(R.string.admin_error_load, errorMessage ?: "")
+        findViewById<TextView>(R.id.tvOwnerBookingStatsState)?.text = message
+        findViewById<TextView>(R.id.tvOwnerBookingStatsState)?.visibility = View.VISIBLE
+        findViewById<TextView>(R.id.tvOwnerRecentBookingsState)?.text = message
+        findViewById<TextView>(R.id.tvOwnerRecentBookingsState)?.visibility = View.VISIBLE
+        findViewById<View>(R.id.cardOwnerBookingStats)?.visibility = View.GONE
+        findViewById<LinearLayout>(R.id.containerOwnerRecentBookings)?.removeAllViews()
+    }
+
+    private fun loadOwnerReviews(salons: List<OwnerSalonRow>) {
+        val state = findViewById<TextView>(R.id.tvOwnerReviewsState)
+        val container = findViewById<LinearLayout>(R.id.containerOwnerReviews)
+        container?.removeAllViews()
+        state?.text = getString(R.string.admin_client_loading)
+        state?.visibility = View.VISIBLE
+
+        if (salons.isEmpty()) {
+            state?.text = getString(R.string.admin_owner_no_reviews)
+            return
+        }
+
+        val rows = mutableListOf<OwnerReviewRow>()
+        var remaining = salons.size
+        var failed = false
+
+        salons.forEach { salon ->
+            reviewManager.getReviewsForSalon(salon.id, object : ReviewManager.ReviewListCallback {
+                override fun onSuccess(reviews: List<Map<String, Any>>?, fromCache: Boolean) {
+                    reviews.orEmpty().forEach { raw -> rows.add(toOwnerReview(raw)) }
+                    remaining--
+                    if (remaining == 0 && !failed) finishOwnerReviews(rows, salons)
+                }
+
+                override fun onFailure(errorMessage: String?) {
+                    if (failed) return
+                    failed = true
+                    state?.text = getString(R.string.admin_error_load, errorMessage ?: "")
+                }
+            })
+        }
+    }
+
+    private fun toOwnerReview(raw: Map<String, Any>): OwnerReviewRow {
+        val clientId = (raw["clientID"] as? String) ?: ""
+        val salonId = (raw["salonID"] as? String) ?: ""
+        val rating = (raw["rating"] as? Number)?.toInt() ?: 0
+        val comment = (raw["comment"] as? String) ?: ""
+        val createdAt = (raw["createdAt"] as? Timestamp)?.toDate()?.time ?: 0L
+        return OwnerReviewRow(clientId, salonId, rating, comment, createdAt)
+    }
+
+    private fun finishOwnerReviews(rows: List<OwnerReviewRow>, salons: List<OwnerSalonRow>) {
+        val sorted = rows.sortedByDescending { it.createdAtMs }
+        val salonNames = salons.associate { it.id to it.name }
+        resolveClientNames(sorted.map { it.clientId }) { names ->
+            showOwnerReviews(sorted.take(MAX_CLIENT_ITEMS), salonNames, names)
+        }
+    }
+
+    private fun showOwnerReviews(
+        reviews: List<OwnerReviewRow>,
+        salonNames: Map<String, String>,
+        clientNames: Map<String, String>
+    ) {
+        val container = findViewById<LinearLayout>(R.id.containerOwnerReviews) ?: return
+        val state = findViewById<TextView>(R.id.tvOwnerReviewsState)
+        container.removeAllViews()
+        if (reviews.isEmpty()) {
+            state?.text = getString(R.string.admin_owner_no_reviews)
+            state?.visibility = View.VISIBLE
+            return
+        }
+
+        state?.visibility = View.GONE
+        reviews.forEach { review ->
+            val row = layoutInflater.inflate(R.layout.item_owner_review, container, false)
+            row.findViewById<TextView>(R.id.tvOwnerReviewClient).text =
+                clientNames[review.clientId] ?: getString(R.string.admin_unknown_client)
+            row.findViewById<TextView>(R.id.tvOwnerReviewSalon).text =
+                salonNames[review.salonId] ?: getString(R.string.admin_unknown_salon)
+            row.findViewById<TextView>(R.id.tvOwnerReviewDate).text =
+                formatDate(review.createdAtMs)
+            row.findViewById<RatingBar>(R.id.ratingOwnerReview).rating = review.rating.toFloat()
+            row.findViewById<TextView>(R.id.tvOwnerReviewComment).text =
+                review.comment.ifBlank { getString(R.string.review_no_comment) }
+            container.addView(row)
+        }
+    }
+
+    private fun loadOwnerReports(salons: List<OwnerSalonRow>) {
+        val state = findViewById<TextView>(R.id.tvOwnerReportsState)
+        val container = findViewById<LinearLayout>(R.id.containerOwnerReports)
+        container?.removeAllViews()
+        state?.text = getString(R.string.admin_client_loading)
+        state?.visibility = View.VISIBLE
+
+        if (salons.isEmpty()) {
+            state?.text = getString(R.string.admin_owner_no_reports)
+            return
+        }
+
+        val reports = mutableListOf<Report>()
+        var remaining = salons.size
+        var failed = false
+
+        salons.forEach { salon ->
+            reportManager.getReportsForSalon(salon.id, object : ReportManager.ReportListCallback {
+                override fun onSuccess(reportsForSalon: List<Report>?) {
+                    reports.addAll(reportsForSalon.orEmpty())
+                    remaining--
+                    if (remaining == 0 && !failed) {
+                        val recent = reports.sortedByDescending { it.createdAt?.time ?: 0L }
+                            .take(MAX_CLIENT_ITEMS)
+                        if (recent.isEmpty()) {
+                            state?.text = getString(R.string.admin_owner_no_reports)
+                            state?.visibility = View.VISIBLE
+                        } else {
+                            showOwnerReports(recent)
+                        }
+                    }
+                }
+
+                override fun onFailure(errorMessage: String?) {
+                    if (failed) return
+                    failed = true
+                    state?.text = getString(R.string.admin_error_load, errorMessage ?: "")
+                }
+            })
+        }
+    }
+
+    private fun showOwnerReports(reports: List<Report>) {
+        val container = findViewById<LinearLayout>(R.id.containerOwnerReports) ?: return
+        val state = findViewById<TextView>(R.id.tvOwnerReportsState)
+        container.removeAllViews()
+        state?.visibility = View.GONE
+
+        reports.forEach { report ->
+            val row = layoutInflater.inflate(R.layout.item_client_report, container, false)
+            row.findViewById<TextView>(R.id.tvClientReportDescription).text =
+                report.description?.takeIf { it.isNotBlank() }
+                    ?: getString(R.string.admin_report_no_description)
+            val badge = row.findViewById<TextView>(R.id.tvClientReportStatus)
+            badge.text = reportStatusLabel(report.status)
+            badge.setBackgroundResource(reportStatusBackground(report.status))
+            badge.setTextColor(getColor(reportStatusTextColor(report.status)))
+            row.findViewById<TextView>(R.id.tvClientReportDate).text =
+                formatDate(report.createdAt?.time ?: 0L)
+            container.addView(row)
+        }
+    }
+
+    private fun resolveClientNames(clientIds: Collection<String>, onDone: (Map<String, String>) -> Unit) {
+        val ids = clientIds.filter { it.isNotBlank() }.toSet()
+        if (ids.isEmpty()) {
+            onDone(emptyMap())
+            return
+        }
+
+        val names = HashMap<String, String>()
+        var remaining = ids.size
+        ids.forEach { clientId ->
+            ownerManager.getClientName(clientId, object : OwnerManager.OwnerCallback<String> {
+                override fun onSuccess(result: String?) {
+                    if (!result.isNullOrBlank()) names[clientId] = result
+                    remaining--
+                    if (remaining == 0) onDone(names)
+                }
+
+                override fun onFailure(errorMessage: String?) {
+                    remaining--
+                    if (remaining == 0) onDone(names)
+                }
+            })
         }
     }
 
@@ -652,6 +1143,32 @@ class UserDetailActivity : AppCompatActivity() {
     )
 
     private data class ClientReviewRow(
+        val salonId: String,
+        val rating: Int,
+        val comment: String,
+        val createdAtMs: Long
+    )
+
+    private data class OwnerSalonRow(
+        val id: String,
+        val name: String,
+        val location: String,
+        val services: String,
+        val status: String,
+        val createdAtMs: Long
+    )
+
+    private data class OwnerBookingRow(
+        val clientId: String,
+        val clientName: String,
+        val salonName: String,
+        val serviceName: String,
+        val dateTimeMs: Long,
+        val status: String
+    )
+
+    private data class OwnerReviewRow(
+        val clientId: String,
         val salonId: String,
         val rating: Int,
         val comment: String,

@@ -160,6 +160,28 @@ public class SalonManager {
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
+    /**
+     * All non-deleted salons owned by one user. Only ownerID is filtered in
+     * Firestore (an automatic single-field index); soft-deleted documents are
+     * skipped in memory so no composite index is needed.
+     */
+    public void getSalonsByOwner(String ownerId, SalonListCallback callback) {
+        db.collection("salons")
+                .whereEqualTo("ownerID", ownerId)
+                .get()
+                .addOnSuccessListener(query -> {
+                    List<Map<String, Object>> salons = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : query) {
+                        if (Boolean.TRUE.equals(doc.getBoolean("isDeleted"))) continue;
+                        Map<String, Object> data = new HashMap<>(doc.getData());
+                        data.put("salonID", doc.getId());
+                        salons.add(data);
+                    }
+                    callback.onSuccess(salons);
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
     public void getSalonsByLocation(String location, SalonListCallback callback) {
         db.collection("salons")
                 .whereEqualTo("isDeleted", false)

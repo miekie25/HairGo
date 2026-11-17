@@ -269,6 +269,28 @@ public class ReportManager {
     }
 
     /**
+     * Reports filed against one salon, newest first. Equality-only filters
+     * (automatic single-field indexes, no setup needed); sorting is done in
+     * memory because a single salon's report list is small.
+     */
+    public void getReportsForSalon(String salonId, ReportListCallback callback) {
+        db.collection(COLLECTION_REPORTS)
+                .whereEqualTo("salonID", salonId)
+                .whereEqualTo(FIELD_IS_DELETED, false)
+                .get()
+                .addOnSuccessListener(query -> {
+                    List<Report> reports = new ArrayList<>();
+                    for (com.google.firebase.firestore.QueryDocumentSnapshot doc : query) {
+                        Report report = doc.toObject(Report.class);
+                        if (report != null) reports.add(report);
+                    }
+                    Collections.sort(reports, newestFirst());
+                    callback.onSuccess(reports);
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    /**
      * Every live report for the admin dashboard, newest first.
      * Requires a composite index on isDeleted + createdAt (Firestore will link
      * straight to index creation in the error the first time this runs).
